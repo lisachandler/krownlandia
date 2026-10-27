@@ -16,6 +16,9 @@ find('refresh event status');assert(!$('#helpEntry-1-8').hidden);assert($('#help
 find('other players');assert(!$('#helpEntry-1-9').hidden);assert.equal($('#helpSearchCount').textContent,'1 help topic found.');assert($('#helpEntry-1-9').children[1].textContent.includes('not available yet'));
 find('legacy points');assert(!$('#helpEntry-2-5').hidden);assert.equal($('#helpSearchCount').textContent,'1 help topic found.');
 find('leaderboard');assert(!$('#helpEntry-2-5').hidden);assert($('#helpEntry-2-5').children[1].textContent.includes('not a public or verified leaderboard'));
+find('living sim portal');assert(!$('#helpEntry-1-10').hidden);assert($('#helpEntry-1-10').children[1].textContent.includes('Accounts and progress are separate'));
+find('signal sticker');assert(!$('#helpEntry-1-11').hidden);assert.equal($('#helpSearchCount').textContent,'1 help topic found.');assert($('#helpEntry-1-11').children[1].textContent.includes('has not yet been imported'));
+find('maxigram');assert(!$('#helpEntry-1-10').hidden);assert(!$('#helpEntry-1-11').hidden);assert.equal($('#helpSearchCount').textContent,'2 help topics found.');
 find('no-such-help');assert($('#helpSearchCount').textContent.includes('No matching help'));assert($('#helpSection-0').hidden);assert(!clear.hidden);
 $('#parkHelpClose').onclick();$('#helpButton').onclick();assert.equal(search.value,'no-such-help');
 let focused=false;search.focus=()=>{focused=true;};clear.onclick();assert(focused);assert.equal(search.value,'');assert(clear.hidden);assert(!$('#helpSection-0').open);assert($('#helpSection-1').open);assert(!$('#helpSection-2').open);assert(!$('#helpEntry-2-2').hidden);
