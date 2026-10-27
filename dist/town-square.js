@@ -30,7 +30,7 @@ export function installEventCalendar({pause,rewards,events=CONFIRMED_EVENTS,cloc
 }
 export function installTownSquare({scene,camera,colliders,pause,rewards,getCurrentSeat=()=>null}){
  const calendar=installEventCalendar({pause,rewards});
- const portals=installCommunityPortals({scene,camera,colliders,pause});
+ const portals=installCommunityPortals({scene,camera,colliders,pause,rewards});
  const root=new T.Group();root.name='Krownlandia Town Square';scene.add(root);
  const mat=c=>new T.MeshStandardMaterial({color:c,roughness:.72}),stone=mat('#e7d9b9'),navy=mat('#254668'),gold=mat('#dcb55d'),wood=mat('#80583e'),leaf=mat('#46744b'),pink=mat('#d587a1');
  const add=(geo,m,x,y,z)=>{const o=new T.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;root.add(o);return o;};
@@ -66,7 +66,7 @@ export function installTownSquare({scene,camera,colliders,pause,rewards,getCurre
 }
 
 // New places requested by Lisa; managerial credit is not an original-document attribution.
-export function installCommunityPortals({scene,camera,colliders,pause}){
+export function installCommunityPortals({scene,camera,colliders,pause,rewards}){
  const places=[
   {id:'living-sim',name:'Living Sim Portal',x:-20,z:46,kind:'Community portal',keywords:'maxigram living simulation external',detail:'Place manager: @maxigram · Opens an external site',url:'https://xeroemoji.grok.me/',action:'Visit Living Sim',description:'A doorway to the Living Sim. Choose the link below to visit its separate website in a new tab.',color:'#77cfc0'},
   {id:'emoji-house',name:'Emoji House',x:-20,z:56,kind:'Community pavilion',keywords:'maxigram emoji sticker signal art pack',detail:'Place manager: @maxigram · Preferred sticker collection',url:'https://signal.art/addstickers/#pack_id=36a2965e47352588ba3a683119dec0d0&pack_key=4e1a9fe28a3e055d8a7035fecfb76c581ab1b967ae3beff262dafbf7bddc1a68',action:'View the Signal sticker pack',description:'Home of Krownlandia’s preferred emoji and sticker collection. View or add the pack through Signal. Individual artwork is not yet displayed in Krownlandia.',color:'#e7b4d9'}
@@ -84,8 +84,11 @@ export function installCommunityPortals({scene,camera,colliders,pause}){
  const near=()=>places.find(p=>Math.hypot(camera.position.x-p.x,camera.position.z-p.z)<1.8);
  const dialog=document.createElement('dialog');dialog.id='communityPortal';dialog.setAttribute('aria-labelledby','communityPortalTitle');
  const title=document.createElement('h2');title.id='communityPortalTitle';const manager=document.createElement('p');manager.textContent='Place manager: @maxigram';const description=document.createElement('p');const link=document.createElement('a');link.id='communityPortalLink';link.target='_blank';link.rel='noopener noreferrer';const notice=document.createElement('p');notice.textContent='Opens outside Krownlandia in a new tab. Progress and accounts are separate.';
- let selected=null;
+ const nearby=document.createElement('details');nearby.id='communityPortalNearby';const nearbyTitle=document.createElement('summary');nearbyTitle.textContent='Explore nearby';const nearbyList=document.createElement('div');nearby.append(nearbyTitle,nearbyList);
+ let selected=null,revision=0;
+ function refreshNearby(p){const version=++revision;nearby.open=false;nearbyList.replaceChildren();const targets=[...places.filter(other=>other!==p),{id:'square',name:'Town Square community board',x:8,z:47}];for(const point of targets){const button=document.createElement('button');button.id='communityPortalWalk-'+point.id;button.textContent='Walk to '+point.name;button.onclick=()=>{if(button.disabled||version!==revision||!dialog.open||near()!==p||selected!==p)return;pause();rewards.guideToPoint({x:point.x,z:point.z,name:point.name});dialog.close();};nearbyList.append(button);}}
+
  link.onclick=e=>{if(!dialog.open||near()!==selected)e.preventDefault();};
- const close=document.createElement('button');close.id='communityPortalClose';close.textContent='Back to Krownlandia';close.onclick=()=>{pause();dialog.close();};dialog.append(title,manager,description,link,notice,close);document.body.append(dialog);
- return {places,get near(){return near()},get isOpen(){return dialog.open},open(){const p=near();if(!p||dialog.open)return false;selected=p;title.textContent=p.name;description.textContent=p.description;link.textContent=p.action+' ↗';link.href=p.url;pause();dialog.showModal();return true;}};
+ const close=document.createElement('button');close.id='communityPortalClose';close.textContent='Back to Krownlandia';close.onclick=()=>{pause();dialog.close();};dialog.append(title,manager,description,link,notice,nearby,close);document.body.append(dialog);
+ return {places,get near(){return near()},get isOpen(){return dialog.open},open(){const p=near();if(!p||dialog.open)return false;selected=p;refreshNearby(p);title.textContent=p.name;description.textContent=p.description;link.textContent=p.action+' ↗';link.href=p.url;pause();dialog.showModal();return true;}};
 }
