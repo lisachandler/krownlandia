@@ -1,0 +1,11 @@
+import './school-seating.mjs';
+import assert from 'node:assert/strict';
+import {frame} from './school-seating.mjs';
+const $=s=>document.querySelector(s),a=window.krownlandia;
+$('#rewardButton').onclick();const h=$('#rewardHistory');assert(!h.open);assert(!h.hidden);h.open=true;h.ontoggle();
+assert.equal($('#rewardHistory-all').textContent,a.getState().rewards.points+' points');assert($('#rewardHistoryLegacy').textContent.includes('legacy points'));
+assert(h.children[1].textContent.includes('not verified leaderboard'));const total=$('#rewardHistory-all');
+frame(600);assert.equal($('#rewardHistory-all'),total,'refresh keeps existing nodes');
+$('#rewardClose').onclick();$('#rewardButton').onclick();assert(!h.open,'fresh reopening collapses history');
+const before=JSON.stringify(a.getState().rewards);h.open=true;h.ontoggle();assert.equal(JSON.stringify(a.getState().rewards),before,'viewing history does not award points');
+$('#rewardClose').onclick();console.log('PASS: collapsed optional private history, truthful labels, current point total, stable refresh nodes, reopening and read-only behavior.');

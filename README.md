@@ -40,6 +40,12 @@ Krownlandia predates this prototype. Its recorded community origins date to Janu
 
 ## Publication and licensing
 
-This initial source snapshot corresponds to hosted version 203. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
+This source snapshot corresponds to hosted version 204. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
 
 Three.js retains its license at `dist/vendor/LICENSE`. No project-wide open-source license has been selected; public visibility alone does not grant a general license to reuse project code, community material, branding or artwork.
+
+## Private points history
+
+In Rewards, expand **My points over time** to see this hour, today, this month, this year and all-time totals in Pacific Time. New point claims receive device timestamps; older points remain undated legacy progress in the all-time total. This is private browser-local history, not a shared or server-verified leaderboard. Existing progress backups include the optional timestamps; older backups remain compatible.
+
+Additional checks: `node tests/reward-history.mjs` and `node tests/reward-history-panel.mjs`.
