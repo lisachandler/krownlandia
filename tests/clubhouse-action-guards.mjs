@@ -1,0 +1,15 @@
+import {frame} from './school-seating.mjs';
+import assert from 'node:assert/strict';
+const a=window.krownlandia,$=s=>document.querySelector(s),club=a.clubhouse,p=club.boardPoint;
+const guide=()=>$('#guide').textContent;
+a.camera.position.set(p.x,1.75,p.z);frame();const progress=JSON.stringify(a.getState().rewards);
+const original=guide();$('#clubhouseRewards').onclick();assert.equal(guide(),original,'closed rewards control is inert');
+assert(club.open());const old=$('#clubhouseWalk-tram');$('#clubhouseClose').onclick();old.onclick();assert.equal(guide(),original,'closed direction is inert');
+assert(club.open());old.onclick();assert(club.isOpen,'replaced direction cannot close the new panel');assert.equal(guide(),original);
+const current=$('#clubhouseWalk-tram');current.disabled=true;current.onclick();assert(club.isOpen);assert.equal(guide(),original);current.disabled=false;
+const reward=$('#clubhouseRewards');reward.disabled=true;reward.onclick();assert(club.isOpen);assert.equal(guide(),original);reward.disabled=false;
+a.camera.position.set(0,1.75,0);reward.onclick();current.onclick();assert(club.isOpen);assert.equal(guide(),original,'remote controls are inert');
+a.camera.position.set(p.x,1.75,p.z);current.onclick();assert(!club.isOpen);frame();assert(guide().includes('tram'));
+assert(club.open());const before=a.camera.position.clone();reward.onclick();assert(!club.isOpen);frame();assert(guide().includes('Clubhouse'));assert(a.camera.position.equals(before));
+assert.equal(JSON.stringify(a.getState().rewards),progress,'directions do not change reward progress');
+console.log('PASS: closed, remote, disabled and replaced clubhouse controls are inert; current directions and reward guidance work without moving or changing progress.');
