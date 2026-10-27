@@ -1,5 +1,33 @@
 import * as T from './vendor/three.module.js';
+// Add only owner-confirmed events. Keep the production calendar empty until then.
+const CONFIRMED_EVENTS=[];
+export function installEventCalendar({pause,rewards,events=CONFIRMED_EVENTS,clock=()=>Date.now()}){
+ const venues={square:{x:-7.5,z:50,name:'Town Square stage'},library:{x:30,z:40,name:'Library of Alexandria reading desk'},clubhouse:{x:-30,z:147,name:'Krownlandia Clubhouse Place Managers board'}};
+ const anytime=[{id:'circus',name:'Crown Circus',point:{x:39,z:-51,name:'Crown Circus entrance'},description:'Enter the tent and choose Watch the circus show.'},{id:'safari',name:'Krownlandia Safari',point:{x:47,z:-26,name:'Safari boarding area'},description:'Approach the jeep and choose Board the safari.'},{id:'journey',name:'The Great Journey',point:{x:-30,z:-34,name:'The Great Journey boarding area'},description:'At the boarding area, choose Board The Great Journey.'}];
+ const explicitTime=value=>typeof value==='string'&&/T.*(?:Z|[+-]\d{2}:\d{2})$/.test(value)&&Number.isFinite(Date.parse(value));
+ const valid=events.filter(e=>e&&typeof e.id==='string'&&/^[a-z0-9-]+$/.test(e.id)&&typeof e.title==='string'&&e.title.trim()&&typeof e.description==='string'&&Object.hasOwn(venues,e.venue)&&['confirmed','canceled','postponed'].includes(e.status)&&explicitTime(e.start)&&explicitTime(e.end)&&Date.parse(e.end)>Date.parse(e.start));
+ const dates=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
+ const dialog=document.createElement('dialog');dialog.id='eventCalendar';dialog.setAttribute('aria-labelledby','eventCalendarTitle');
+ const title=document.createElement('h2');title.id='eventCalendarTitle';title.textContent='What’s happening';
+ const intro=document.createElement('p');intro.textContent='Event times are shown in Pacific Time. Status follows the published schedule, not a live attendance feed. Other visitors are not yet visible in this prototype.';
+ const list=document.createElement('div');list.id='eventCalendarList';const updated=document.createElement('p');updated.id='eventCalendarUpdated';
+ const activities=document.createElement('details');activities.id='eventCalendarAnytime';const summary=document.createElement('summary');summary.textContent='Available anytime · rides and performances';activities.append(summary);
+ let revision=0,lastMinute=null;
+ function direction(label,id,point,enabled=()=>true){const b=document.createElement('button');b.id=id;b.textContent=label;const version=revision;b.onclick=()=>{if(!dialog.open||b.disabled||version!==revision||!enabled())return;pause();rewards.guideToPoint({...point});dialog.close();};return b;}
+ function render(){revision++;const now=clock();lastMinute=Math.floor(now/60000);list.replaceChildren();updated.textContent='As of: '+dates.format(now);const upcoming=valid.filter(e=>Date.parse(e.end)>now).sort((a,b)=>Date.parse(a.start)-Date.parse(b.start)||a.id.localeCompare(b.id));
+  if(!upcoming.length){const empty=document.createElement('p');empty.id='eventCalendarEmpty';empty.textContent='No confirmed upcoming events are scheduled yet. Check back for announcements, or explore the anytime activities below.';list.append(empty);}
+  for(const e of upcoming){const card=document.createElement('article'),heading=document.createElement('h3'),status=document.createElement('p'),time=document.createElement('p'),description=document.createElement('p');heading.textContent=e.title;status.id='eventStatus-'+e.id;status.textContent=e.status==='canceled'?'Canceled':e.status==='postponed'?'Postponed · new time not announced':Date.parse(e.start)<=now?'Scheduled now':'Upcoming';time.textContent=(e.status==='confirmed'?'':'Previously scheduled: ')+dates.format(Date.parse(e.start))+' – '+dates.format(Date.parse(e.end));description.textContent=e.description;const location=document.createElement('p');location.textContent='Location: '+venues[e.venue].name;card.append(heading,status,time,location,description);if(e.status==='confirmed')card.append(direction('Walk to '+venues[e.venue].name,'eventGo-'+e.id,venues[e.venue],()=>Date.parse(e.end)>clock()));list.append(card);}
+  activities.replaceChildren(summary);for(const a of anytime){const p=document.createElement('p');p.textContent=a.description;activities.append(direction('Walk to '+a.name,'eventAnytime-'+a.id,a.point),p);}
+ }
+ const refresh=document.createElement('button');refresh.id='eventCalendarRefresh';refresh.textContent='Refresh event status';refresh.onclick=()=>{if(dialog.open)render();};
+ const close=document.createElement('button');close.id='eventCalendarClose';close.textContent='Back to the world';close.onclick=()=>{if(dialog.open){pause();dialog.close();}};
+ dialog.append(title,intro,updated,list,activities,refresh,close);document.body.append(dialog);const css=document.createElement('link');css.rel='stylesheet';css.href='events.css';document.head.append(css);
+ function open(){pause();if(!dialog.open)activities.open=false;render();if(!dialog.open)dialog.showModal();}
+ const nav=document.createElement('button');nav.id='eventsButton';nav.textContent='What’s happening';nav.onclick=open;document.querySelector('nav').append(nav);
+ return {open,update(){if(dialog.open&&Math.floor(clock()/60000)!==lastMinute)render();},get isOpen(){return !!dialog.open}};
+}
 export function installTownSquare({scene,camera,colliders,pause,rewards,getCurrentSeat=()=>null}){
+ const calendar=installEventCalendar({pause,rewards});
  const root=new T.Group();root.name='Krownlandia Town Square';scene.add(root);
  const mat=c=>new T.MeshStandardMaterial({color:c,roughness:.72}),stone=mat('#e7d9b9'),navy=mat('#254668'),gold=mat('#dcb55d'),wood=mat('#80583e'),leaf=mat('#46744b'),pink=mat('#d587a1');
  const add=(geo,m,x,y,z)=>{const o=new T.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;root.add(o);return o;};
@@ -24,10 +52,11 @@ export function installTownSquare({scene,camera,colliders,pause,rewards,getCurre
  const status=document.createElement('p');status.id='townSquareStatus';status.setAttribute('role','status');const actions=document.createElement('div');actions.id='townSquareActions';
  const button=(id,text,fn)=>{const b=document.createElement('button');b.id=id;b.textContent=text;b.onclick=fn;actions.append(b);return b;};
  const welcome=button('squareWelcome','Read our community welcome',()=>{if(!canRead()||!dialog.open)return;story.hidden=false;rewards.completeSquareWelcome();updateStatus();});
+ button('squareEvents','What’s happening · event calendar',()=>{if(!canRead()||!dialog.open)return;dialog.close();calendar.open();});
  const lights=button('squareLights','Light the stage',()=>{if(!canRead()||!dialog.open)return;lit=!lit;light.intensity=lit?28:0;glow.emissiveIntensity=lit?2:.15;lights.textContent=lit?'Turn stage lights off':'Light the stage';lights.setAttribute('aria-pressed',String(lit));});lights.setAttribute('aria-pressed','false');
  const guide=p=>{if(!canRead()||!dialog.open)return;pause();rewards.guideToPoint(p);dialog.close();};button('squareStage','Walk to the stage',()=>guide(stagePoint));button('squareOffice','Visit Community Office Garden',()=>guide({x:14.7,z:-13.7,name:'Community Office Garden project board'}));button('squareHistory','Visit the history garden',()=>guide({x:-26,z:30,name:'Making of Krownlandia exhibit'}));button('squareTram','Walk to the village tram',()=>guide({x:2.2,z:36,name:'Park entrance tram stop'}));button('squareRewards','Find Town Square rewards',()=>{if(!canRead()||!dialog.open)return;pause();rewards.guideTo('square');dialog.close();});
  const close=document.createElement('button');close.id='townSquareClose';close.textContent='Return to the square';close.onclick=()=>{pause();dialog.close();};dialog.append(title,intro,story,status,actions,close);document.body.append(dialog);const css=document.createElement('link');css.rel='stylesheet';css.href='town-square.css';document.head.append(css);
  function updateStatus(){const s=rewards.state();status.textContent=s.claims.includes('square:task')?'Welcome reward collected. Enjoy the square.':s.done.includes('square-welcome')?'Welcome explored · 20 task points are ready at the Town Square rewards station.':'Read the community welcome to unlock 20 task points.';if(!s.saved)status.textContent+=' Progress is available for this visit; browser storage is unavailable.';}
  function open(){if(!canRead()||dialog.open)return false;pause();updateStatus();dialog.showModal();return true;}
- return {open,seats,boardPoint,stagePoint,get near(){return near()},get isOpen(){return dialog.open},get lightsOn(){return lit}};
+ return {open,seats,boardPoint,stagePoint,update:calendar.update,get near(){return near()},get isOpen(){return dialog.open||calendar.isOpen},get lightsOn(){return lit}};
 }

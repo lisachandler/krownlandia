@@ -16,7 +16,7 @@ python3 -m http.server 8000 --directory dist
 
 Open http://localhost:8000 in a browser with WebGL support. Serve the files over HTTP rather than opening index.html directly. Alternatively, install the locked development dependencies with `npm ci` and run `npm run dev`.
 
-Progress is stored locally in the visitor's browser. Use the in-world backup controls to export or restore progress. Different hosts have separate browser storage. This prototype does not provide shared multiplayer property ownership, real purchases, or live event schedules.
+Progress is stored locally in the visitor's browser. Use the in-world backup controls to export or restore progress. Different hosts have separate browser storage. This prototype does not provide shared multiplayer property ownership, real purchases, or shared live attendance.
 
 ## Source and checks
 
@@ -40,7 +40,7 @@ Krownlandia predates this prototype. Its recorded community origins date to Janu
 
 ## Publication and licensing
 
-This source snapshot corresponds to hosted version 204. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
+This source snapshot corresponds to hosted version 205. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
 
 Three.js retains its license at `dist/vendor/LICENSE`. No project-wide open-source license has been selected; public visibility alone does not grant a general license to reuse project code, community material, branding or artwork.
 
@@ -49,3 +49,7 @@ Three.js retains its license at `dist/vendor/LICENSE`. No project-wide open-sour
 In Rewards, expand **My points over time** to see this hour, today, this month, this year and all-time totals in Pacific Time. New point claims receive device timestamps; older points remain undated legacy progress in the all-time total. This is private browser-local history, not a shared or server-verified leaderboard. Existing progress backups include the optional timestamps; older backups remain compatible.
 
 Additional checks: `node tests/reward-history.mjs` and `node tests/reward-history-panel.mjs`.
+
+## Event calendar
+
+Open **Activities → What’s happening** or the Town Square community board for the published event calendar. The initial list is empty pending owner-confirmed events. A collapsed anytime section offers directions to the circus, safari and Great Journey. See [EVENTS.md](EVENTS.md) for publishing instructions and status behavior. This is not a live attendance feed or multiplayer service.
