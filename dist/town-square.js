@@ -12,19 +12,21 @@ export function installEventCalendar({pause,rewards,events=CONFIRMED_EVENTS,cloc
  const intro=document.createElement('p');intro.textContent='Event times are shown in Pacific Time. Status follows the published schedule, not a live attendance feed. Other visitors are not yet visible in this prototype.';
  const list=document.createElement('div');list.id='eventCalendarList';const updated=document.createElement('p');updated.id='eventCalendarUpdated';
  const activities=document.createElement('details');activities.id='eventCalendarAnytime';const summary=document.createElement('summary');summary.textContent='Available anytime · rides and performances';activities.append(summary);
- let revision=0,lastMinute=null;
- function direction(label,id,point,enabled=()=>true){const b=document.createElement('button');b.id=id;b.textContent=label;const version=revision;b.onclick=()=>{if(!dialog.open||b.disabled||version!==revision||!enabled())return;pause();rewards.guideToPoint({...point});dialog.close();};return b;}
- function render(){revision++;const now=clock();lastMinute=Math.floor(now/60000);list.replaceChildren();updated.textContent='As of: '+dates.format(now);const upcoming=valid.filter(e=>Date.parse(e.end)>now).sort((a,b)=>Date.parse(a.start)-Date.parse(b.start)||a.id.localeCompare(b.id));
+ let revision=0,lastMinute=null,lastStatus='',directions=[];
+ const statusKey=now=>JSON.stringify(valid.filter(e=>Date.parse(e.end)>now).map(e=>[e.id,e.status,e.status==='confirmed'&&Date.parse(e.start)<=now]));
+ function direction(label,id,point,enabled=()=>true){const b=document.createElement('button');b.id=id;b.textContent=label;const version=revision;directions.push({id,button:b});b.onclick=()=>{if(!dialog.open||b.disabled||version!==revision||!enabled())return;pause();rewards.guideToPoint({...point});dialog.close();};return b;}
+ function render(){const focused=directions.find(d=>d.button===document.activeElement)?.id;directions=[];revision++;const now=clock();lastMinute=Math.floor(now/60000);lastStatus=statusKey(now);list.replaceChildren();updated.textContent='As of: '+dates.format(now);const upcoming=valid.filter(e=>Date.parse(e.end)>now).sort((a,b)=>Date.parse(a.start)-Date.parse(b.start)||a.id.localeCompare(b.id));
   if(!upcoming.length){const empty=document.createElement('p');empty.id='eventCalendarEmpty';empty.textContent='No confirmed upcoming events are scheduled yet. Check back for announcements, or explore the anytime activities below.';list.append(empty);}
   for(const e of upcoming){const card=document.createElement('article'),heading=document.createElement('h3'),status=document.createElement('p'),time=document.createElement('p'),description=document.createElement('p');heading.textContent=e.title;status.id='eventStatus-'+e.id;status.textContent=e.status==='canceled'?'Canceled':e.status==='postponed'?'Postponed · new time not announced':Date.parse(e.start)<=now?'Scheduled now':'Upcoming';time.textContent=(e.status==='confirmed'?'':'Previously scheduled: ')+dates.format(Date.parse(e.start))+' – '+dates.format(Date.parse(e.end));description.textContent=e.description;const location=document.createElement('p');location.textContent='Location: '+venues[e.venue].name;card.append(heading,status,time,location,description);if(e.status==='confirmed')card.append(direction('Walk to '+venues[e.venue].name,'eventGo-'+e.id,venues[e.venue],()=>Date.parse(e.end)>clock()));list.append(card);}
   activities.replaceChildren(summary);for(const a of anytime){const p=document.createElement('p');p.textContent=a.description;activities.append(direction('Walk to '+a.name,'eventAnytime-'+a.id,a.point),p);}
+  if(focused)(directions.find(d=>d.id===focused)?.button||refresh).focus();
  }
  const refresh=document.createElement('button');refresh.id='eventCalendarRefresh';refresh.textContent='Refresh event status';refresh.onclick=()=>{if(dialog.open)render();};
  const close=document.createElement('button');close.id='eventCalendarClose';close.textContent='Back to the world';close.onclick=()=>{if(dialog.open){pause();dialog.close();}};
  dialog.append(title,intro,updated,list,activities,refresh,close);document.body.append(dialog);const css=document.createElement('link');css.rel='stylesheet';css.href='events.css';document.head.append(css);
  function open(){pause();if(!dialog.open)activities.open=false;render();if(!dialog.open)dialog.showModal();}
  const nav=document.createElement('button');nav.id='eventsButton';nav.textContent='What’s happening';nav.onclick=open;document.querySelector('nav').append(nav);
- return {open,update(){if(dialog.open&&Math.floor(clock()/60000)!==lastMinute)render();},get isOpen(){return !!dialog.open}};
+ return {open,update(){if(!dialog.open)return;const now=clock();if(Math.floor(now/60000)===lastMinute)return;if(statusKey(now)!==lastStatus)render();else{lastMinute=Math.floor(now/60000);updated.textContent='As of: '+dates.format(now);}},get isOpen(){return !!dialog.open}};
 }
 export function installTownSquare({scene,camera,colliders,pause,rewards,getCurrentSeat=()=>null}){
  const calendar=installEventCalendar({pause,rewards});
