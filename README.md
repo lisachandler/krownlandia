@@ -40,7 +40,7 @@ Krownlandia predates this prototype. Its recorded community origins date to Janu
 
 ## Publication and licensing
 
-This source snapshot corresponds to hosted version 207. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
+This source snapshot corresponds to hosted version 208. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
 
 Three.js retains its license at `dist/vendor/LICENSE`. No project-wide open-source license has been selected; public visibility alone does not grant a general license to reuse project code, community material, branding or artwork.
 
@@ -53,3 +53,9 @@ Additional checks: `node tests/reward-history.mjs` and `node tests/reward-histor
 ## Event calendar
 
 Open **Activities → What’s happening** or the Town Square community board for the published event calendar. The initial list is empty pending owner-confirmed events. A collapsed anytime section offers directions to the circus, safari and Great Journey. See [EVENTS.md](EVENTS.md) for publishing instructions and status behavior. This is not a live attendance feed or multiplayer service.
+
+## Community portals
+
+Visit Living Sim Portal and Emoji House west of Town Square, both with place manager @maxigram. Search the map for `maxigram` or use the square board. External links open only by choice in a new tab; sticker artwork has not yet been imported. See [COMMUNITY_PORTALS.md](COMMUNITY_PORTALS.md).
+
+Portal checks: `node tests/community-portals.mjs`. The broad smoke test currently has a pre-existing food-search reset assertion failure; focused food-guide tests cover the retained-query behavior.
