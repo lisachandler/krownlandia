@@ -1,1 +1,45 @@
-# krownlandia
+# Krownlandia
+
+An interactive browser-based Krownlandia Theme Park and community-world prototype, with attractions, discovery walks, themed lounges, housing, rewards stations, and keepsakes.
+
+## Explore
+
+[Krownlandia Gateway](https://krownlandia-gateway.lisachandleremail.chatgpt.site/) is the hosted version. Its existing access settings still apply. [Krownlandia.com](https://www.krownlandia.com/) provides public community information.
+
+## Run locally
+
+The application is static HTML, CSS and JavaScript using the bundled Three.js modules. No build step is required. With Python 3 installed:
+
+```sh
+python3 -m http.server 8000 --directory dist
+```
+
+Open http://localhost:8000 in a browser with WebGL support. Serve the files over HTTP rather than opening index.html directly. Alternatively, install the locked development dependencies with `npm ci` and run `npm run dev`.
+
+Progress is stored locally in the visitor's browser. Use the in-world backup controls to export or restore progress. Different hosts have separate browser storage. This prototype does not provide shared multiplayer property ownership, real purchases, or live event schedules.
+
+## Source and checks
+
+- `dist/`: application source and static assets (despite the directory name, no compilation is needed).
+- `tests/`: Node.js regression checks.
+- `CREDITS.md`: community origins, source attributions and prototype boundaries.
+
+Run focused checks with Node.js, for example:
+
+```sh
+node tests/community-walk.mjs
+node tests/backup.mjs
+node tests/journal.mjs
+```
+
+The deterministic scene tests do not replace live browser, WebGL, accessibility or visual testing.
+
+## Community origins and credits
+
+Krownlandia predates this prototype. Its recorded community origins date to January 22, 2020 in the KROWN DAC and Token Telegram community. Designer: Lisa Chandler (@lisachandler). Naming credit: @gorayii. Individual community place credits remain in the application and CREDITS.md, including Library of Alexandria by @Jauregui9821. ChatGPT assisted with this recent prototype implementation; it did not originate Krownlandia.
+
+## Publication and licensing
+
+This initial source snapshot corresponds to hosted version 203. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
+
+Three.js retains its license at `dist/vendor/LICENSE`. No project-wide open-source license has been selected; public visibility alone does not grant a general license to reuse project code, community material, branding or artwork.

@@ -1,0 +1,17 @@
+import {frame} from './school-seating.mjs';
+import assert from 'node:assert/strict';
+const a=window.krownlandia,$=s=>document.querySelector(s),l=a.lounges,search=$('#loungeSearch'),clear=$('#loungeClearSearch'),filter=$('#loungeUncollected');
+const rows=()=>$('#loungeBody').children.filter(n=>typeof n.onclick==='function');
+const query=s=>{search.value=s;search.oninput();};
+$('#loungesButton').onclick();assert.equal(rows().length,l.spots.length);assert(clear.hidden);
+query('LÍSA’S pink');assert.equal(rows().length,1);assert(rows()[0].textContent.includes('Pink Patio'));
+query('leaf bookmark');assert.equal(rows().length,1);assert(rows()[0].textContent.includes('Discovery Hideaway'));
+query('popcorn sweet');assert.equal(rows().length,1);assert(rows()[0].textContent.includes('Popcorn Picnic'));
+const position=a.camera.position.clone(),points=a.getState().rewards.points;rows()[0].onclick();frame();assert(a.camera.position.equals(position));assert.equal(a.getState().rewards.points,points);
+$('#loungesButton').onclick();assert.equal(search.value,'popcorn sweet');assert.equal(rows().length,1);
+query('unfindable');assert.equal(rows().length,0);assert($('#loungeResultCount').textContent.includes('0 lounges'));assert($('#loungeBody').children.some(n=>n.textContent?.includes('No matching lounges')));
+let focused=false;search.focus=()=>{focused=true;};clear.onclick();assert(focused);assert.equal(rows().length,l.spots.length);assert(clear.hidden);
+query('leaf bookmark');filter.onclick();assert.equal(rows().length,1);$('#loungeClose').onclick();
+const spot=l.spots.find(s=>s.id==='discovery');a.camera.position.set(spot.x,1.75,spot.z+1.1);frame();l.open(spot);assert(search.hidden);assert(clear.hidden);assert($('#loungeResultCount').hidden);$('#loungeCollect').onclick();$('#loungeClose').onclick();
+$('#loungesButton').onclick();assert(!search.hidden);assert.equal(search.value,'leaf bookmark');assert.equal(rows().length,0);filter.onclick();assert.equal(rows().length,1);assert(rows()[0].textContent.includes('Souvenir collected'));assert.equal(a.getState().rewards.points,points);
+console.log('PASS: lounge/snack/souvenir multiword search, accents and apostrophes, query continuity, empty state, clear focus, collection filter and local-menu visibility.');

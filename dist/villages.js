@@ -1,0 +1,131 @@
+import * as T from './vendor/three.module.js';
+import {batchStatic} from './scenery.js';
+export function installVillages({scene,camera,colliders,pause,guideTo,getSouvenirs,getHosts=()=>[],getTramStops=()=>[],getRiverbendDestinations=()=>[]}){
+ const villages=[{id:'meadow',name:'Meadow Village',x:-29,z:68,color:'#f0d6a4',roof:'#54715b',description:'Cream cottages around a flower garden.'},{id:'harbor',name:'Bluewater Village',x:29,z:68,color:'#c5e5ea',roof:'#305b86',description:'Blue-trimmed homes beside a reflecting pond.'},{id:'woodland',name:'Woodland Village',x:0,z:108,color:'#b78b64',roof:'#384e43',description:'Timber cabins beneath a grove of trees.'},{id:'eldergrove',name:'Eldergrove',x:29,z:153,color:'#9c7957',roof:'#294f3e',description:'Timber homes inspired by Eldergrove’s forest and woodcraft traditions. Follow the path back to the Great Elder Tree clearing.'},{id:'riverbend',name:'Riverbend',x:-16,z:169,color:'#e0d4bc',roof:'#4a7074',description:'Three cottages and a shared pottery table beside the Riverbend riverside. Inspired by the original village’s cottages and crafts; this layout is a prototype interpretation.'}];
+ const homes=[],seats=[],commons=[{id:'riverbend',name:'Riverbend Pottery Courtyard',x:14,z:170},{id:'meadow',name:'Meadow Picnic Garden',x:-40,z:92},{id:'harbor',name:'Bluewater Terrace',x:40,z:92},{id:'woodland',name:'Woodland Lantern Circle',x:-25,z:122},{id:'eldergrove',name:'Eldergrove Woodland Table',x:-18,z:155}],root=new T.Group();root.name='Krownlandia residential villages';scene.add(root);
+ const mat=c=>new T.MeshStandardMaterial({color:c,roughness:.8}),grass=mat('#67934f'),path=mat('#d8c9a4'),wood=mat('#76513b'),cream=mat('#f4e7ca'),gold=mat('#d6ac4e'),water=mat('#669faf');
+ // Share immutable Riverbend stone finishes so repeated pieces can be instanced.
+ const riverPaving=[mat('#b6aca0'),mat('#c9beb0')],riverFoundation=[mat('#a39b8c'),mat('#b9b1a2')];
+ function part(g,m,x,y,z){const o=new T.Mesh(g,m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;root.add(o);return o;}
+ function box(x,y,z,w,h,d,m,solid=false){const o=part(new T.BoxGeometry(w,h,d),m,x,y,z);if(solid)colliders.push({x,z,w:w/2+.3,d:d/2+.3});return o;}
+ function sign(text,x,y,z,w){const c=document.createElement('canvas');c.width=1024;c.height=160;const ctx=c.getContext('2d');ctx.fillStyle='#203c35';ctx.fillRect(0,0,1024,160);ctx.fillStyle='#fff0c7';ctx.textAlign='center';ctx.font='42px serif';ctx.fillText(text,512,98);const texture=new T.CanvasTexture(c);texture.colorSpace=T.SRGBColorSpace;part(new T.PlaneGeometry(w,.65),new T.MeshStandardMaterial({map:texture,side:T.DoubleSide}),x,y,z);}
+ box(0,-.3,85,110,.5,96,grass);box(0,.02,81,6,.12,102,path);box(0,.03,76,94,.12,4,path);box(0,.03,116,36,.12,4,path);
+ box(0,-.3,155,110,.5,48,grass);box(0,.035,153.5,6,.12,45,path);box(25,.07,136,3,.12,10,path);box(12.5,.06,140,28,.12,3,path);box(25,.05,161,50,.12,4,path);
+ sign('ELDERGROVE HOMES · Follow the woodland path',12,2.7,140,10);
+ for(const [x,z] of [[-43,141],[-38,171],[-7,145],[8,144],[51,144],[8,175],[50,174],[-42,175]]){box(x,3,z,.5,6,.5,wood,true);part(new T.SphereGeometry(2.8,10,8),mat('#426a42'),x,7,z);}
+ box(-15,.06,177,56,.12,2,stonePath());
+ function stonePath(){return mat('#b9b0a1');}
+ sign('VILLAGES · Follow the path beyond the gate',0,3,38,9);
+ for(const v of villages){
+  const walls=mat(v.color),roof=mat(v.roof),flower=mat(v.id==='meadow'?'#c05a88':v.id==='harbor'?'#ededff':'#edb859'),foliage=mat('#426947'),glass=new T.MeshStandardMaterial({color:'#c2dfe8',transparent:true,opacity:.22,roughness:.18,depthWrite:false});if(v.id==='riverbend'){sign('RIVERBEND COTTAGES',-39,2.7,176,6);for(let i=0;i<70;i++)box(-42+i*.8,.135,177+(i%2?-.5:.5),.7,.025,.8,riverPaving[i%3?0:1]);}else{box(v.x,.04,v.z+14,12,.14,8,path);sign(v.name.toUpperCase(),v.x,2.7,v.z+17,7);}
+  for(let i=0;i<3;i++){
+   const x=v.x+(i-1)*14,z=v.z,id=v.id+'-'+(i+1),name=v.name+' · Home '+(i+1),furniture=mat(v.roof);const house={id,name,village:v.id,x,z,door:{x,z:z+5},mailbox:{x:x+4.8,z:z+6.8},furniture,defaultColor:v.roof};homes.push(house);
+   const bloomMaterial=flower.clone();house.defaultBloomColor='#'+flower.color.getHexString();const blooms=new T.InstancedMesh(new T.SphereGeometry(.1,7,5),bloomMaterial,50),bloomPose=new T.Object3D();let bloomIndex=0;blooms.name='Home window flowers · '+id;blooms.receiveShadow=true;root.add(blooms);house.blooms=blooms;
+   box(x,.13,z,9,.18,8,path);box(x-4.5,1.9,z,.25,3.6,8,walls,true);box(x+4.5,1.9,z,.25,3.6,8,walls,true);box(x,1.9,z-4,9,3.6,.25,walls,true);
+   for(const side of [-1,1]){const wx=x+side*2.9;
+    // Real window openings, with the original wall collision retained.
+    colliders.push({x:wx,z:z+4,w:1.9,d:.425});box(wx,.725,z+4,3.2,1.25,.25,walls);box(wx,3.275,z+4,3.2,.85,.25,walls);
+    for(const edge of [-1,1])box(wx+edge*1.175,2.1,z+4,.85,1.5,.25,walls);
+    const pane=box(wx,2.1,z+4,1.5,1.5,.04,glass);pane.name='Home window · '+id;
+    for(const edge of [-1,1]){box(wx+edge*.82,2.1,z+4.17,.12,1.7,.12,cream);box(wx,2.1+edge*.82,z+4.17,1.76,.12,.12,cream);box(wx+edge*.61,2.1,z+3.8,.25,1.42,.05,furniture);}
+    box(wx,2.1,z+4.18,.06,1.5,.08,cream);box(wx,2.1,z+4.18,1.5,.06,.08,cream);box(wx,1.23,z+4.28,1.9,.13,.5,wood);
+    box(wx,.98,z+4.4,1.7,.38,.5,furniture,true);box(wx,1.17,z+4.4,1.55,.035,.4,wood);for(let f=0;f<5;f++){const fx=wx-.6+f*.3,fy=1.48+Math.sin(f)*.045;box(fx,1.29,z+4.4,.025,.3,.025,foliage);for(const side of [-1,1]){const blade=part(new T.SphereGeometry(.1,7,5),foliage,fx+side*.07,1.31,z+4.43);blade.scale.set(1.1,.45,.35);blade.rotation.z=side*.5;}for(let petal=0;petal<5;petal++){const angle=petal*Math.PI*2/5;bloomPose.position.set(fx+Math.sin(angle)*.09,fy+Math.cos(angle)*.09,z+4.46);bloomPose.scale.set(.7,1,.38);bloomPose.rotation.z=-angle;bloomPose.updateMatrix();blooms.setMatrixAt(bloomIndex++,bloomPose.matrix);}part(new T.SphereGeometry(.055,7,5),gold,fx,fy,z+4.51);}
+   }
+   blooms.instanceMatrix.needsUpdate=true;blooms.computeBoundingSphere();
+   box(x,3.45,z+4,2.6,.5,.3,walls);const top=part(new T.ConeGeometry(6.8,2.4,4),roof,x,4.9,z);top.rotation.y=Math.PI/4;box(x,.05,z+6,2.3,.12,4,path);
+   if(v.id==='riverbend'){for(const dx of [-4.3,4.3])box(x+dx,1.9,z+4.18,.18,3.6,.1,cream);for(let j=0;j<5;j++)box(x-4+j*2,.38,z+4.18,1.8,.36,.13,riverFoundation[j%2?0:1]);part(new T.CylinderGeometry(.24,.38,.5,14),mat('#b57d59'),x-3.6,.55,z+6.2);}
+   if(v.id==='eldergrove'){for(const dx of [-4.3,4.3])box(x+dx,1.9,z+4.2,.2,3.6,.12,wood);for(const y of [.35,2.95])box(x,y,z+4.2,8.8,.12,.1,wood);for(let j=0;j<3;j++){const carving=part(new T.OctahedronGeometry(.14),gold,x-.4+j*.4,3.48,z+4.22);carving.scale.y=1.4;}box(x-3.3,.4,z+6.6,1.5,.6,.8,wood,true);for(let j=0;j<4;j++)part(new T.SphereGeometry(.16,7,5),foliage,x-3.8+j*.3,.9,z+6.6);}
+   sign('HOME '+(i+1),x,3.15,z+4.22,2.2);
+   box(x,3.55,z+4.85,3.3,.17,2,roof);for(const side of [-1,1])box(x+side*1.5,3.22,z+4.35,.12,.55,.75,wood);
+   box(x,.17,z+4.65,1.65,.035,.75,furniture);box(x+2.7,5.45,z-2.2,.8,1.8,.8,wood);box(x+2.7,6.38,z-2.2,1,.12,1,cream);
+   box(x+4.8,.75,z+5.8,.12,1.4,.12,wood,true);box(x+4.8,1.5,z+5.8,.65,.45,.4,roof,true);box(x+4.8,1.52,z+6.015,.36,.035,.02,gold);
+   const porchGlow=new T.MeshStandardMaterial({color:'#ffe7b0',emissive:'#ffbc62',emissiveIntensity:0,roughness:.45});house.porchGlow=porchGlow;
+   box(x+1.55,2.45,z+4.28,.14,.65,.15,wood);box(x+1.55,2.58,z+4.56,.34,.4,.28,porchGlow);
+   for(const y of [2.34,2.82])box(x+1.55,y,z+4.56,.44,.08,.38,wood);
+   for(const dx of [-.18,.18])box(x+1.55+dx,2.58,z+4.72,.035,.42,.035,wood);
+   const porchLight=new T.PointLight('#ffd39a',0,7,2);porchLight.position.set(x+1.55,2.58,z+4.8);root.add(porchLight);house.porchLight=porchLight;
+   // A front porch resting spot faces the village and leaves the doorway clear.
+   box(x+2.8,.15,z+6.3,2.9,.12,2.5,wood);
+   for(let plank=0;plank<7;plank++)box(x+1.6+plank*.4,.218,z+6.3,.025,.015,2.4,cream);
+   box(x+2.8,.66,z+6.1,2.1,.22,.75,furniture,true);
+   for(const dx of [-.88,.88]){box(x+2.8+dx,.4,z+6.1,.13,.5,.65,wood);box(x+2.8+dx,.95,z+6.1,.13,.42,.75,wood);}
+   box(x+2.8,1.08,z+5.77,2.1,.67,.12,wood);
+   for(const dx of [-.7,0,.7])box(x+2.8+dx,1.09,z+5.85,.55,.35,.055,furniture);
+   seats.push({homeId:id,furniture:'porch',name:name+' porch bench',x:x+2.8,z:z+6.1,y:1.5,yaw:Math.PI,approach:{x:x+2.8,z:z+7.4},kind:'porch'});
+   // Open central aisle, sofa at the back, bed to the side, and a small dining table.
+   box(x, .65,z-2.4,2.7,.4,.85,furniture,true);box(x,1.08,z-2.8,2.7,.8,.15,wood);for(const dx of [-1.3,1.3])box(x+dx,.9,z-2.4,.15,.55,.85,wood);
+   seats.push({homeId:id,furniture:'sofa',name:name+' sofa',x,z:z-2.4,y:1.5,yaw:Math.PI,approach:{x,z:z-.8},kind:'home'});
+   box(x-2.7,.45,z-.3,1.5,.6,2.7,wood,true);box(x-2.7,.82,z-.3,1.45,.16,2.6,furniture);box(x-2.7,.96,z-1.1,1.1,.15,.55,cream);
+   seats.push({homeId:id,furniture:'bed',name:name+' bed',x:x-2.7,z:z-.3,y:1.45,yaw:Math.PI,approach:{x:x-1.25,z:z-.3},kind:'bed'});
+   box(x+2.8,.85,z,1.5,.12,1.3,wood,true);box(x+2.8,.4,z,.12,.8,.12,wood);box(x+2.8,.55,z+1.7,.7,.18,.7,furniture,true);box(x+2.8,1,z+2,.7,.8,.12,wood);
+   seats.push({homeId:id,furniture:'chair',name:name+' chair',x:x+2.8,z:z+1.7,y:1.35,yaw:0,approach:{x:x+1.6,z:z+1.7},kind:'home'});
+   box(x+2.7,1.2,z-3.5,2,2.3,.4,wood,true);for(let j=0;j<6;j++)box(x+2+j*.25,1.4,z-3.2,.16,.5,.15,j%2?roof:cream);
+   const displayCanvas=document.createElement('canvas');displayCanvas.width=768;displayCanvas.height=384;const displayTexture=new T.CanvasTexture(displayCanvas);displayTexture.colorSpace=T.SRGBColorSpace;box(x-2.7,2.5,z-3.8,2.5,1.3,.08,gold);const display=part(new T.PlaneGeometry(2.35,1.15),new T.MeshStandardMaterial({map:displayTexture}),x-2.7,2.5,z-3.74);house.display={canvas:displayCanvas,texture:displayTexture,mesh:display,key:null};
+   // The existing interior light now has a visible pendant fixture.
+   const interiorGlow=new T.MeshStandardMaterial({color:'#fff0cf',emissive:'#ffd29a',emissiveIntensity:.15,roughness:.5});house.interiorGlow=interiorGlow;
+   box(x,3.58,z,.3,.12,.3,wood);box(x,3.33,z,.055,.42,.055,gold);
+   const shade=part(new T.CylinderGeometry(.25,.48,.28,16),furniture,x,3.05,z);shade.name='Home ceiling lamp · '+id;
+   part(new T.CylinderGeometry(.38,.38,.065,16),interiorGlow,x,2.885,z);
+   const lamp=new T.PointLight('#ffe2ac',3,11,1.5);lamp.position.set(x,2.8,z);root.add(lamp);house.interiorLight=lamp;
+
+  }
+  if(v.id==='harbor'){part(new T.CylinderGeometry(3,3,.12,32),water,v.x+10,.12,v.z+16);colliders.push({x:v.x+10,z:v.z+16,r:3.2});}
+  else if(v.id!=='riverbend')for(let i=0;i<8;i++){const a=i*Math.PI/4;part(new T.SphereGeometry(.3,8,6),i%2?gold:cream,v.x+Math.cos(a)*3,.35,v.z+13+Math.sin(a)*2);}
+ }
+ for(const c of commons){
+  const accent=mat(villages.find(v=>v.id===c.id).roof),x=c.x,z=c.z;
+  box(x,.04,z,10,.15,10,c.id==='harbor'?wood:path);box(x/2,.045,z+5,Math.abs(x)+2,.14,2.5,path);sign(c.name.toUpperCase(),x,2.7,z+4.6,7);
+  // Four benches face the shared center; each has an unobstructed approach.
+  for(const [dx,dz,yaw] of [[-3,0,-Math.PI/2],[3,0,Math.PI/2],[0,-3,Math.PI],[0,3,0]]){
+   const sx=x+dx,sz=z+dz,side=dx!==0;box(sx,.58,sz,side?.8:2.7,.25,side?2.7:.8,accent,true);
+   box(sx+(side?Math.sign(dx)*.36:0),1.02,sz+(!side?Math.sign(dz)*.36:0),side?.13:2.7,.8,side?2.7:.13,wood);
+   seats.push({name:c.name+' bench',x:sx,z:sz,y:1.42,yaw,approach:{x:sx+(side?-Math.sign(dx)*1.15:0),z:sz+(!side?-Math.sign(dz)*1.15:0)},kind:'commons'});
+  }
+  if(c.id==='woodland'){
+   part(new T.CylinderGeometry(.9,1,.35,16),wood,x,.3,z);colliders.push({x,z,r:1});const glow=new T.MeshStandardMaterial({color:'#ffd986',emissive:'#ffb745',emissiveIntensity:1.5});
+   for(let i=0;i<5;i++){const a=i*Math.PI*2/5;part(new T.CylinderGeometry(.12,.12,.3,8),glow,x+Math.cos(a)*.5,.7,z+Math.sin(a)*.5);}
+  }else{
+   box(x,.94,z,2,.15,1.5,wood,true);for(const dx of [-.7,.7])box(x+dx,.47,z,.12,.85,.12,wood);
+   part(new T.CylinderGeometry(.35,.3,.16,16),cream,x,1.1,z);for(let i=0;i<5;i++)part(new T.SphereGeometry(.1,8,6),i%2?gold:accent,x+Math.sin(i*2.4)*.22,1.25,z+Math.cos(i*2.4)*.22);
+  }
+  if(c.id==='riverbend'){for(const dx of [-.55,.55])part(new T.CylinderGeometry(.16,.24,.38,14),mat('#b57d59'),x+dx,1.2,z);}
+  if(c.id==='meadow')for(const dx of [-4.2,4.2]){box(x+dx,.4,z-3.8,1.2,.65,1.2,wood,true);for(let i=0;i<5;i++)part(new T.SphereGeometry(.17,8,6),i%2?gold:mat('#b46594'),x+dx+Math.sin(i)*.3,.85,z-3.8+Math.cos(i)*.3);}
+  if(c.id==='harbor'){part(new T.CylinderGeometry(2.5,2.5,.12,32),water,x+8,.12,z);colliders.push({x:x+8,z,r:2.7});}
+  for(const dx of [-4.4,4.4]){box(x+dx,1.8,z+3.7,.08,3.5,.08,wood,true);part(new T.SphereGeometry(.22,10,8),new T.MeshStandardMaterial({color:'#ffe7ac',emissive:'#ffc56c',emissiveIntensity:1}),x+dx,3.6,z+3.7);}
+ }
+ for(const x of [-23,23,-35,35]){box(x,2,105,.3,4,.3,wood,true);part(new T.ConeGeometry(2.3,5,9),mat('#365c40'),x,5,105);}
+ const staticMaterials=new Set(root.children.filter(o=>o.isMesh&&!o.material.map&&!homes.some(h=>h.furniture===o.material||h.porchGlow===o.material||h.interiorGlow===o.material)).map(o=>o.material));
+ const geometryStats=batchStatic(root,staticMaterials);
+ let home=null,storageOK=true;try{const id=localStorage.getItem('krownlandia-home-v1');if(homes.some(h=>h.id===id))home=id;}catch{storageOK=false;}
+ const palettes={original:null,rose:'#c86d91',ocean:'#397d9c',forest:'#47664b',sunshine:'#c89a3f'},decor={};
+ try{const saved=JSON.parse(localStorage.getItem('krownlandia-home-decor-v1')||'{}');for(const h of homes){const p=saved?.[h.id];if(p&&Object.hasOwn(palettes,p.palette))decor[h.id]={palette:p.palette,souvenir:typeof p.souvenir==='string'?p.souvenir:null,porchLight:p.porchLight!==false};}}catch{storageOK=false;}
+ function persist(){try{localStorage.setItem('krownlandia-home-decor-v1',JSON.stringify(decor));storageOK=true;}catch{storageOK=false;}}
+ let lightingNight=false;
+ function update(night=lightingNight){lightingNight=night;const collection=getSouvenirs();for(const h of homes){const d=decor[h.id]||{palette:'original'};const lit=d.porchLight!==false?Number(night):0;h.porchLight.intensity=8*lit;h.porchGlow.emissiveIntensity=1.8*lit;h.interiorLight.intensity=3+9*Number(night);h.interiorGlow.emissiveIntensity=.15+1.25*Number(night);const item=collection.find(s=>s.id===d.souvenir),key=d.palette+':'+(item?.id||'');if(h.display.key===key)continue;h.display.key=key;h.furniture.color.set(palettes[d.palette]||h.defaultColor);h.blooms.material.color.set(palettes[d.palette]||h.defaultBloomColor).lerp(new T.Color('#fff0d4'),.3);const ctx=h.display.canvas.getContext('2d');ctx.fillStyle=item?.color||'#203c35';ctx.fillRect(0,0,768,384);ctx.textAlign='center';ctx.fillStyle='#fff0c7';ctx.font='30px serif';ctx.fillText(item?'MY KROWNLANDIA COLLECTION':'MAKE YOURSELF AT HOME',384,108);ctx.font='bold 38px serif';ctx.fillText(item?.name||'Your souvenir display',384,212);ctx.font='24px sans-serif';ctx.fillText(item?'A memory from your park adventures':'Choose a collected souvenir in Villages & homes',384,296);h.display.texture.needsUpdate=true;}}
+ const $=s=>document.querySelector(s),dialog=document.createElement('dialog');dialog.id='villageMenu';dialog.setAttribute('aria-labelledby','villageTitle');const title=document.createElement('h2');title.id='villageTitle';title.textContent='Villages & homes';const body=document.createElement('div');body.id='villageBody';const close=document.createElement('button');close.id='villageClose';close.textContent='Close';close.onclick=()=>dialog.close();dialog.append(title,body,close);document.body.append(dialog);
+ const css=document.createElement('link');css.rel='stylesheet';css.href='villages.css';document.head.append(css);const nav=document.createElement('button');nav.id='villagesButton';nav.textContent='Villages & homes';$('nav').append(nav);
+ const homeShortcut=document.createElement('button');homeShortcut.id='takeMeHome';homeShortcut.textContent='Take me home';$('nav').append(homeShortcut);
+ const updateHomeShortcut=()=>{const chosen=homes.find(h=>h.id===home);homeShortcut.title=chosen?'Walking directions to '+chosen.name:'Choose a home in Villages & homes';};updateHomeShortcut();
+ function guideHome(){const chosen=homes.find(h=>h.id===home);if(!chosen){open();return;}pause();guideTo({...chosen.door,name:chosen.name});dialog.close();}
+ homeShortcut.onclick=guideHome;
+ const nearest=()=>homes.find(h=>Math.abs(camera.position.x-h.x)<4&&Math.abs(camera.position.z-h.z)<3.6)||null;
+ function button(text,id,action){const b=document.createElement('button');b.textContent=text;b.id=id;b.onclick=action;return b;}
+ let requestedDisplay=null;
+ function render(){body.replaceChildren();const near=nearest();if(near){const card=document.createElement('section');card.id='currentHomeChoice';const heading=document.createElement('h3');heading.textContent='You are visiting · '+near.name;const hint=document.createElement('p');hint.id='currentHomeChoiceStatus';hint.setAttribute('role','status');const previous=homes.find(h=>h.id===home);hint.textContent=home===near.id?'This is your home base. Your furniture and keepsake display controls are below.':previous?'Your current home base is '+previous.name+'. Choosing this home changes your home shortcut; each home keeps its own decorations.':'Make this your home base to use the home shortcut, furniture colors and keepsake display.';const choose=button(home===near.id?'This is your home base':'Make '+near.name+' my home','chooseHome',()=>{if(nearest()?.id!==near.id)return;home=near.id;updateHomeShortcut();try{localStorage.setItem('krownlandia-home-v1',home);storageOK=true;}catch{storageOK=false;}render();});choose.disabled=home===near.id;card.append(heading,hint,choose);body.append(card);}else if(!home){const candidate=[...homes].sort((a,b)=>Math.hypot(a.door.x-camera.position.x,a.door.z-camera.position.z)-Math.hypot(b.door.x-camera.position.x,b.door.z-camera.position.z))[0];const hint=document.createElement('p');hint.textContent='No home base chosen yet. Visit a home and walk inside to choose it.';body.append(hint,button('Visit a nearby home','findFirstHome',()=>{guideTo({...candidate.door,name:candidate.name});dialog.close();}));} const requested=getSouvenirs().find(item=>item.id===requestedDisplay);if(requested){const selected=homes.find(h=>h.id===home),card=document.createElement('section');card.id='selectedHomeDisplay';const heading=document.createElement('h3');heading.textContent=requested.name;const hint=document.createElement('p');hint.id='selectedHomeDisplayStatus';hint.setAttribute('role','status');hint.textContent=selected?(decor[home]?.souvenir===requested.id?'Displayed at '+selected.name+'.':'Choose Display this at home to place this keepsake in '+selected.name+'.'):'Choose a home base first: follow a home’s directions below, walk inside, and choose Make this my home. Your keepsake stays in your journal.';card.append(heading,hint);if(selected){const apply=button('Display this at home','selectedHomeDisplayApply',()=>{if(!getSouvenirs().some(item=>item.id===requested.id))return;decor[home]={...(decor[home]||{palette:'original'}),souvenir:requested.id};persist();update();render();});apply.disabled=decor[home]?.souvenir===requested.id;card.append(apply,button('Visit my home','selectedHomeDisplayVisit',guideHome));}body.append(card);}const note=document.createElement('p');note.textContent='Walk into any home to visit. Choose one as your home base on this browser. These are virtual homes; choosing one does not reserve it for other visitors.';body.append(note);
+  const relaxingHome=nearest()||homes.find(h=>h.id===home);if(relaxingHome){const heading=document.createElement('h3');heading.textContent=(nearest()?'Relax here · ':'Relax at home · ')+relaxingHome.name;const hint=document.createElement('p');hint.textContent='Follow directions to a comfortable spot, then choose Rest or Sit, or press F. You can look around freely and stand up whenever you like.';body.append(heading,hint);for(const s of seats.filter(s=>s.homeId===relaxingHome.id)){const label=s.furniture==='bed'?'bed':s.furniture==='sofa'?'sofa':s.furniture==='porch'?'porch bench':'dining chair';body.append(button('Find the '+label,'homeRelax-'+s.furniture,()=>{pause();guideTo({...s.approach,name:s.name});dialog.close();}));}}
+  const chosen=homes.find(h=>h.id===home);if(chosen){const heading=document.createElement('h3');heading.textContent='Your home · '+chosen.name;body.append(heading,button('Guide me home','guideHome',guideHome));const d=decor[home]||{palette:'original',souvenir:null};
+   const lantern=button(d.porchLight===false?'Porch lantern · off':'Porch lantern · on at night','homePorchLight',()=>{decor[home]={...d,porchLight:d.porchLight===false};persist();update();render();});lantern.setAttribute('aria-pressed',String(d.porchLight!==false));body.append(lantern);
+   const caption=document.createElement('p');caption.textContent='Furniture colors · sofa, chair and bedcover';body.append(caption);for(const [id,label] of [['original','Village colors'],['rose','Rose'],['ocean','Ocean'],['forest','Forest'],['sunshine','Sunshine']]){const b=button(label,'homeColor-'+id,()=>{decor[home]={...d,palette:id};persist();update();render();});b.setAttribute('aria-pressed',String(d.palette===id));body.append(b);}
+   const displayLabel=document.createElement('p');displayLabel.textContent='Framed souvenir display';body.append(displayLabel);const items=getSouvenirs();if(!items.length){const empty=document.createElement('p');empty.textContent='Collect a lounge souvenir or meet all three village hosts to earn a pennant for this display.';body.append(empty);}for(const item of items){const b=button(item.name,'homeDisplay-'+item.id,()=>{decor[home]={...d,souvenir:item.id};persist();update();render();});b.setAttribute('aria-pressed',String(d.souvenir===item.id));body.append(b);}body.append(button('Clear display','homeDisplay-clear',()=>{decor[home]={...d,souvenir:null};persist();update();render();}));
+  }
+  for(const v of villages){const heading=document.createElement('h3');heading.textContent=v.name;const p=document.createElement('p');p.textContent=v.description;body.append(heading,p);const c=commons.find(c=>c.id===v.id);body.append(button('Visit '+c.name,'commonsGo-'+v.id,()=>{guideTo({x:c.x,z:c.z+5,name:c.name});dialog.close();}));for(const h of homes.filter(h=>h.village===v.id))body.append(button(h.name+(h.id===home?' · Your home':''),'homeGo-'+h.id,()=>{guideTo({...h.door,name:h.name});dialog.close();}));}
+  const hostHeading=document.createElement('h3');hostHeading.textContent='Meet your village hosts · '+getHosts().filter(p=>p.met).length+' / 3';body.append(hostHeading);for(const p of getHosts())body.append(button((p.met?'Met ':'Meet ')+p.name,'hostGo-'+p.id,()=>{guideTo({x:p.x,z:p.z+1.5,name:p.name+' · Village host'});dialog.close();}));
+  if(!storageOK){const p=document.createElement('p');p.textContent='Browser storage unavailable: your home choice lasts for this visit.';body.append(p);}
+ }
+ const mailboxNear=()=>homes.find(h=>Math.hypot(camera.position.x-h.mailbox.x,camera.position.z-h.mailbox.z)<1.25)||null;
+ const welcomeNotes={riverbend:'Welcome to Riverbend. These first cottages draw on the original village’s river life, pottery and woven baskets. Visit the Pottery Courtyard, then follow the bank path to the lantern boats and riverside discovery display.',meadow:'Welcome to Meadow Village. These cream cottages gather around a flower garden. Take a slow walk to the Meadow Picnic Garden, settle on a bench, and make room for a little rest between park adventures.',harbor:'Welcome to Bluewater Village. Blue-trimmed homes and reflecting water set the pace here. Bluewater Terrace is a shared place to sit, enjoy the village, and plan your next park visit.',woodland:'Welcome to Woodland Village. Timber cabins sit beneath the trees, with the Woodland Lantern Circle nearby. Find a seat around the shared center, or ride the tram north to Eldergrove.',eldergrove:'Welcome to Eldergrove. These timber homes draw on the community’s forest and woodcraft traditions. Visit the Great Elder Tree clearing to explore the tree, craft shelter and herb garden, then return to the Woodland Table to relax.'};
+ function openMailbox(){const h=mailboxNear();if(!h)return;pause();title.textContent='A welcome note · '+h.name;body.replaceChildren();const note=document.createElement('p');note.id='mailboxNote';note.textContent=welcomeNotes[h.village];const detail=document.createElement('p');detail.textContent='Every home welcomes visitors. You can choose a home base from inside and personalize its furniture, keepsake display and porch lantern.';body.append(note,detail);const walk=(label,id,p)=>button(label,id,()=>{pause();guideTo(p);dialog.close();});const c=commons.find(c=>c.id===h.village),porch=seats.find(s=>s.homeId===h.id&&s.furniture==='porch'),stop=getTramStops().find(s=>s.id===(h.village==='riverbend'?'eldergrove':h.village));body.append(walk('Visit '+c.name,'mailboxCommons',{x:c.x,z:c.z+5,name:c.name}),walk('Find this home’s porch bench','mailboxPorch',{...porch.approach,name:porch.name}));if(stop)body.append(walk('Find the village tram','mailboxTram',{x:stop.x+2.2,z:stop.z,name:stop.name+' tram stop'}));if(h.village==='riverbend')for(const point of getRiverbendDestinations())body.append(walk('Visit '+point.name,'mailboxRiverbend-'+point.id,{x:point.x,z:point.z,name:point.name}));if(h.village==='eldergrove')body.append(walk('Visit the Great Elder Tree','mailboxTree',{x:35,z:121,name:'Eldergrove · Great Elder Tree'}));body.append(button('Browse villages & homes','mailboxDirectory',()=>{title.textContent='Villages & homes';render();}));dialog.showModal();}
+ function open(){requestedDisplay=null;pause();title.textContent='Villages & homes';render();dialog.showModal();}nav.onclick=open;
+ function openDisplay(id){requestedDisplay=getSouvenirs().some(item=>item.id===id)?id:null;pause();title.textContent='Your home display';render();dialog.showModal();}
+ return {homes,seats,villages,commons,geometryStats,open,openDisplay,openMailbox,update,get mailboxNear(){return mailboxNear()},get near(){return nearest()},get isOpen(){return dialog.open},get home(){return home},get visitedVillage(){return nearest()?.village}};
+}

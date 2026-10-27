@@ -1,0 +1,7 @@
+#journey{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);width:min(510px,calc(100vw - 36px));box-sizing:border-box;background:rgba(9,30,47,.96);color:#fff9e9;border:1px solid #c9aa60;border-radius:18px;padding:22px;box-shadow:0 16px 60px #0007;z-index:15}#journey[hidden]{display:none}#journey h2{font:24px Georgia,serif;margin:10px 0}#journey p{line-height:1.5;color:#d2dfe4}#journey button{margin:4px 8px 0 0}#journeyAction{background:#e7c575;color:#102c42}body.riding #quest,body.riding #joystick,body.riding #crosshair{visibility:hidden}@media(max-width:600px){#journey{bottom:14px;padding:16px}#journey h2{font-size:21px}}
+
+#journey.ride-finished{width:min(360px,calc(100vw - 28px));padding:12px 16px}#journey.ride-finished>.label{display:none}#journey.ride-finished h2{font-size:19px;margin:4px 0}#journey.ride-finished p{font-size:14px;margin:7px 0}
+
+#journey.journey-minimized>.label,#journey.journey-minimized>#journeyText{display:none}#journey.ride-finished>#journeyText{display:block}#journeyCompact{background:transparent;border-color:transparent;color:#e7c575}
+#journeyAfterRide{margin-top:10px}#journeyAfterRide[hidden]{display:none}#journeyAfterRide summary{cursor:pointer;color:#e7c575;padding:8px 0}#journeyAfterRide summary:focus-visible{outline:2px solid #e7c575;outline-offset:3px}
+#journey{max-height:40vh;max-height:40dvh;overflow:auto;overscroll-behavior:contain;overflow-wrap:anywhere;scroll-padding-block:8px}#journey:focus-visible{outline:2px solid #e7c575;outline-offset:3px}

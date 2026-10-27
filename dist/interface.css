@@ -1,0 +1,32 @@
+/* The scene is the main surface. Panels are opened deliberately. */
+body.compact-interface header{top:16px;left:18px}body.compact-interface header h1{font-size:17px}body.compact-interface header p,body.compact-interface .crest{display:none}
+#viewControls{position:fixed;right:14px;top:12px;display:flex;gap:6px;z-index:20}#viewControls button{padding:9px 12px;font-size:14px;background:#102a3bcc}
+body.compact-interface nav{display:none;top:58px;right:14px;left:auto;width:220px;max-width:calc(100vw - 28px);padding:10px;background:#102a3bee;border:1px solid #d7bd7a88;border-radius:10px;z-index:19}
+body.compact-interface.park-menu-open nav{display:grid;grid-template-columns:1fr 1fr;gap:6px}body.compact-interface nav button{font-size:14px;padding:10px}
+body.compact-interface #quest{bottom:14px;left:14px;padding:8px 12px;width:auto;max-width:min(360px,calc(100vw - 28px));pointer-events:auto;background:#102b3bbf;display:flex;flex-direction:column;gap:4px}
+body.compact-interface #quest>.label,body.compact-interface #quest>h3,body.compact-interface #quest>p:not(#guide),body.compact-interface #quest>#pins{display:none}
+body.compact-interface.quest-expanded #quest>.label,body.compact-interface.quest-expanded #quest>h3,body.compact-interface.quest-expanded #quest>p,body.compact-interface.quest-expanded #quest>#pins{display:block}
+body.compact-interface #quest #guide{font-size:14px;margin:0;line-height:1.4}#questToggle{align-self:flex-start;padding:5px 8px;font-size:14px;border:0;background:transparent;color:#f1d18c}
+body.compact-interface #place{bottom:auto;top:48px;left:18px;right:auto;background:transparent;padding:0;font-size:14px;pointer-events:none}
+body.compact-interface #interact{bottom:110px;max-width:calc(100vw - 28px);font-size:14px;padding:10px 14px}
+body.compact-interface #welcome{top:auto;bottom:16px;left:16px;transform:none;width:min(350px,calc(100vw - 32px));padding:20px;max-height:65dvh;overflow:auto}body.compact-interface #welcome h2{font-size:25px}body.compact-interface #welcome p{font-size:14px;line-height:1.5}
+body.compact-interface #talk,body.compact-interface #rewards{position:fixed;inset:78px 14px auto auto;margin:0;width:min(390px,calc(100vw - 28px));max-height:calc(100dvh - 96px);overflow:auto;padding:20px}
+body.compact-interface #talk::backdrop,body.compact-interface #rewards::backdrop{background:#07172618}
+body.compact-interface #talk h2,body.compact-interface #rewards h2{font-size:24px}body.compact-interface #talk p{font-size:15px}
+body.compact-interface #journey{left:auto;right:14px;bottom:14px;transform:none;width:min(360px,calc(100vw - 28px));padding:14px;max-height:38dvh;overflow:auto;border-radius:10px}body.compact-interface #journey h2{font-size:18px;margin:7px 0}body.compact-interface #journey p{font-size:14px;margin:7px 0}body.compact-interface #journey button{padding:8px 12px}
+body.compact-interface.clear-view header,body.compact-interface.clear-view #quest,body.compact-interface.clear-view #place,body.compact-interface.clear-view #crosshair{display:none}
+@media(pointer:coarse){body.compact-interface #joystick{bottom:120px;left:14px}}
+@media(max-width:600px){body.compact-interface header{top:62px}body.compact-interface #place{top:86px}body.compact-interface #talk,body.compact-interface #rewards{inset:auto 10px 10px 10px;width:auto;max-height:52dvh;padding:16px}body.compact-interface #journey{max-height:32dvh}body.compact-interface #quest{max-width:calc(100vw - 28px)}body.compact-interface #interact{bottom:210px}body.compact-interface.quest-expanded #quest{max-height:160px;overflow:auto}}
+body.compact-interface:has(#welcome:not([hidden])) #quest{display:none}
+body.compact-interface nav{width:340px;max-height:calc(100dvh - 80px);overflow:auto;overscroll-behavior:contain;padding:14px;box-sizing:border-box}
+body.compact-interface.park-menu-open nav{display:flex;flex-direction:column;gap:16px}
+.park-menu-group h2{margin:0 0 7px;font-size:14px;font-weight:600;color:#f1d18c;text-align:left;letter-spacing:.02em}
+.park-menu-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+body.compact-interface .park-menu-actions button{min-height:44px;text-align:left;line-height:1.35;overflow-wrap:anywhere}
+@media(max-width:600px){body.compact-interface nav{max-height:65dvh;width:340px;padding:12px}}
+
+@media(max-width:600px){#viewControls{left:14px;justify-content:flex-end}#viewControls button{font-size:13px;padding:9px 8px}}
+
+body.compact-interface.clear-view #journey.ride-finished,body.compact-interface.clear-view #safari.ride-finished{display:none}
+
+#welcome #resumeInfo{font-size:14px;line-height:1.45;margin:12px 0 8px}#startAtGate{margin-top:4px;background:transparent;color:#f1d18c;border-color:#d7bd7a88}#startAtGate[hidden],#resumeInfo[hidden]{display:none}

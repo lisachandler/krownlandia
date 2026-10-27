@@ -1,0 +1,15 @@
+import {frame} from './school-seating.mjs';
+import assert from 'node:assert/strict';
+import {createRewards} from '../dist/rewards-core.js';
+const a=window.krownlandia,$=s=>document.querySelector(s),builders=a.builders,seat=builders.seats[0],button=$('#seatBuildersStory'),points=a.getState().rewards.points;
+frame();assert(button.hidden);assert.equal(builders.open(),false);$('#buildersChapter-1').onclick();assert(!a.getState().rewards.done.includes('builders-page-1'));
+a.camera.position.set(seat.approach.x,1.75,seat.approach.z);frame();assert(a.seating.sit());frame();const position=a.camera.position.clone();assert(!button.hidden);
+$('#mapButton').onclick();frame();assert.equal(button.onclick(),false);$('#mapClose').onclick();frame();$('#seatViewOptions').open=true;
+assert(button.onclick());frame();assert(!$('#seatViewOptions').open);assert.equal(builders.open(),false);assert($('#buildersStory').children[1].textContent.includes('@gorayii'));assert($('#buildersClaim').disabled);
+$('#buildersClose').onclick();frame();assert(a.seating.active);assert(button.onclick());frame();assert($('#buildersStatus').textContent.includes('2 / 3'),'reopening resumes at the next unread chapter');
+$('#buildersChapter-2').onclick();assert($('#buildersStory').children[1].textContent.includes('later chapter'));assert(!$('#buildersClaim').disabled);assert.equal(builders.collection().length,0);
+$('#buildersClaim').onclick();assert.equal(builders.collection()[0].id,'builders-crown');assert.equal(a.getState().rewards.points,points);assert(createRewards(localStorage).state().done.includes('builders-story'));assert(a.camera.position.equals(position));assert(a.seating.active);
+$('#buildersRewards').onclick();frame();assert(!builders.isOpen);assert(a.seating.active);assert(a.camera.position.equals(position));a.seating.stand();frame();assert(!a.blocked(a.camera.position.x,a.camera.position.z));assert(button.hidden);
+const other=a.bridge.seats[0];a.camera.position.set(other.approach.x,1.75,other.approach.z);frame();assert(a.seating.sit());frame();assert(button.hidden);assert.equal(builders.open(),false);a.seating.stand();
+a.camera.position.set(-26,1.75,30);frame();assert(builders.open());assert($('#buildersClaim').disabled);$('#buildersClose').onclick();
+console.log('PASS: seated history chapters, source credits, unread resumption, explicit saved crown without automatic points, anchored directions, modal guards and standing access.');

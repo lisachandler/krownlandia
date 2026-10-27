@@ -1,0 +1,11 @@
+import {frame} from './school-seating.mjs';
+import assert from 'node:assert/strict';
+const a=window.krownlandia,$=s=>document.querySelector(s),l=a.lounges,s=l.spots[0],other=l.spots[1],key='krownlandia-lounge-souvenirs-v1';
+const write=localStorage.setItem;let writes=0;localStorage.setItem=(k,v)=>{if(k===key)writes++;write(k,v);};
+a.camera.position.set(s.x,1.75,s.z+1.1);frame();assert(l.open(s));assert.equal(l.open(other),false);assert.equal($('#loungeTitle').textContent,s.name);
+const snack=$('#loungeSnack').onclick,collect=$('#loungeCollect').onclick,sit=$('#loungeSit').onclick,position=a.camera.position.clone();$('#loungeClose').onclick();snack();collect();sit();assert(!s.treat.visible);assert(!l.collection().some(x=>x.id===s.id));assert(!l.seated);assert(a.camera.position.equals(position));assert.equal(writes,0);
+l.open(other);snack();collect();sit();assert(!s.treat.visible);assert.equal(writes,0);$('#loungeClose').onclick();
+l.open(s);snack();collect();collect();assert(s.treat.visible);assert(l.collection().some(x=>x.id===s.id));assert.equal(writes,1);sit();assert(l.seated);
+l.open(s);const face=$('#loungeFaceForward').onclick,look=$('#loungeLookUp').onclick,photo=$('#loungePhoto').onclick;$('#loungeClose').onclick();const rotation=a.camera.rotation.clone();face();look();assert.equal(photo(),undefined);assert(a.camera.rotation.equals(rotation));
+l.open(s);$('#loungeSit').onclick();assert(!l.seated);localStorage.setItem=write;
+console.log('PASS: closed and mismatched lounge actions are inert, duplicate open preserves current menu, collection writes once, normal snacks/seating work and closed view controls are inert.');

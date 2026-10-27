@@ -1,0 +1,12 @@
+import {frame} from './school-seating.mjs';
+import assert from 'node:assert/strict';
+const a=window.krownlandia,$=s=>document.querySelector(s),l=a.lounges,spot=l.spots[0],key='krownlandia-lounge-souvenirs-v1',write=localStorage.setItem;
+let fail=true,writes=0;localStorage.setItem=(k,v)=>{if(k===key){writes++;if(fail)throw Error('full');}write(k,v);};
+a.camera.position.set(spot.x,1.75,spot.z+1.1);frame();l.open(spot);$('#loungeCollect').onclick();assert(l.collection().some(s=>s.id===spot.id));assert(!$('#loungeRetrySave').hidden);assert($('#loungeCollect').disabled);
+const collection=JSON.stringify(l.collection()),position=a.camera.position.clone(),points=a.getState().rewards.points;
+$('#loungeRetrySave').onclick();assert(!$('#loungeRetrySave').hidden);assert.equal(JSON.stringify(l.collection()),collection);
+$('#loungeClose').onclick();let count=writes;$('#loungeRetrySave').onclick();assert.equal(writes,count,'closed retry is inert');
+$('#loungesButton').onclick();assert($('#loungeBody').children[0].textContent.includes('for this visit'));assert(!$('#loungeRetrySave').hidden);
+fail=false;$('#loungeRetrySave').onclick();assert($('#loungeRetrySave').hidden);assert($('#loungeBody').children[0].textContent.includes('on this browser'));assert(JSON.parse(localStorage.getItem(key)).includes(spot.id));assert.equal(JSON.stringify(l.collection()),collection);assert.equal(a.getState().rewards.points,points);assert(a.camera.position.equals(position));
+localStorage.setItem=write;
+console.log('PASS: failed souvenir writes retain collection, retry failure is safe, closed retry is inert, recovered storage saves existing keepsakes without extra rewards or movement.');

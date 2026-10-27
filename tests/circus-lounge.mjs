@@ -1,0 +1,10 @@
+import {frame} from './school-seating.mjs';
+import {createNavigator} from '../dist/navigation-core.js';
+import assert from 'node:assert/strict';
+const a=window.krownlandia,$=s=>document.querySelector(s),lounge=a.lounges.spots.find(s=>s.id==='circus'),button=$('#circusProgramLounge'),after=$('#circusAfterShow');
+const before=JSON.stringify(a.lounges.collection()),points=a.getState().rewards.points;
+a.camera.position.set(39,1.75,-51);frame();const position=a.camera.position.clone();$('#circusProgramButton').onclick();assert(!after.open);assert(!after.hidden);assert($('#circusLoungeInfo').textContent.includes(lounge.snack));assert($('#circusLoungeInfo').textContent.includes(lounge.souvenir));assert(button.textContent.includes(lounge.name));
+after.open=true;button.onclick();frame();assert(!$('#circusProgram').open);assert(a.camera.position.equals(position));assert.equal(JSON.stringify(a.lounges.collection()),before);assert.equal(a.getState().rewards.points,points);
+assert(createNavigator(a.blocked).route({x:position.x,z:position.z},{x:lounge.x,z:lounge.z+1.3}).length>0);
+assert.equal(button.onclick(),false,'closed action is inert');$('#circusProgramButton').onclick();assert(!after.open,'optional details collapse on reopening');$('#circusProgramClose').onclick();
+console.log('PASS: circus lounge details use current snack/keepsake definitions, navigable directions, collapsed reopening, no automatic collection, movement or rewards.');

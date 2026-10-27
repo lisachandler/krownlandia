@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const source=fs.readFileSync(new URL('../dist/world.js',import.meta.url),'utf8').split('\n');
+const handlers={},canvas={setPointerCapture(){}},pad={firstElementChild:{style:{}},getBoundingClientRect:()=>({left:0,top:0}),setPointerCapture(){},hasPointerCapture:()=>true};
+const document={hidden:false,addEventListener:(k,f)=>handlers[k]=f};let saves=0;
+const code=[source.find(l=>l.startsWith('function keysReset()')),source.find(l=>l.startsWith('const canvas=')),source.find(l=>l.startsWith('const pad=')),source.find(l=>l.startsWith("addEventListener('pagehide'"))].join('\n');
+const api=new Function('renderer','$','document','addEventListener','saveVisit',`let playing=true,journey={active:false},tram={active:false},safari={active:false},drag=null,padPointer=null,yaw=0,pitch=0;const keys={w:true},joy={x:0,y:0},velocity={x:2,z:3};${code};return {reset:keysReset,keys,joy,velocity,state:()=>({drag,padPointer,yaw,pitch})};`)({domElement:canvas},()=>pad,document,(k,f)=>handlers[k]=f,()=>saves++);
+const event=(pointerId,clientX=75,clientY=50)=>({pointerId,clientX,clientY});
+pad.onpointerdown(event(1));assert.equal(api.joy.x,25/35);assert(pad.firstElementChild.style.transform);
+pad.onpointerdown(event(2,10));pad.onpointermove(event(2,10));pad.onpointerup(event(2));assert.equal(api.joy.x,25/35,'unrelated touches cannot move or stop the joystick');
+pad.onlostpointercapture(event(1));assert.equal(api.joy.x,0);assert.equal(pad.firstElementChild.style.transform,'');
+pad.onpointerdown(event(3));canvas.onpointerdown(event(4));canvas.onpointerdown(event(5));canvas.onpointermove(event(5,100));canvas.onpointerup(event(5));assert.equal(api.state().yaw,0);assert.equal(api.state().drag.id,4);
+canvas.onpointermove(event(4,100));assert.equal(api.state().yaw,-.1);canvas.onlostpointercapture(event(4));assert.equal(api.state().drag,null);canvas.onpointermove(event(4,120));assert.equal(api.state().yaw,-.1);
+handlers.blur();assert.equal(api.keys.w,false);assert.deepEqual(api.velocity,{x:0,z:0});assert.deepEqual(api.joy,{x:0,y:0});assert.equal(pad.firstElementChild.style.transform,'');pad.onpointermove(event(3));assert.equal(api.joy.x,0,'old capture cannot restart a reset gesture');
+pad.onpointerdown(event(6));handlers.visibilitychange();assert.notEqual(api.joy.x,0,'visible event leaves gesture intact');document.hidden=true;handlers.visibilitychange();assert.equal(saves,1);assert.equal(api.joy.x,0);assert.equal(api.state().padPointer,null);
+pad.onpointerdown(event(7));pad.onpointercancel(event(7));assert.equal(api.joy.x,0);canvas.onpointerdown(event(8));canvas.onpointercancel(event(8));assert.equal(api.state().drag,null);
+console.log('PASS: pointer ownership, independent camera/joystick gestures, cancellation, lost capture, blur, hidden-page reset, indicator reset and fresh gesture recovery.');

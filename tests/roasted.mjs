@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {createRewards} from '../dist/rewards-core.js';
+const data=new Map(),storage={getItem:k=>data.get(k),setItem:(k,v)=>data.set(k,v)};
+let r=createRewards(storage);
+assert(!r.orderRoasted('Rainbow Roast',false));assert(!r.orderRoasted('Invented bowl',true));
+assert(r.orderRoasted('Mediterranean Roast',true));assert(!r.orderRoasted('Harvest Roast',true));assert(!r.returnRoasted(true));
+r=createRewards(storage);assert.deepEqual(r.state().meal,{name:'Mediterranean Roast',status:'ready'});
+assert(!r.pickupRoasted(false));assert(r.pickupRoasted(true));assert(!r.pickupRoasted(true));
+r=createRewards(storage);assert.equal(r.state().meal.status,'carried');assert(!r.returnRoasted(false));assert(r.returnRoasted(true));assert(!r.returnRoasted(true));
+assert.equal(r.claim('roasted','task','roasted'),25);assert.equal(r.claim('roasted','task','roasted'),0);
+r=createRewards(storage);assert.equal(r.state().meal,null);assert(r.status('roasted').claimed);assert(r.orderRoasted('Harvest Roast',true));
+console.log('PASS: meal eligibility, pickup before return, order/pickup persistence, one active bowl and one-time rewards.');

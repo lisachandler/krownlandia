@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import * as T from '../dist/vendor/three.module.js';
+import {installNavigation} from '../dist/navigation.js';
+const scene=new T.Scene(),navigate=installNavigation({scene,blocked:(x,z)=>x>4&&x<8});
+assert.equal(navigate(0,{x:0,z:0},{x:12,z:0},true).unreachable,true);
+assert.equal(scene.getObjectByName('Walking guidance trail').visible,false);
+const reachable=navigate(2000,{x:10,z:0},{x:12,z:0},true);assert(!reachable.unreachable);assert(Number.isFinite(reachable.distance));
+assert.equal(navigate(2100,{x:10,z:0},{x:12,z:0},false),null);assert(!scene.getObjectByName('Walking guidance trail').visible);
+assert.equal(navigate(2200,{x:10,z:0},null,true),null);
+console.log('PASS: no-route status, recovery from a reachable position and hiding/clearing trail.');

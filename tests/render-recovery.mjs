@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const lines=fs.readFileSync(new URL('../dist/world.js',import.meta.url),'utf8').split('\n');
+const handlers={},nodes=new Map(),get=s=>{if(!nodes.has(s))nodes.set(s,{hidden:true,setAttribute(){}});return nodes.get(s);};
+let saves=0,resets=0,scheduled=0,advanced=0,prevented=0;
+const setup=lines.filter(l=>l.startsWith('let contextLost=')||l.startsWith("renderer.domElement.addEventListener('webglcontext")).join('\n');
+const frameStart=lines.find(l=>l.startsWith('function frame(ms)')).split('if(ms-lastVisitSave')[0];
+const api=new Function('renderer','$','keysReset','saveVisit','requestAnimationFrame','advance',`let last=0;${setup}\n${frameStart}advance(ms-last);last=ms;}return {frame,state:()=>({contextLost,contextResumed,last})};`)({domElement:{addEventListener:(name,fn)=>handlers[name]=fn}},get,()=>resets++,()=>saves++,()=>scheduled++,()=>advanced++);
+api.frame(10);assert.equal(advanced,1);handlers.webglcontextrestored();assert.equal(resets,0);
+handlers.webglcontextlost({preventDefault(){prevented++;}});assert.equal(saves,1);assert.equal(resets,1);assert(!get('#error').hidden);assert(get('#error').textContent.includes('paused'));assert(get('#interact').hidden);
+handlers.webglcontextlost({preventDefault(){prevented++;}});assert.equal(saves,1);assert.equal(prevented,2);
+for(const ms of [20,1000,60000])api.frame(ms);assert.equal(advanced,1,'no movement, ride or rendering work during loss');assert.equal(scheduled,3,'recovery keeps animation polling alive');assert.equal(api.state().last,60000);
+handlers.webglcontextrestored();assert.equal(resets,2);assert(get('#error').hidden);api.frame(120000);assert.equal(advanced,1,'first restored frame resets the clock');api.frame(120016);assert.equal(advanced,2);
+handlers.webglcontextlost({preventDefault(){}});assert.equal(saves,2);assert(api.state().contextLost);handlers.webglcontextrestored();assert(!api.state().contextLost);
+console.log('PASS: loss saves once and clears controls, duplicate/spurious events are safe, world updates stop, restoration resets the clock, and subsequent losses recover.');

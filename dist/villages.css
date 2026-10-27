@@ -1,0 +1,6 @@
+#villageMenu{position:fixed;inset:78px 14px auto auto;margin:0;width:min(400px,calc(100vw - 28px));max-height:calc(100dvh - 100px);overflow:auto;padding:20px}#villageMenu h2{font-size:24px}#villageBody{display:grid;gap:9px}#villageBody h3{margin:15px 0 0;font-size:19px}#villageBody p{font-size:16px;line-height:1.5;margin:4px 0}#villageBody button{text-align:left}#villageClose{margin-top:14px}#villageMenu::backdrop{background:#07172618}@media(max-width:600px){#villageMenu{inset:auto 10px 10px;width:auto;max-height:55dvh;padding:16px}}
+#villageBody button[aria-pressed=true]{background:#315846;color:#fff0c7;border:2px solid #d6ac4e}
+
+#selectedHomeDisplay{padding:14px;border:1px solid #b99d57;background:#f5f0df;border-radius:10px;margin-bottom:14px}#selectedHomeDisplay h3{margin-top:0}#selectedHomeDisplay button{margin:4px 6px 0 0}
+
+#currentHomeChoice{padding:14px;border:1px solid #b99d57;border-radius:10px;background:#f5f0df;margin-bottom:14px}#currentHomeChoice h3{margin-top:0}#currentHomeChoice button:disabled{opacity:.65;cursor:default}

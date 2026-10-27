@@ -1,0 +1,13 @@
+import './school-seating.mjs';
+import {installCircus} from '../dist/circus.js';
+import assert from 'node:assert/strict';
+const a=window.krownlandia,$=s=>document.querySelector(s);let saved=false,claimed=false,guides=[];
+const circus=installCircus({scene:new a.scene.constructor(),camera:a.camera,colliders:[],guideTo:id=>guides.push(id),rewardCompleted:()=>saved,rewardClaimed:()=>claimed});
+const open=()=>$('#circusProgramButton').onclick(),status=()=>$('#circusProgramStatus').textContent,go=()=>$('#circusProgramReward').onclick();
+const points=a.getState().rewards.points,position=a.camera.position.clone();
+go();assert.equal(guides.length,0);open();assert(status().includes('Watch the complete'));assert.equal($('#circusProgramReward').textContent,'Find circus rewards');go();assert.deepEqual(guides,['circus']);assert(!circus.isOpen);assert(a.camera.position.equals(position));
+saved=true;open();assert(status().includes('reward is ready'));assert($('#circusProgramReward').textContent.includes('30-point'));$('#circusProgramClose').onclick();
+claimed=true;open();assert(status().includes('reward is collected'));assert.equal($('#circusProgramReward').textContent,'Find circus rewards');go();
+saved=false;claimed=false;a.camera.position.set(39,1.75,-57);assert(circus.start());circus.update(36,false);assert(circus.completed);open();assert(status().includes('reward is ready'),'current performance counts before persisted callback');go();
+assert.equal(a.getState().rewards.points,points);const calls=guides.length;go();assert.equal(guides.length,calls);
+console.log('PASS: incomplete, saved-ready, claimed and current-show circus status; reward directions are read-only and closed controls inert.');

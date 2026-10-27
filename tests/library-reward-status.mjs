@@ -1,0 +1,14 @@
+import './library-seating.mjs';
+import assert from 'node:assert/strict';
+import * as T from '../dist/vendor/three.module.js';
+import {installLibrary} from '../dist/library.js';
+const state={done:[],claims:[],saved:true};let guided=null;
+const camera=new T.PerspectiveCamera();camera.position.set(30,1.75,40);
+const library=installLibrary({scene:new T.Scene(),camera,colliders:[],pause(){},rewards:{state:()=>state,recordLibraryPage(i){if(!state.done.includes('library-page-'+i))state.done.push('library-page-'+i)},completeLibrary(){state.done.push('library-read')},guideTo(id){guided=id},guideToPoint(){}}});
+const $=s=>document.querySelector(s);assert(library.open());assert($('#libraryStatus').textContent.includes('1 / 3'));
+$('#libraryChapter-1').onclick();$('#libraryChapter-2').onclick();assert($('#libraryStatus').textContent.includes('Collect your Alexandria Bookmark below'));assert(!state.done.includes('library-read'));
+$('#libraryClaim').onclick();assert($('#libraryStatus').textContent.includes('20-point task reward is ready'));assert.equal($('#libraryRewards').textContent,'Find my 20-point library reward');
+const before=JSON.stringify(state);$('#libraryRewards').onclick();assert.equal(guided,'library');assert.equal(JSON.stringify(state),before);assert(!library.isOpen);
+state.claims.push('library:task');assert(library.open());assert($('#libraryStatus').textContent.includes('task reward are collected'));assert.equal($('#libraryRewards').textContent,'Find library rewards');assert($('#libraryClaim').disabled);
+state.saved=false;$('#libraryClose').onclick();library.open();assert($('#libraryStatus').textContent.includes('browser storage is unavailable'));
+console.log('PASS: reading, bookmark-ready, points-ready and points-collected messages, read-only station directions and visit-only disclosure.');
