@@ -11,6 +11,11 @@ find('seating');assert(!$('#helpEntry-0-3').hidden);assert($('#helpSection-0').o
 find('uncollected souvenirs');assert(!$('#helpEntry-1-7').hidden);assert.equal($('#helpSearchCount').textContent,'1 help topic found.');
 find('retry saving');assert(!$('#helpEntry-2-4').hidden);assert.equal($('#helpSearchCount').textContent,'1 help topic found.');
 find('rest along');assert(!$('#helpEntry-1-5').hidden);assert.equal($('#helpSearchCount').textContent,'1 help topic found.');
+find('event announcements');assert(!$('#helpEntry-1-8').hidden);assert.equal($('#helpSearchCount').textContent,'1 help topic found.');
+find('refresh event status');assert(!$('#helpEntry-1-8').hidden);assert($('#helpEntry-1-8').children[1].textContent.includes('reload the Site'));
+find('other players');assert(!$('#helpEntry-1-9').hidden);assert.equal($('#helpSearchCount').textContent,'1 help topic found.');assert($('#helpEntry-1-9').children[1].textContent.includes('not available yet'));
+find('legacy points');assert(!$('#helpEntry-2-5').hidden);assert.equal($('#helpSearchCount').textContent,'1 help topic found.');
+find('leaderboard');assert(!$('#helpEntry-2-5').hidden);assert($('#helpEntry-2-5').children[1].textContent.includes('not a public or verified leaderboard'));
 find('no-such-help');assert($('#helpSearchCount').textContent.includes('No matching help'));assert($('#helpSection-0').hidden);assert(!clear.hidden);
 $('#parkHelpClose').onclick();$('#helpButton').onclick();assert.equal(search.value,'no-such-help');
 let focused=false;search.focus=()=>{focused=true;};clear.onclick();assert(focused);assert.equal(search.value,'');assert(clear.hidden);assert(!$('#helpSection-0').open);assert($('#helpSection-1').open);assert(!$('#helpSection-2').open);assert(!$('#helpEntry-2-2').hidden);
