@@ -17,3 +17,15 @@ const hostile=[{...records[0],actor:'<script>alert(1)</script>',activity:'=1+1'}
 assert(!(await activityResponse(req('',admin),env,hostile).text()).includes('<script>'));
 assert((await activityResponse(req('?format=csv',admin),env,hostile).text()).includes("'=1+1"));
 console.log('PASS: admin authorization for HTML/CSV, fail-closed configuration, private caching, Pacific dates, invalid ranges, HTML escaping and spreadsheet formula safety.');
+const searchable=[{...records[0],version:222,summary:'Protected admin activity log and CSV export',summaryEvidence:'Project notes'}, {...records[0],version:221,time:'2026-10-28T15:37:00Z',commit:'def1234567890',summary:'Ready rewards filter for discovery walks',summaryEvidence:'Project notes'}];
+let html=await activityResponse(req('?q=READY+walks',admin),env,searchable).text();assert(html.includes('1 matching records'));assert(html.includes('Ready rewards filter'));assert(!html.includes('Protected admin activity log'));assert(html.includes('q=READY+walks'));
+html=await activityResponse(req('?q=222',admin),env,searchable).text();assert(html.includes('Protected admin activity log'));assert(!html.includes('Ready rewards filter'));
+html=await activityResponse(req('?q=def123',admin),env,searchable).text();assert(html.includes('Ready rewards filter'));
+html=await activityResponse(req('?q=ready&to=2026-10-27',admin),env,searchable).text();assert(html.includes('0 matching records'));assert(html.includes('Try fewer search words'));
+let csv=await activityResponse(req('?q=ready&format=csv',admin),env,searchable).text();assert(csv.includes('Ready rewards filter'));assert(csv.includes('Change summary'));assert(csv.includes('Project notes'));assert(!csv.includes('Protected admin activity log'));
+html=await activityResponse(req('?q='+encodeURIComponent('\"/><script>bad()</script>'),admin),env,searchable).text();assert(!html.includes('<script>'));assert(html.includes('&lt;script&gt;'));
+html=await activityResponse(req('?q='+('a'.repeat(200)),admin),env,searchable).text();assert(html.includes('value="'+'a'.repeat(160)+'"'));assert(!html.includes('a'.repeat(161)));
+assert.equal(activityResponse(req('?q=ready&format=csv'),env,searchable).status,401);
+assert.equal(activityResponse(req('?q=ready',{...admin,'oai-authenticated-user-email':'viewer@example.test'}),env,searchable).status,403);
+assert((await activityResponse(req('',admin),env,[]).text()).includes('no imported history yet'));
+console.log('PASS: change summaries, case-insensitive multiword search, version/revision lookup, combined dates, matching CSV, escaped/bounded queries, empty history and protected search.');

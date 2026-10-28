@@ -17,3 +17,9 @@ The original static game source remains in `dist/`. The server is a separate Sit
 A shared visitor milestone log still needs server-side event storage, explicit notices and controls, retention/deletion policy, rate limiting and authenticated event validation. Browser-reported events cannot prove a human or an agent performed them. Agent integrations must carry authorized identities; external portal activity cannot be observed from Krownlandia. No collection endpoint is enabled in this phase.
 
 The public GitHub mirror contains an empty history fixture and an unregistered server manifest. Populate history only from verified records in your private deployment. To run the original game locally, continue serving dist as static files. Server dependencies and build are only needed for the admin route.
+
+## Finding changes
+
+The Search updates field matches all entered words, ignoring case, across version, activity, change summary, outcome, actor and source revision. It combines with Pacific-date filters, and Download CSV exports exactly that filtered set. Search is capped at 160 characters. Reset returns to all records.
+
+Optional `summary` and `summaryEvidence` fields describe verified changes from project notes and the corresponding published source. They are editorial context, separate from the hosting evidence for publication outcomes; they do not establish actor identity. Older records without summaries remain valid. CSV retains its original columns and appends Change summary and Summary source.
