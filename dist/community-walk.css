@@ -2,4 +2,6 @@
 
 #communityWalkReady{width:100%;background:#244f46;color:#fff0c7}#communityWalkReady[hidden]{display:none}#communityWalkStops article button{margin:4px 8px 0 0}#communityWalkRewards{color:#38594d}
 #communityWalkRoutes{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}#communityWalkRoutes[hidden]{display:none}#communityWalkRoutes button[aria-pressed=true]{background:#244f46;color:#fff0c7}
-#communityWalkUnfinished{min-height:44px;margin:8px 0}#communityWalkUnfinished[aria-pressed=true]{background:#244f46;color:#fff0c7}
+#communityWalkFilters button{min-height:44px;margin:8px 0}#communityWalkFilters button[aria-pressed=true]{background:#244f46;color:#fff0c7}
+
+#communityWalkFilters{display:flex;flex-wrap:wrap;gap:8px}#communityWalkFilters button:focus-visible{outline:2px solid #244f46;outline-offset:3px}
