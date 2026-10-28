@@ -55,7 +55,8 @@ export function installTownSquare({scene,camera,colliders,pause,rewards,getCurre
  const status=document.createElement('p');status.id='townSquareStatus';status.setAttribute('role','status');const actions=document.createElement('div');actions.id='townSquareActions';
  let actionTarget=actions;
  const button=(id,text,fn)=>{const b=document.createElement('button');b.id=id;b.textContent=text;b.onclick=fn;actionTarget.append(b);return b;};
- const welcome=button('squareWelcome','Read our community welcome',()=>{if(!canRead()||!dialog.open)return;story.hidden=false;rewards.completeSquareWelcome();updateStatus();});
+ const welcome=button('squareWelcome','Read our community welcome',()=>{if(welcome.disabled||!canRead()||!dialog.open)return;setStoryVisible(story.hidden);if(!story.hidden){rewards.completeSquareWelcome();updateStatus();}});welcome.setAttribute('aria-controls','townSquareStory');
+ function setStoryVisible(visible){story.hidden=!visible;welcome.textContent=visible?'Hide community welcome':'Read our community welcome';welcome.setAttribute('aria-expanded',String(visible));}setStoryVisible(false);
  button('squareEvents','What’s happening · event calendar',()=>{if(!canRead()||!dialog.open)return;dialog.close();calendar.open();});
  const lights=button('squareLights','Light the stage',()=>{if(!canRead()||!dialog.open)return;lit=!lit;light.intensity=lit?28:0;glow.emissiveIntensity=lit?2:.15;lights.textContent=lit?'Turn stage lights off':'Light the stage';lights.setAttribute('aria-pressed',String(lit));});lights.setAttribute('aria-pressed','false');
  const directions=document.createElement('details');directions.id='squareDirections';const directionsTitle=document.createElement('summary');directionsTitle.textContent='Walking directions & rewards';const directionActions=document.createElement('div');directionActions.id='squareDirectionActions';directions.append(directionsTitle,directionActions);actionTarget=directionActions;
@@ -63,7 +64,7 @@ export function installTownSquare({scene,camera,colliders,pause,rewards,getCurre
  for(const p of portals.places)button('square-'+p.id,'Walk to '+p.name,()=>guide(p));
  const close=document.createElement('button');close.id='townSquareClose';close.textContent='Return to the square';close.onclick=()=>{pause();dialog.close();};dialog.append(title,intro,story,status,actions,directions,close);document.body.append(dialog);const css=document.createElement('link');css.rel='stylesheet';css.href='town-square.css';document.head.append(css);
  function updateStatus(){const s=rewards.state();status.textContent=s.claims.includes('square:task')?'Welcome reward collected. Enjoy the square.':s.done.includes('square-welcome')?'Welcome explored · 20 task points are ready at the Town Square rewards station.':'Read the community welcome to unlock 20 task points.';if(!s.saved)status.textContent+=' Progress is available for this visit; browser storage is unavailable.';}
- function open(){if(portals.near)return portals.open();if(!canRead()||dialog.open)return false;pause();directions.open=false;updateStatus();dialog.showModal();return true;}
+ function open(){if(portals.near)return portals.open();if(!canRead()||dialog.open)return false;pause();directions.open=false;setStoryVisible(false);updateStatus();dialog.showModal();return true;}
  return {open,seats,boardPoint,stagePoint,portalPlaces:portals.places,update:calendar.update,get interactLabel(){return portals.near?.name||'Town Square community board'},get near(){return near()||!!portals.near},get isOpen(){return dialog.open||calendar.isOpen||portals.isOpen},get lightsOn(){return lit}};
 }
 

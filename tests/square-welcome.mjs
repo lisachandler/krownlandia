@@ -1,0 +1,11 @@
+import {frame} from './school-seating.mjs';
+import assert from 'node:assert/strict';
+const a=window.krownlandia,$=s=>document.querySelector(s),square=a.townSquare,button=$('#squareWelcome'),story=$('#townSquareStory');
+const attrs={};button.setAttribute=(k,v)=>attrs[k]=v;
+a.camera.position.set(square.boardPoint.x,1.75,square.boardPoint.z);frame();const points=a.getState().rewards.points;
+button.onclick();assert(story.hidden);assert(!a.getState().rewards.done.includes('square-welcome'));
+assert(square.open());assert(story.hidden);assert.equal(attrs['aria-expanded'],'false');button.disabled=true;button.onclick();assert(story.hidden);button.disabled=false;button.onclick();assert(!story.hidden);assert.equal(attrs['aria-expanded'],'true');assert.equal(button.textContent,'Hide community welcome');assert(a.getState().rewards.done.includes('square-welcome'));
+const progress=JSON.stringify(a.getState().rewards);assert(!square.open());assert(!story.hidden,'duplicate opening preserves reading');button.onclick();assert(story.hidden);assert.equal(attrs['aria-expanded'],'false');assert.equal(JSON.stringify(a.getState().rewards),progress);
+button.onclick();$('#townSquareClose').onclick();assert(square.open());assert(story.hidden,'fresh visit starts compact');assert.equal(button.textContent,'Read our community welcome');a.camera.position.set(0,1.75,0);button.onclick();assert(story.hidden);$('#townSquareClose').onclick();
+const seat=square.seats[0];a.camera.position.set(seat.approach.x,1.75,seat.approach.z);frame();assert(a.seating.sit());assert(square.open());const position=a.camera.position.clone();button.onclick();assert(!story.hidden);button.onclick();assert(story.hidden);assert(a.seating.active);assert(a.camera.position.equals(position));assert.equal(JSON.stringify(a.getState().rewards),progress);assert.equal(a.getState().rewards.points,points);
+console.log('PASS: optional welcome disclosure, fresh/duplicate opening, local/closed/disabled guards, seated reading and retained completion without awarded points.');
