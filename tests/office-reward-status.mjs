@@ -1,0 +1,10 @@
+import './school-seating.mjs';
+import assert from 'node:assert/strict';
+import * as T from '../dist/vendor/three.module.js';
+import {installOfficeGarden} from '../dist/office-garden.js';
+const $=s=>document.querySelector(s),camera=new T.PerspectiveCamera();camera.position.set(14.7,1.75,-13.7);let state={claims:[],done:[],saved:true},guided=null;
+const office=installOfficeGarden({scene:new T.Scene(),camera,colliders:[],pause(){},rewards:{state:()=>state,completeOfficeIdea(){state.done=['office-idea'];},guideTo:id=>guided=id,guideToPoint(){}}});
+const button=$('#officeGardenReward');assert(office.open());assert.equal(button.textContent,'Guide me to garden rewards');$('#officeProject-library').onclick();assert.equal(button.textContent,'Find my 20-point garden reward');assert($('#officeGardenStatus').textContent.includes('20 task points are ready'));const before=JSON.stringify(state);button.onclick();assert.equal(guided,'office');assert(!office.isOpen);assert.equal(JSON.stringify(state),before);
+state={claims:['office:task'],done:['office-idea'],saved:true};assert(office.open());assert.equal(button.textContent,'Revisit garden rewards · task claimed');$('#officeProject-square').onclick();assert.equal(button.textContent,'Revisit garden rewards · task claimed');$('#officeGardenClose').onclick();
+state={claims:[],done:['office-idea'],saved:false};assert(office.open());assert.equal(button.textContent,'Find my 20-point garden reward');assert($('#officeGardenStatus').textContent.includes('storage is unavailable'));$('#officeGardenClose').onclick();
+state={claims:[],done:[],saved:true};assert(office.open());assert.equal(button.textContent,'Guide me to garden rewards');console.log('PASS: office reward labels track unfinished, ready, claimed, unsaved and restored progress; reading and guidance preserve claim state.');
