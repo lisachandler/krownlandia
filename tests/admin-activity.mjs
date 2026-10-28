@@ -29,3 +29,13 @@ assert.equal(activityResponse(req('?q=ready&format=csv'),env,searchable).status,
 assert.equal(activityResponse(req('?q=ready',{...admin,'oai-authenticated-user-email':'viewer@example.test'}),env,searchable).status,403);
 assert((await activityResponse(req('',admin),env,[]).text()).includes('no imported history yet'));
 console.log('PASS: change summaries, case-insensitive multiword search, version/revision lookup, combined dates, matching CSV, escaped/bounded queries, empty history and protected search.');
+const detailed=[{...searchable[0],deploymentId:'deployment-evidence-one'}, {...searchable[1],deploymentId:'deployment-evidence-two'}];
+html=await activityResponse(req('',admin),env,detailed).text();
+assert.equal((html.match(/<details>/g)||[]).length,2);assert(!/<details\s+open/.test(html));
+for(const record of detailed){assert(html.includes('aria-label="Publication evidence for version '+record.version+'"'));assert(html.includes(record.commit));assert(html.includes(record.deploymentId));assert(html.includes(record.time));}
+assert(html.includes('Hosting record updated (UTC)'));assert(html.includes('does not identify who performed'));
+html=await activityResponse(req('?q=deployment-evidence-two',admin),env,detailed).text();assert(html.includes('1 matching records'));assert(html.includes('Version 221'));assert(!html.includes('Version 222'));
+csv=await activityResponse(req('?q=deployment-evidence-two&format=csv',admin),env,detailed).text();assert(csv.includes('deployment-evidence-two'));assert(!csv.includes('deployment-evidence-one'));
+html=await activityResponse(req('',admin),env,[{...records[0],commit:'<svg onload=bad()>',deploymentId:'<img src=x>',evidence:'<script>bad()</script>'}]).text();assert(!html.includes('<svg'));assert(!html.includes('<img'));assert(!html.includes('<script>'));assert(html.includes('No summary source recorded'));
+for(const headers of [{},{...admin,'oai-authenticated-user-email':'viewer@example.test'}]){html=await activityResponse(req('',headers),env,detailed).text();assert(!html.includes('deployment-evidence-one'));assert(!html.includes('abc1234567890'));}
+console.log('PASS: collapsed publication evidence, unique accessible names, full revisions/timestamps, provenance fallback, record-ID search/export, escaped fields and unauthorized non-disclosure.');
