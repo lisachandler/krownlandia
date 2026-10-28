@@ -1,0 +1,12 @@
+import './school-seating.mjs';
+import assert from 'node:assert/strict';
+import * as T from '../dist/vendor/three.module.js';
+import {installClubhouse} from '../dist/clubhouse.js';
+const $=s=>document.querySelector(s),camera=new T.PerspectiveCamera();camera.position.set(-30,1.75,147);
+let st={claims:[],done:[],saved:true},guided=null,completed=0;
+const club=installClubhouse({scene:new T.Scene(),camera,colliders:[],pause(){},rewards:{state:()=>st,completeClubhouse(){completed++;st.done=['clubhouse-board'];},guideTo:id=>guided=id}});
+const button=$('#clubhouseRewards');assert(club.open());assert.equal(button.textContent,'Find clubhouse rewards');$('#clubhouseTopic-care').onclick();assert.equal(completed,1);assert.equal(button.textContent,'Find my 20-point clubhouse reward');assert($('#clubhouseStatus').textContent.includes('20 task points are ready'));const before=JSON.stringify(st);button.onclick();assert.equal(guided,'clubhouse');assert(!club.isOpen);assert.equal(JSON.stringify(st),before);
+st={claims:['clubhouse:task'],done:['clubhouse-board'],saved:true};assert(club.open());assert.equal(button.textContent,'Revisit clubhouse rewards · task claimed');assert($('#clubhouseStatus').textContent.includes('collected'));button.onclick();assert.equal(guided,'clubhouse');
+st={claims:[],done:['clubhouse-board'],saved:false};assert(club.open());assert.equal(button.textContent,'Find my 20-point clubhouse reward');assert($('#clubhouseStatus').textContent.includes('visit only'));$('#clubhouseClose').onclick();
+st={claims:[],done:[],saved:true};assert(club.open());assert.equal(button.textContent,'Find clubhouse rewards','reopening reflects restored progress');
+console.log('PASS: clubhouse reward label reflects unfinished, ready, claimed and unsaved progress; directions preserve progress and reopening refreshes labels.');
