@@ -40,7 +40,7 @@ Krownlandia predates this prototype. Its recorded community origins date to Janu
 
 ## Publication and licensing
 
-This source snapshot corresponds to hosted version 221. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
+This source snapshot corresponds to hosted version 222. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
 
 Three.js retains its license at `dist/vendor/LICENSE`. No project-wide open-source license has been selected; public visibility alone does not grant a general license to reuse project code, community material, branding or artwork.
 
@@ -65,3 +65,7 @@ Controls & help includes searchable Living Sim Portal and Emoji House directions
 The Clubhouse board includes a collapsed Places & their managers section with walking directions to Living Sim Portal and Emoji House, credited to @maxigram.
 
 Both portal panels offer a collapsed Explore nearby section with walking directions to the other pavilion and Town Square.
+
+## Admin activity log
+
+The hosted `/admin/activity` page is restricted to the configured administrator and lists verified build publications. Visitor tracking is off. The public source contains an empty history fixture, not private deployment records. See [ADMIN_ACTIVITY.md](ADMIN_ACTIVITY.md) for server build and maintenance details. The original static game remains runnable as described above.

@@ -1,6 +1,7 @@
 node_modules/
 .sites-runtime/
-.openai/
-.env
-.env.*
-!.env.example
+
+/server-app/public/
+/server-app/dist/
+/dist/server/
+/dist/client/
