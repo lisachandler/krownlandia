@@ -20,3 +20,14 @@ document.createElement=tag=>{const node=createElement(tag);node.click=()=>{downl
 URL.createObjectURL=value=>{blob=value;return 'blob:backup';};URL.revokeObjectURL=()=>{};globalThis.setTimeout=()=>0;
 $('#backupDownload').onclick();const exported=JSON.parse(await blob.text());assert.equal(downloaded,'krownlandia-progress-'+exported.createdAt.replace(/[:.]/g,'-')+'.json');assert($('#backupStatus').textContent.includes('download started'));
 console.log('PASS: backup comparison, date previews and legacy dates, read-only preview, stale read isolation and explicit restore.');
+// A repeated open request must preserve a selected file and an active read.
+open();await pick(current);const selectedMessage=$('#backupStatus').textContent;open();assert.equal($('#backupStatus').textContent,selectedMessage);assert(!$('#backupRestore').hidden);
+let resolveReading;$('#backupFile').files=[{size:10,text:()=>new Promise(resolve=>resolveReading=resolve)}];const reading=$('#backupFile').onchange();open();assert($('#backupStatus').textContent.includes('Reading'));resolveReading(current);await reading;assert(!$('#backupRestore').hidden);
+const beforeGuard=JSON.stringify([...values]),beforeReloads=reloads;
+$('#backupRestore').disabled=true;$('#backupRestore').onclick();assert.equal(reloads,beforeReloads);assert.equal(JSON.stringify([...values]),beforeGuard);$('#backupRestore').disabled=false;
+$('#backupClose').disabled=true;$('#backupClose').onclick();assert($('#backupMenu').open);$('#backupClose').disabled=false;
+blob=null;$('#backupDownload').disabled=true;$('#backupDownload').onclick();assert.equal(blob,null);$('#backupDownload').disabled=false;
+let reads=0;$('#backupFile').disabled=true;$('#backupFile').files=[{size:1,text:async()=>{reads++;return empty;}}];await $('#backupFile').onchange();assert.equal(reads,0);assert(!$('#backupRestore').hidden);$('#backupFile').disabled=false;
+$('#backupClose').onclick();const closedMessage=$('#backupStatus').textContent;$('#backupDownload').onclick();await $('#backupFile').onchange();$('#backupRestore').onclick();$('#backupClose').onclick();assert.equal(reads,0);assert.equal(blob,null);assert.equal(reloads,beforeReloads);assert.equal(JSON.stringify([...values]),beforeGuard);assert.equal($('#backupStatus').textContent,closedMessage);
+$('#backupButton').disabled=true;open();assert(!$('#backupMenu').open);$('#backupButton').disabled=false;open();assert($('#backupMenu').open);assert($('#backupRestore').hidden);assert.equal($('#backupStatus').textContent,'');await pick(current);$('#backupRestore').onclick();assert.equal(reloads,beforeReloads+1);
+console.log('PASS: repeated opening preserves file preview and pending read; disabled/closed actions are inert; fresh opening resets review and explicit restore still works.');
