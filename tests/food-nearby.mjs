@@ -23,3 +23,12 @@ position={x:0,z:0};open();const stale=$('#foodGuideGo-coffee');search.value='pop
 const current=$('#foodGuideGo-popcorn');current.onclick();assert.equal(destination.name,'Circus popcorn stand');assert(!guide.isOpen);const afterGuide=pauses;current.onclick();$('#foodGuideClose').onclick();$('#foodGuideClear').onclick();$('#foodGuideNearest').onclick();assert.equal(pauses,afterGuide);assert.equal(search.value,'popcorn','closed controls preserve search');
 open();assert.equal(search.value,'popcorn');const afterOpen=pauses;open();assert.equal(pauses,afterOpen,'duplicate open only refreshes results');current.onclick();assert(guide.isOpen,'old result stays inert after reopening');$('#foodGuideGo-popcorn').onclick();assert(!guide.isOpen);
 console.log('PASS: closed and replaced-result directions are inert, disabled sorting is inert, closed controls preserve query and valid refreshed directions still work.');
+
+const nav=$('#foodGuideButton');nav.disabled=true;const pausedBefore=pauses;nav.onclick();assert(!guide.isOpen);assert.equal(pauses,pausedBefore);nav.disabled=false;open();
+assert.equal(search.attributes['aria-describedby'],'foodGuideCount');
+const walk=$('#foodGuideGo-popcorn'),before=destination;walk.disabled=true;walk.onclick();assert.equal(destination,before);assert(guide.isOpen);
+const close=$('#foodGuideClose');close.disabled=true;close.onclick();assert(guide.isOpen);close.disabled=false;
+const clear=$('#foodGuideClear');clear.disabled=true;clear.onclick();assert.equal(search.value,'popcorn');clear.disabled=false;
+search.disabled=true;const resultBefore=$('#foodGuidePlaces').children;search.value='roast';search.oninput();assert.equal($('#foodGuidePlaces').children,resultBefore);search.disabled=false;search.oninput();assert.deepEqual(names(),['Roasted · Crown Palace']);
+$('#foodGuideGo-roasted').onclick();assert(!guide.isOpen);assert.equal(destination.name,'Roasted · Crown Palace');
+console.log('PASS: disabled navigation, search, clear, close and walking controls are inert; enabled search and directions recover; search describes its result count.');
