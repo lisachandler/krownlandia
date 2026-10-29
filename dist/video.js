@@ -15,10 +15,10 @@ export function installVideo({renderer,pause=()=>{},getContext=()=>({})}){
  const stop=make('button','videoStop','Stop recording');stop.hidden=true;document.body.append(stop);
  const css=make('link','videoStyle');css.rel='stylesheet';css.href='video.css';document.head.append(css);
  const canvas=renderer.domElement,Recorder=globalThis.MediaRecorder;
- let active=null,clipUrl=null,interval=null,timeout=null;
+ let active=null,clipUrl=null,interval=null,timeout=null,readyNotice=false;
  const supported=typeof Recorder==='function'&&typeof canvas.captureStream==='function';
  const unavailable=()=>renderer.getContext?.()?.isContextLost?.()===true;
- function controls(){nav.textContent=active?'Recording…':'Record video';start.disabled=!supported||!!active||unavailable();start.textContent=clipUrl?'Record new clip (replace current)':'Start recording';stop.hidden=!active;}
+ function controls(){nav.textContent=active?'Recording…':clipUrl?'Video ready · preview':'Record video';start.disabled=!supported||!!active||unavailable();start.textContent=clipUrl?'Record new clip (replace current)':'Start recording';stop.hidden=!active&&!readyNotice;if(!active){stop.disabled=false;stop.textContent='Preview clip';}}
  function cleanup(session){clearInterval(interval);clearTimeout(timeout);interval=timeout=null;for(const track of session.stream.getTracks())track.stop();}
  function finish(session){
   if(active!==session)return;cleanup(session);active=null;controls();
@@ -26,13 +26,13 @@ export function installVideo({renderer,pause=()=>{},getContext=()=>({})}){
   const type=session.recorder.mimeType||session.chunks[0].type||'video/webm';
   const blob=new Blob(session.chunks,{type});if(!blob.size){status.textContent='No video was captured. Please try again.';return;}
   clipUrl=URL.createObjectURL(blob);preview.src=clipUrl;preview.hidden=false;download.href=clipUrl;download.download=session.filename.replace(/\.png$/,type.includes('mp4')?'.mp4':'.webm');download.hidden=false;
-  status.textContent='Clip ready. Open Record video to preview and download it.';controls();nav.textContent='Video ready · preview';
+  readyNotice=!dialog.open;status.textContent='Clip ready. Preview and download it before leaving.';controls();
  }
  function end(reason='Recording stopped.'){
-  if(!active)return;const session=active;clearInterval(interval);clearTimeout(timeout);stop.disabled=true;status.textContent=reason;
+  if(!active||active.stopping)return;const session=active;session.stopping=true;clearInterval(interval);clearTimeout(timeout);stop.disabled=true;stop.textContent='Finishing clip…';status.textContent=reason;
   try{if(session.recorder.state!=='inactive')session.recorder.stop();else finish(session);}catch{session.failed=true;finish(session);}
  }
- function open(){if(dialog.open)return;pause();controls();dialog.showModal();}
+ function open(){if(dialog.open)return;readyNotice=false;pause();controls();dialog.showModal();}
  nav.onclick=()=>{if(!nav.disabled)open();};close.onclick=()=>{if(dialog.open&&!close.disabled){preview.pause();dialog.close();pause();}};
  dialog.addEventListener('close',()=>preview.pause());
  start.onclick=()=>{
@@ -45,14 +45,14 @@ export function installVideo({renderer,pause=()=>{},getContext=()=>({})}){
    const session={stream,recorder,chunks:[],bytes:0,failed:false,filename:photoFilename(getContext()),started:Date.now()};
    recorder.ondataavailable=e=>{if(active!==session||!e.data?.size)return;session.bytes+=e.data.size;if(session.bytes>24*1024*1024){session.failed=true;end('Recording reached its memory limit.');return;}session.chunks.push(e.data);};
    recorder.onstop=()=>finish(session);recorder.onerror=()=>{session.failed=true;end('Recording was interrupted.');};
-   active=session;recorder.start(1000);
+   active=session;recorder.start(1000);readyNotice=false;
    if(clipUrl){preview.pause();preview.removeAttribute('src');URL.revokeObjectURL(clipUrl);clipUrl=null;}preview.hidden=true;download.hidden=true;download.removeAttribute('href');
    status.textContent='Recording the 3D scene. Stop anytime; recording ends after 30 seconds.';stop.disabled=false;controls();dialog.close();
    interval=setInterval(()=>{if(active===session)stop.textContent='Stop recording · '+Math.min(30,Math.floor((Date.now()-session.started)/1000))+'/30s';},1000);
    stop.textContent='Stop recording · 0/30s';timeout=setTimeout(()=>end('30-second clip finished.'),30000);
   }catch{if(stream)for(const t of stream.getTracks())t.stop();active=null;controls();status.textContent='Video recording is unavailable right now. Try another browser or use Take photo.';}
  };
- stop.onclick=()=>{if(active&&!stop.disabled)end();};
+ stop.onclick=()=>{if(stop.disabled||stop.hidden)return;if(active)end();else if(clipUrl&&readyNotice)open();};
  document.addEventListener('visibilitychange',()=>{if(document.hidden)end('Recording stopped when this page was hidden.');});
  canvas.addEventListener('webglcontextlost',()=>end('Recording stopped while graphics recover.'));
  canvas.addEventListener('webglcontextrestored',controls);
