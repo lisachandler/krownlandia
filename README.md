@@ -40,7 +40,7 @@ Krownlandia predates this prototype. Its recorded community origins date to Janu
 
 ## Publication and licensing
 
-This source snapshot corresponds to hosted version 229. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
+This source snapshot corresponds to hosted version 230. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
 
 Three.js retains its license at `dist/vendor/LICENSE`. No project-wide open-source license has been selected; public visibility alone does not grant a general license to reuse project code, community material, branding or artwork.
 
@@ -69,3 +69,7 @@ Both portal panels offer a collapsed Explore nearby section with walking directi
 ## Admin activity log
 
 The hosted `/admin/activity` page is restricted to the configured administrator and lists verified build publications. Visitor tracking is off. The public source contains an empty history fixture, not private deployment records. See [ADMIN_ACTIVITY.md](ADMIN_ACTIVITY.md) for server build and maintenance details. The original static game remains runnable as described above.
+
+## Scene video
+
+Activities → Record video captures up to 30 seconds of silent canvas video in supported browsers. Stop, preview and download manually. Clips stay in the page, are not uploaded or included in progress backups, and should be downloaded before recording a replacement or leaving. Actual codec/playback testing remains pending; lifecycle, gameplay and deployment checks are covered.

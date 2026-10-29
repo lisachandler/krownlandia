@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import {installVideo} from '../dist/video.js';
+const nodes=new Map(),events={},canvasEvents={},timers=new Map();let next=0,stopped=0,revoked=[],captureArgs=[],urls=0;
+const el=()=>({children:[],attributes:{},hidden:false,disabled:false,open:false,append(...v){this.children.push(...v)},set id(v){this._id=v;nodes.set(v,this)},get id(){return this._id},setAttribute(k,v){this.attributes[k]=v},removeAttribute(k){delete this[k]},addEventListener(k,f){(this.listeners??={})[k]=f},showModal(){this.open=true},close(){this.open=false},pause(){}});
+globalThis.document={head:el(),body:el(),hidden:false,createElement:el,querySelector:()=>nav,addEventListener:(k,f)=>events[k]=f};const nav=el();
+globalThis.setTimeout=(f,ms)=>{timers.set(++next,{f,ms});return next};globalThis.setInterval=globalThis.setTimeout;globalThis.clearTimeout=id=>timers.delete(id);globalThis.clearInterval=globalThis.clearTimeout;
+URL.createObjectURL=()=>`blob:test-${++urls}`;URL.revokeObjectURL=u=>revoked.push(u);
+let recorder,fail=false;
+class Recorder{static isTypeSupported(t){return t==='video/webm'}constructor(stream,opts){recorder=this;this.mimeType=opts.mimeType;this.state='inactive'}start(){if(fail)throw Error('test');this.state='recording'}stop(){this.state='inactive';this.ondataavailable({data:new Blob(['clip'],{type:this.mimeType})});this.onstop()}}
+globalThis.MediaRecorder=Recorder;
+const canvas={captureStream(fps){captureArgs.push(fps);return {getTracks:()=>[{stop(){stopped++}}]}},addEventListener:(k,f)=>canvasEvents[k]=f};
+let lost=false,pauses=0;const video=installVideo({renderer:{domElement:canvas,getContext:()=>({isContextLost:()=>lost})},pause:()=>pauses++,getContext:()=>({location:'Town Square',night:false})});const $=id=>nodes.get(id);
+$('recordVideo').onclick();assert(video.isOpen);$('videoStart').onclick();assert(video.recording);assert(!video.isOpen);assert.deepEqual(captureArgs,[24]);assert(!$('videoStop').hidden);$('videoStart').onclick();assert.equal(captureArgs.length,1);
+$('videoStop').onclick();assert(!video.recording);assert.equal(stopped,1);assert.equal(timers.size,0);assert(!$('videoDownload').hidden);assert.match($('videoDownload').download,/Krownlandia-Town-Square-Day-.*\.webm/);assert.equal($('videoPreview').src,'blob:test-1');
+$('recordVideo').onclick();fail=true;$('videoStart').onclick();assert(!video.recording);assert.equal($('videoPreview').src,'blob:test-1','failed start preserves prior clip');fail=false;$('videoStart').onclick();assert(video.recording);assert.deepEqual(revoked,['blob:test-1']);assert($('videoDownload').hidden);
+const limit=[...timers.values()].find(t=>t.ms===30000);limit.f();assert(!video.recording);assert(!$('videoDownload').hidden);
+$('recordVideo').onclick();$('videoStart').onclick();document.hidden=true;events.visibilitychange();assert(!video.recording);document.hidden=false;
+$('recordVideo').onclick();$('videoStart').onclick();lost=true;canvasEvents.webglcontextlost();assert(!video.recording);assert($('videoStart').disabled);lost=false;canvasEvents.webglcontextrestored();assert(!$('videoStart').disabled);
+$('recordVideo').onclick();$('videoStart').onclick();recorder.ondataavailable({data:{size:25*1024*1024}});assert(!video.recording);assert($('videoDownload').hidden);assert.equal(timers.size,0);
+globalThis.MediaRecorder=undefined;installVideo({renderer:{domElement:canvas}});assert($('videoStart').disabled);assert($('videoStatus').textContent.includes('does not support'));
+console.log('PASS: silent canvas capture, start/stop, timed/hidden/context stops, replacement cleanup, failed-start retention, memory limit and unsupported browsers.');

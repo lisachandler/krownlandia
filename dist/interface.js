@@ -18,7 +18,7 @@ export function installInterface({pause=()=>{}}={}){
  menu.addEventListener('keydown',e=>{if(e.key==='Escape'){menuOpen=false;sync();e.preventDefault();}});
  sync();
  return {get isOpen(){return menuOpen&&!clearView},organize(){
-  const groups=[['explore','Explore',['mapButton','communityWalkButton','tramButton','findRest','stopDirections','home']],['activities','Activities',['eventsButton','rewardButton','foodGuideButton','loungesButton','circusProgramButton','takePhoto']],['home','Home & keepsakes',['takeMeHome','villagesButton','journalButton']],['settings','Settings',['sound','graphicsButton','helpButton','backupButton','reference']]];
+  const groups=[['explore','Explore',['mapButton','communityWalkButton','tramButton','findRest','stopDirections','home']],['activities','Activities',['eventsButton','rewardButton','foodGuideButton','loungesButton','circusProgramButton','takePhoto','recordVideo']],['home','Home & keepsakes',['takeMeHome','villagesButton','journalButton']],['settings','Settings',['sound','graphicsButton','helpButton','backupButton','reference']]];
   const sections=groups.map(([id,label,ids])=>{const section=document.createElement('section');section.className='park-menu-group';section.id='menuGroup-'+id;const heading=document.createElement('h2');heading.id='menuHeading-'+id;heading.textContent=label;section.setAttribute('aria-labelledby',heading.id);const actions=document.createElement('div');actions.className='park-menu-actions';for(const name of ids){const button=$('#'+name);if(button)actions.append(button);}section.append(heading,actions);return section;});
   $('nav').replaceChildren(...sections);
  }};

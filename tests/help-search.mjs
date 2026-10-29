@@ -5,7 +5,7 @@ const before=JSON.stringify(a.getState().rewards),position=a.camera.position.clo
 $('#helpButton').onclick();assert($('#parkHelp').open);assert(clear.hidden);assert($('#helpSearchCount').hidden);
 $('#helpSection-0').open=false;$('#helpSection-1').open=true;
 function find(value){search.value=value;search.oninput();}
-find('BACKUP');assert(!$('#helpEntry-2-2').hidden);assert($('#helpSection-2').open);assert($('#helpSection-0').hidden);assert.equal($('#helpSearchCount').textContent,'1 help topic found.');
+find('BACKUP');assert(!$('#helpEntry-2-2').hidden);assert(!$('#helpEntry-2-3').hidden);assert($('#helpSection-2').open);assert($('#helpSection-0').hidden);assert.equal($('#helpSearchCount').textContent,'2 help topics found.');
 find('village tram');assert(!$('#helpEntry-1-1').hidden);assert($('#helpEntry-1-0').hidden);
 find('seating');assert(!$('#helpEntry-0-3').hidden);assert($('#helpSection-0').open);
 find('uncollected souvenirs');assert(!$('#helpEntry-1-7').hidden);assert.equal($('#helpSearchCount').textContent,'1 help topic found.');

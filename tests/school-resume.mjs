@@ -1,3 +1,4 @@
+import './video-runtime.mjs';
 import {exportBackup,parseBackup,restoreBackup} from '../dist/backup-core.js';
 import {createNeighbors} from '../dist/neighbors-core.js';
 globalThis.createNeighbors=createNeighbors;
