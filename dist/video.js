@@ -15,21 +15,22 @@ export function installVideo({renderer,pause=()=>{},getContext=()=>({})}){
  const stop=make('button','videoStop','Stop recording');stop.hidden=true;document.body.append(stop);
  const css=make('link','videoStyle');css.rel='stylesheet';css.href='video.css';document.head.append(css);
  const canvas=renderer.domElement,Recorder=globalThis.MediaRecorder;
- let active=null,clipUrl=null,interval=null,timeout=null,readyNotice=false;
+ let active=null,clipUrl=null,interval=null,timeout=null,readyNotice=false,issue=false;
  const supported=typeof Recorder==='function'&&typeof canvas.captureStream==='function';
  const unavailable=()=>renderer.getContext?.()?.isContextLost?.()===true;
- function controls(){nav.textContent=active?'Recording…':clipUrl?'Video ready · preview':'Record video';start.disabled=!supported||!!active||unavailable();start.textContent=clipUrl?'Record new clip (replace current)':'Start recording';stop.hidden=!active&&!readyNotice;if(!active){stop.disabled=false;stop.textContent='Preview clip';}}
- function cleanup(session){clearInterval(interval);clearTimeout(timeout);interval=timeout=null;for(const track of session.stream.getTracks())track.stop();}
+ function controls(){nav.textContent=active?'Recording…':clipUrl?'Video ready · preview':issue?'Recording issue':'Record video';start.disabled=!supported||!!active||unavailable();start.textContent=clipUrl?'Record new clip (replace current)':'Start recording';stop.hidden=!active&&!readyNotice;if(!active){stop.disabled=false;stop.textContent=issue?'Recording issue':'Preview clip';}}
+ function cleanup(session){clearInterval(interval);clearTimeout(timeout);clearTimeout(session.stopTimer);interval=timeout=null;for(const track of session.stream.getTracks())track.stop();}
  function finish(session){
   if(active!==session)return;cleanup(session);active=null;controls();
-  if(session.failed||!session.chunks.length){status.textContent='Recording could not be completed. Try a shorter clip or another browser.';return;}
+  if(session.failed||!session.chunks.length){session.chunks=[];issue=true;readyNotice=!dialog.open;status.textContent=session.failureMessage||'Recording could not be completed. Try a shorter clip or another browser.';controls();return;}
   const type=session.recorder.mimeType||session.chunks[0].type||'video/webm';
-  const blob=new Blob(session.chunks,{type});if(!blob.size){status.textContent='No video was captured. Please try again.';return;}
+  const blob=new Blob(session.chunks,{type});session.chunks=[];if(!blob.size){status.textContent='No video was captured. Please try again.';return;}
   clipUrl=URL.createObjectURL(blob);preview.src=clipUrl;preview.hidden=false;download.href=clipUrl;download.download=session.filename.replace(/\.png$/,type.includes('mp4')?'.mp4':'.webm');download.hidden=false;
-  readyNotice=!dialog.open;status.textContent='Clip ready. Preview and download it before leaving.';controls();
+  issue=false;readyNotice=!dialog.open;status.textContent='Clip ready. Preview and download it before leaving.';controls();
  }
  function end(reason='Recording stopped.'){
   if(!active||active.stopping)return;const session=active;session.stopping=true;clearInterval(interval);clearTimeout(timeout);stop.disabled=true;stop.textContent='Finishing clip…';status.textContent=reason;
+  session.stopTimer=setTimeout(()=>{if(active!==session)return;session.failed=true;session.failureMessage='The browser did not finish this recording. The incomplete clip was discarded; you can try again or use Take photo.';finish(session);},10000);
   try{if(session.recorder.state!=='inactive')session.recorder.stop();else finish(session);}catch{session.failed=true;finish(session);}
  }
  function open(){if(dialog.open)return;readyNotice=false;pause();controls();dialog.showModal();}
@@ -43,16 +44,16 @@ export function installVideo({renderer,pause=()=>{},getContext=()=>({})}){
    const type=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'].find(t=>Recorder.isTypeSupported?.(t));
    const recorder=new Recorder(stream,{...(type?{mimeType:type}:{}),videoBitsPerSecond:4000000});
    const session={stream,recorder,chunks:[],bytes:0,failed:false,filename:photoFilename(getContext()),started:Date.now()};
-   recorder.ondataavailable=e=>{if(active!==session||!e.data?.size)return;session.bytes+=e.data.size;if(session.bytes>24*1024*1024){session.failed=true;end('Recording reached its memory limit.');return;}session.chunks.push(e.data);};
-   recorder.onstop=()=>finish(session);recorder.onerror=()=>{session.failed=true;end('Recording was interrupted.');};
-   active=session;recorder.start(1000);readyNotice=false;
+   recorder.ondataavailable=e=>{if(active!==session||!e.data?.size)return;session.bytes+=e.data.size;if(session.bytes>24*1024*1024){session.failed=true;session.failureMessage='This recording reached its memory limit and was discarded. Try a shorter clip or Lightweight graphics.';end('Recording reached its memory limit.');return;}session.chunks.push(e.data);};
+   recorder.onstop=()=>finish(session);recorder.onerror=()=>{if(active!==session)return;session.failed=true;session.failureMessage='The browser interrupted recording. Try again or use Take photo.';end('Recording was interrupted.');};
+   active=session;recorder.start(1000);readyNotice=false;issue=false;
    if(clipUrl){preview.pause();preview.removeAttribute('src');URL.revokeObjectURL(clipUrl);clipUrl=null;}preview.hidden=true;download.hidden=true;download.removeAttribute('href');
    status.textContent='Recording the 3D scene. Stop anytime; recording ends after 30 seconds.';stop.disabled=false;controls();dialog.close();
    interval=setInterval(()=>{if(active===session)stop.textContent='Stop recording · '+Math.min(30,Math.floor((Date.now()-session.started)/1000))+'/30s';},1000);
    stop.textContent='Stop recording · 0/30s';timeout=setTimeout(()=>end('30-second clip finished.'),30000);
   }catch{if(stream)for(const t of stream.getTracks())t.stop();active=null;controls();status.textContent='Video recording is unavailable right now. Try another browser or use Take photo.';}
  };
- stop.onclick=()=>{if(stop.disabled||stop.hidden)return;if(active)end();else if(clipUrl&&readyNotice)open();};
+ stop.onclick=()=>{if(stop.disabled||stop.hidden)return;if(active)end();else if(readyNotice&&(clipUrl||issue))open();};
  document.addEventListener('visibilitychange',()=>{if(document.hidden)end('Recording stopped when this page was hidden.');});
  canvas.addEventListener('webglcontextlost',()=>end('Recording stopped while graphics recover.'));
  canvas.addEventListener('webglcontextrestored',controls);
