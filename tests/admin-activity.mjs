@@ -39,3 +39,14 @@ csv=await activityResponse(req('?q=deployment-evidence-two&format=csv',admin),en
 html=await activityResponse(req('',admin),env,[{...records[0],commit:'<svg onload=bad()>',deploymentId:'<img src=x>',evidence:'<script>bad()</script>'}]).text();assert(!html.includes('<svg'));assert(!html.includes('<img'));assert(!html.includes('<script>'));assert(html.includes('No summary source recorded'));
 for(const headers of [{},{...admin,'oai-authenticated-user-email':'viewer@example.test'}]){html=await activityResponse(req('',headers),env,detailed).text();assert(!html.includes('deployment-evidence-one'));assert(!html.includes('abc1234567890'));}
 console.log('PASS: collapsed publication evidence, unique accessible names, full revisions/timestamps, provenance fallback, record-ID search/export, escaped fields and unauthorized non-disclosure.');
+
+html=await activityResponse(req('',admin),env,detailed).text();
+const scope=html.match(/<details class="log-scope">([\s\S]*?)<\/details>/);
+assert(scope,'log scope is an initially collapsed native disclosure');
+assert(scope[1].includes('<summary>What this log includes</summary>'));
+assert(scope[1].includes('private conversations'));assert(scope[1].includes('Actor identity is unknown'));
+const visibleNotice=html.slice(html.indexOf('<div class="note">'),html.indexOf('<details class="log-scope">'));
+assert(visibleNotice.includes('Visitor tracking is off'));assert(visibleNotice.includes('through version 222'));assert(visibleNotice.includes('Records are not live'));
+assert(html.includes('.table:focus-visible'));assert(html.includes('role="region" aria-label="Build publication records"'));
+assert(!(await activityResponse(req('',{}),env,detailed).text()).includes('What this log includes'));
+console.log('PASS: compact log scope keeps tracking and snapshot limits visible, with optional detail and keyboard region focus.');

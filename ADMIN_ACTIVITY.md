@@ -29,3 +29,5 @@ Each publication has an initially collapsed Publication evidence section. It sho
 ## Clean deployment output
 
 `build-admin.mjs` removes only the generated `server-app/dist` before a framework build. Original `dist/` game assets and authored server files are retained. A failed framework build leaves the previous root `dist/server` and `dist/client` intact; a successful build replaces them and verifies their file lists against the fresh output. Build immediately before packaging, and compare the final archive with the fresh framework output before saving. If scratch output retains obsolete files after a build, independently replace `dist/server` and `dist/client` from the successful `server-app/dist` output, then package the validated build without rebuilding. Do not publish an archive that fails comparison.
+
+The tracking-off notice, snapshot coverage and non-live status remain visible. Expand **What this log includes** for scope limitations and actor-identity details. The records region has a visible keyboard-focus outline for horizontal scrolling.
