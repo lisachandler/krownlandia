@@ -19,6 +19,11 @@ find('leaderboard');assert(!$('#helpEntry-2-5').hidden);assert($('#helpEntry-2-5
 find('living sim portal');assert(!$('#helpEntry-1-10').hidden);assert($('#helpEntry-1-10').children[1].textContent.includes('Accounts and progress are separate'));
 find('signal sticker');assert(!$('#helpEntry-1-11').hidden);assert.equal($('#helpSearchCount').textContent,'1 help topic found.');assert($('#helpEntry-1-11').children[1].textContent.includes('has not yet been imported'));
 find('maxigram');assert(!$('#helpEntry-1-10').hidden);assert(!$('#helpEntry-1-11').hidden);assert.equal($('#helpSearchCount').textContent,'2 help topics found.');
+find('clear-view');assert(!$('#helpEntry-1-2').hidden);
+find('WHAT’S HAPPENING');assert(!$('#helpEntry-1-8').hidden);
+find("what's happening");assert(!$('#helpEntry-1-8').hidden);
+find('réady, rewards');assert(!$('#helpEntry-1-5').hidden);assert($('#helpEntry-1-5').children[1].textContent.includes('unclaimed task rewards'));
+find('!!!');assert($('#helpSearchCount').hidden);assert(!$('#helpSection-0').hidden);assert(!$('#helpSection-0').open);assert($('#helpSection-1').open);
 find('no-such-help');assert($('#helpSearchCount').textContent.includes('No matching help'));assert($('#helpSection-0').hidden);assert(!clear.hidden);
 $('#parkHelpClose').onclick();$('#helpButton').onclick();assert.equal(search.value,'no-such-help');
 let focused=false;search.focus=()=>{focused=true;};clear.onclick();assert(focused);assert.equal(search.value,'');assert(clear.hidden);assert(!$('#helpSection-0').open);assert($('#helpSection-1').open);assert(!$('#helpSection-2').open);assert(!$('#helpEntry-2-2').hidden);
