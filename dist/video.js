@@ -9,16 +9,25 @@ export function installVideo({renderer,pause=()=>{},getContext=()=>({})}){
  const preview=make('video','videoPreview');preview.controls=true;preview.playsInline=true;preview.hidden=true;preview.setAttribute('aria-label','Your recorded Krownlandia clip');
  const download=make('a','videoDownload','Download clip');download.hidden=true;
  const start=make('button','videoStart','Start recording');
+ const discard=make('button','videoDiscard','Discard clip');discard.hidden=true;
+ const confirm=make('div','videoDiscardConfirm');confirm.hidden=true;confirm.setAttribute('role','group');confirm.setAttribute('aria-labelledby','videoDiscardQuestion');
+ const question=make('p','videoDiscardQuestion','Discard this clip from the page? This cannot be undone. Any file already downloaded is kept.');
+ const keep=make('button','videoKeep','Keep clip'),remove=make('button','videoDiscardNow','Discard this clip');confirm.append(question,keep,remove);
  const close=make('button','videoClose','Back to the world');
  const note=make('p','videoNote','Clips stay in this page only. Download before recording a replacement or leaving. Nothing is uploaded or included in progress backups.');
- dialog.append(title,intro,status,preview,download,start,close,note);document.body.append(dialog);
+ dialog.append(title,intro,status,preview,download,discard,confirm,start,close,note);document.body.append(dialog);
  const stop=make('button','videoStop','Stop recording');stop.hidden=true;document.body.append(stop);
  const css=make('link','videoStyle');css.rel='stylesheet';css.href='video.css';document.head.append(css);
  const canvas=renderer.domElement,Recorder=globalThis.MediaRecorder;
- let active=null,clipUrl=null,interval=null,timeout=null,readyNotice=false,issue=false;
+ let active=null,clipUrl=null,interval=null,timeout=null,readyNotice=false,issue=false,discardPending=false;
  const supported=typeof Recorder==='function'&&typeof canvas.captureStream==='function';
  const unavailable=()=>renderer.getContext?.()?.isContextLost?.()===true;
- function controls(){nav.textContent=active?'Recording…':clipUrl?'Video ready · preview':issue?'Recording issue':'Record video';start.disabled=!supported||!!active||unavailable();start.textContent=clipUrl?'Record new clip (replace current)':'Start recording';stop.hidden=!active&&!readyNotice;if(!active){stop.disabled=false;stop.textContent=issue?'Recording issue':'Preview clip';}}
+ function controls(){nav.textContent=active?'Recording…':clipUrl?'Video ready · preview':issue?'Recording issue':'Record video';start.disabled=!supported||!!active||unavailable()||discardPending;discard.hidden=!clipUrl||!!active;confirm.hidden=!discardPending;start.textContent=clipUrl?'Record new clip (replace current)':'Start recording';stop.hidden=!active&&!readyNotice;if(!active){stop.disabled=false;stop.textContent=issue?'Recording issue':'Preview clip';}}
+ function cancelDiscard(){discardPending=false;controls();}
+ function releaseClip(){preview.pause();preview.removeAttribute('src');preview.load?.();if(clipUrl)URL.revokeObjectURL(clipUrl);clipUrl=null;preview.hidden=true;download.hidden=true;download.removeAttribute('href');download.removeAttribute('download');}
+ discard.onclick=()=>{if(!dialog.open||discard.disabled||!clipUrl||active||discardPending)return;discardPending=true;controls();keep.focus?.();};
+ keep.onclick=()=>{if(!dialog.open||keep.disabled||!discardPending)return;cancelDiscard();discard.focus?.();};
+ remove.onclick=()=>{if(!dialog.open||remove.disabled||!discardPending||!clipUrl||active)return;releaseClip();discardPending=false;readyNotice=false;issue=false;status.textContent='Clip discarded from this page. Downloaded files and park progress are unchanged.';controls();start.focus?.();};
  function cleanup(session){clearInterval(interval);clearTimeout(timeout);clearTimeout(session.stopTimer);interval=timeout=null;for(const track of session.stream.getTracks())track.stop();}
  function finish(session){
   if(active!==session)return;cleanup(session);active=null;controls();
@@ -34,8 +43,8 @@ export function installVideo({renderer,pause=()=>{},getContext=()=>({})}){
   try{if(session.recorder.state!=='inactive')session.recorder.stop();else finish(session);}catch{session.failed=true;finish(session);}
  }
  function open(){if(dialog.open)return;readyNotice=false;pause();controls();dialog.showModal();}
- nav.onclick=()=>{if(!nav.disabled)open();};close.onclick=()=>{if(dialog.open&&!close.disabled){preview.pause();dialog.close();pause();}};
- dialog.addEventListener('close',()=>preview.pause());
+ nav.onclick=()=>{if(!nav.disabled)open();};close.onclick=()=>{if(dialog.open&&!close.disabled){preview.pause();cancelDiscard();dialog.close();pause();}};
+ dialog.addEventListener('close',()=>{preview.pause();cancelDiscard();});
  start.onclick=()=>{
   if(!dialog.open||start.disabled||active)return;
   let stream;try{
@@ -47,7 +56,7 @@ export function installVideo({renderer,pause=()=>{},getContext=()=>({})}){
    recorder.ondataavailable=e=>{if(active!==session||!e.data?.size)return;session.bytes+=e.data.size;if(session.bytes>24*1024*1024){session.failed=true;session.failureMessage='This recording reached its memory limit and was discarded. Try a shorter clip or Lightweight graphics.';end('Recording reached its memory limit.');return;}session.chunks.push(e.data);};
    recorder.onstop=()=>finish(session);recorder.onerror=()=>{if(active!==session)return;session.failed=true;session.failureMessage='The browser interrupted recording. Try again or use Take photo.';end('Recording was interrupted.');};
    active=session;recorder.start(1000);readyNotice=false;issue=false;
-   if(clipUrl){preview.pause();preview.removeAttribute('src');URL.revokeObjectURL(clipUrl);clipUrl=null;}preview.hidden=true;download.hidden=true;download.removeAttribute('href');
+   releaseClip();
    status.textContent='Recording the 3D scene. Stop anytime; recording ends after 30 seconds.';stop.disabled=false;controls();dialog.close();
    interval=setInterval(()=>{if(active===session)stop.textContent='Stop recording · '+Math.min(30,Math.floor((Date.now()-session.started)/1000))+'/30s';},1000);
    stop.textContent='Stop recording · 0/30s';timeout=setTimeout(()=>end('30-second clip finished.'),30000);
