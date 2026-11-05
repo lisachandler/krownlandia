@@ -3,7 +3,7 @@ import * as T from './vendor/three.module.js';
 const CONFIRMED_EVENTS=[];
 export function installEventCalendar({pause,rewards,events=CONFIRMED_EVENTS,clock=()=>Date.now()}){
  const venues={square:{x:-7.5,z:50,name:'Town Square stage'},library:{x:30,z:40,name:'Library of Alexandria reading desk'},clubhouse:{x:-30,z:147,name:'Krownlandia Clubhouse Place Managers board'}};
- const anytime=[{id:'circus',name:'Crown Circus',point:{x:39,z:-51,name:'Crown Circus entrance'},description:'Enter the tent and choose Watch the circus show.'},{id:'safari',name:'Krownlandia Safari',point:{x:47,z:-26,name:'Safari boarding area'},description:'Approach the jeep and choose Board the safari.'},{id:'journey',name:'The Great Journey',point:{x:-30,z:-34,name:'The Great Journey boarding area'},description:'At the boarding area, choose Board The Great Journey.'}];
+ const anytime=[{id:'circus',name:'Crown Circus',point:{x:39,z:-51,name:'Crown Circus entrance'},description:'Enter the tent and choose Watch the circus show.'},{id:'safari',name:'Krownlandia Safari',point:{x:47,z:-26,name:'Safari boarding area'},description:'Approach the jeep and choose Board the safari.'},{id:'journey',name:'The Great Journey',point:{x:-30,z:-34,name:'The Great Journey boarding area'},description:'At the boarding area, choose Board The Great Journey.'},{id:'library',name:'Library of Alexandria',point:{x:30,z:40,name:'Library of Alexandria reading desk'},description:'Explore the three readings at the desk at your own pace. Original place idea: @Jauregui9821.'},{id:'produce',name:'Community Produce Garden',point:{x:-37,z:53,name:'Community Produce Garden watering bench'},description:'Visit the vegetable beds and use the watering bench if you have not tended them yet. Original place idea: @lisachandler.'}];
  const explicitTime=value=>typeof value==='string'&&/T.*(?:Z|[+-]\d{2}:\d{2})$/.test(value)&&Number.isFinite(Date.parse(value));
  const valid=events.filter(e=>e&&typeof e.id==='string'&&/^[a-z0-9-]+$/.test(e.id)&&typeof e.title==='string'&&e.title.trim()&&typeof e.description==='string'&&Object.hasOwn(venues,e.venue)&&['confirmed','canceled','postponed'].includes(e.status)&&explicitTime(e.start)&&explicitTime(e.end)&&Date.parse(e.end)>Date.parse(e.start));
  const dates=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
@@ -11,7 +11,7 @@ export function installEventCalendar({pause,rewards,events=CONFIRMED_EVENTS,cloc
  const title=document.createElement('h2');title.id='eventCalendarTitle';title.textContent='What’s happening';
  const intro=document.createElement('p');intro.textContent='Event times are shown in Pacific Time. Status follows the published schedule, not a live attendance feed. Other visitors are not yet visible in this prototype.';
  const list=document.createElement('div');list.id='eventCalendarList';const updated=document.createElement('p');updated.id='eventCalendarUpdated';
- const activities=document.createElement('details');activities.id='eventCalendarAnytime';const summary=document.createElement('summary');summary.textContent='Available anytime · rides and performances';activities.append(summary);
+ const activities=document.createElement('details');activities.id='eventCalendarAnytime';const summary=document.createElement('summary');summary.textContent='Available anytime · rides and discovery';activities.append(summary);
  let revision=0,lastMinute=null,lastStatus='',directions=[];
  const statusKey=now=>JSON.stringify(valid.filter(e=>Date.parse(e.end)>now).map(e=>[e.id,e.status,e.status==='confirmed'&&Date.parse(e.start)<=now]));
  function direction(label,id,point,enabled=()=>true){const b=document.createElement('button');b.id=id;b.textContent=label;const version=revision;directions.push({id,button:b});b.onclick=()=>{if(!dialog.open||b.disabled||version!==revision||!enabled())return;pause();rewards.guideToPoint({...point});dialog.close();};return b;}
@@ -21,11 +21,11 @@ export function installEventCalendar({pause,rewards,events=CONFIRMED_EVENTS,cloc
   activities.replaceChildren(summary);for(const a of anytime){const p=document.createElement('p');p.textContent=a.description;activities.append(direction('Walk to '+a.name,'eventAnytime-'+a.id,a.point),p);}
   if(focused)(directions.find(d=>d.id===focused)?.button||refresh).focus();
  }
- const refresh=document.createElement('button');refresh.id='eventCalendarRefresh';refresh.textContent='Refresh event status';refresh.onclick=()=>{if(dialog.open)render();};
- const close=document.createElement('button');close.id='eventCalendarClose';close.textContent='Back to the world';close.onclick=()=>{if(dialog.open){pause();dialog.close();}};
+ const refresh=document.createElement('button');refresh.id='eventCalendarRefresh';refresh.textContent='Refresh event status';refresh.onclick=()=>{if(dialog.open&&!refresh.disabled)render();};
+ const close=document.createElement('button');close.id='eventCalendarClose';close.textContent='Back to the world';close.onclick=()=>{if(dialog.open&&!close.disabled){pause();dialog.close();}};
  dialog.append(title,intro,updated,list,activities,refresh,close);document.body.append(dialog);const css=document.createElement('link');css.rel='stylesheet';css.href='events.css';document.head.append(css);
  function open(){pause();if(!dialog.open)activities.open=false;render();if(!dialog.open)dialog.showModal();}
- const nav=document.createElement('button');nav.id='eventsButton';nav.textContent='What’s happening';nav.onclick=open;document.querySelector('nav').append(nav);
+ const nav=document.createElement('button');nav.id='eventsButton';nav.textContent='What’s happening';nav.onclick=()=>{if(!nav.disabled)open();};document.querySelector('nav').append(nav);
  return {open,update(){if(!dialog.open)return;const now=clock();if(Math.floor(now/60000)===lastMinute)return;if(statusKey(now)!==lastStatus)render();else{lastMinute=Math.floor(now/60000);updated.textContent='As of: '+dates.format(now);}},get isOpen(){return !!dialog.open}};
 }
 export function installTownSquare({scene,camera,colliders,pause,rewards,getCurrentSeat=()=>null}){

@@ -8,26 +8,33 @@ export function installPhotography({renderer,scene,camera,getContext=()=>({})}){
  const button=document.createElement('button');button.id='takePhoto';button.textContent='Take photo';button.title='Save the current 3D view as a PNG without menus';document.querySelector('nav').append(button);
  const status=document.createElement('p');status.id='photoStatus';status.hidden=true;status.setAttribute('role','status');document.body.append(status);
  const style=document.createElement('link');style.rel='stylesheet';style.href='photography.css';document.head.append(style);
- let busy=false,timer,graphicsGeneration=0;
+ let busy=false,timer,graphicsGeneration=0,pageGeneration=0,cancelEncoding=null;
+ globalThis.addEventListener?.('pagehide',()=>{pageGeneration++;cancelEncoding?.();clearTimeout(timer);status.hidden=true;});
  renderer.domElement.addEventListener('webglcontextlost',()=>{graphicsGeneration++;});
  const graphicsUnavailable=()=>renderer.getContext?.()?.isContextLost?.()===true;
  function message(text){clearTimeout(timer);status.textContent=text;status.hidden=false;timer=setTimeout(()=>status.hidden=true,6000);}
  async function capture(){
-  if(busy)return false;busy=true;button.disabled=true;
+  if(busy)return false;busy=true;button.disabled=true;const page=pageGeneration;
   try{
    const generation=graphicsGeneration;
    if(graphicsUnavailable()){message('Photo paused while graphics recover. Try again when the 3D view returns.');return false;}
    const context=getContext(),filename=photoFilename(context),location=context.location||'Krownlandia';
    // Capture immediately after drawing, since the normal renderer clears its buffer.
    renderer.render(scene,camera);
-   const blob=await new Promise((resolve,reject)=>renderer.domElement.toBlob(b=>b?resolve(b):reject(Error('Image unavailable')),'image/png'));
+   const blob=await new Promise((resolve,reject)=>{
+    const encodingTimer=setTimeout(()=>reject(Error('Image encoding timed out')),10000);
+    cancelEncoding=()=>{clearTimeout(encodingTimer);reject(Error('Page left during capture'));};
+    try{renderer.domElement.toBlob(b=>{clearTimeout(encodingTimer);b?resolve(b):reject(Error('Image unavailable'));},'image/png');}
+    catch(error){clearTimeout(encodingTimer);reject(error);}
+   });
+   if(page!==pageGeneration)return false;
    if(generation!==graphicsGeneration||graphicsUnavailable()){message('Graphics were interrupted while taking the photo. Try again when the 3D view returns.');return false;}
    const url=URL.createObjectURL(blob),link=document.createElement('a');
    link.href=url;link.download=filename;link.hidden=true;document.body.append(link);
    try{link.click();}finally{link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
    message(location+' photo sent to your browser’s downloads.');return true;
-  }catch{message('Photo could not be saved. Try again or use a screenshot.');return false;}
-  finally{busy=false;button.disabled=false;}
+  }catch{if(page===pageGeneration)message('Photo could not be saved. Try again or use a screenshot.');return false;}
+  finally{cancelEncoding=null;busy=false;button.disabled=false;}
  }
  button.onclick=capture;return capture;
 }

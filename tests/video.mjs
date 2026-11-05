@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import {installVideo} from '../dist/video.js';
-const nodes=new Map(),events={},canvasEvents={},timers=new Map();let next=0,stopped=0,revoked=[],captureArgs=[],urls=0;
+const nodes=new Map(),events={},canvasEvents={},windowEvents={},timers=new Map();let next=0,stopped=0,revoked=[],captureArgs=[],urls=0;
 const el=()=>({children:[],attributes:{},hidden:false,disabled:false,open:false,append(...v){this.children.push(...v)},set id(v){this._id=v;nodes.set(v,this)},get id(){return this._id},setAttribute(k,v){this.attributes[k]=v},removeAttribute(k){delete this[k]},addEventListener(k,f){(this.listeners??={})[k]=f},showModal(){this.open=true},close(){this.open=false},pause(){}});
+globalThis.addEventListener=(k,f)=>windowEvents[k]=f;
 globalThis.document={head:el(),body:el(),hidden:false,createElement:el,querySelector:()=>nav,addEventListener:(k,f)=>events[k]=f};const nav=el();
 globalThis.setTimeout=(f,ms)=>{timers.set(++next,{f,ms});return next};globalThis.setInterval=globalThis.setTimeout;globalThis.clearTimeout=id=>timers.delete(id);globalThis.clearInterval=globalThis.clearTimeout;
 URL.createObjectURL=()=>`blob:test-${++urls}`;URL.revokeObjectURL=u=>revoked.push(u);
@@ -27,5 +28,17 @@ $('videoDiscard').onclick();$('videoClose').onclick();assert(!video.isOpen);$('v
 $('videoDiscard').onclick();$('videoDiscardNow').disabled=true;$('videoDiscardNow').onclick();assert.equal(revoked.length,revokesBefore);$('videoDiscardNow').disabled=false;$('videoDiscardNow').onclick();assert.equal(revoked.length,revokesBefore+1);assert.equal(revoked.at(-1),clipBeforeDiscard);assert($('videoPreview').hidden);assert($('videoDownload').hidden);assert.equal($('videoDownload').href,undefined);assert($('videoDiscard').hidden);assert.equal($('recordVideo').textContent,'Record video');assert(!$('videoStart').disabled);assert($('videoStatus').textContent.includes('park progress are unchanged'));
 $('videoDiscardNow').onclick();assert.equal(revoked.length,revokesBefore+1);$('videoStart').onclick();assert(video.recording);$('videoStop').onclick();assert(!$('videoDownload').hidden);
 console.log('PASS: discard confirmation, keep/cancel, disabled/closed guards, URL release and recording after discard.');
+// Leaving must release resources synchronously, even with a pending stop event.
+$('recordVideo').onclick();$('videoDiscard').onclick();const leavingUrl=$('videoPreview').src;windowEvents.pagehide();assert.equal(revoked.at(-1),leavingUrl);assert($('videoPreview').hidden);assert.equal($('videoPreview').src,undefined);assert.equal($('videoDownload').href,undefined);assert($('videoDiscardConfirm').hidden);assert(!$('videoStart').disabled);assert.equal($('recordVideo').textContent,'Record video');assert($('videoStatus').textContent.includes('cleared when you left'));
+for(const stopping of [false,true]){
+ deferStop=true;$('videoStart').onclick();const late=recorder; if(stopping)$('videoStop').onclick();const before=stopped;windowEvents.pagehide();assert(!video.recording);assert.equal(stopped,before+1);assert.equal(timers.size,0);assert($('videoStop').hidden);assert($('videoDownload').hidden);
+ late.ondataavailable({data:new Blob(['late'])});late.onstop();late.onerror();assert($('videoDownload').hidden);assert.equal(timers.size,0);
+ $('recordVideo').onclick();deferStop=false;$('videoStart').onclick();assert(video.recording);late.onerror();assert(video.recording);$('videoStop').onclick();assert(!$('videoDownload').hidden);$('recordVideo').onclick();
+}
+console.log('PASS: page exit clears ready clips, pending confirmation, active/pending capture, timers and stale callbacks; restored-page retry works.');
+// Stop remains reachable inside the modal while recording.
+$('recordVideo').onclick();deferStop=true;$('videoStart').onclick();assert(video.recording);$('videoPanelStop').onclick();assert.equal(recorder.state,'recording','closed-panel stop is inert');$('recordVideo').onclick();assert(video.isOpen);assert(!$('videoPanelStop').hidden);assert(!$('videoPanelStop').disabled);
+$('videoPanelStop').disabled=true;$('videoPanelStop').onclick();assert.equal(recorder.state,'recording');$('videoPanelStop').disabled=false;$('videoPanelStop').onclick();assert(video.recording);assert($('videoPanelStop').disabled);assert.equal($('videoPanelStop').textContent,'Finishing clip…');$('videoPanelStop').onclick();complete();assert(!video.recording);assert($('videoPanelStop').hidden);assert(!$('videoDownload').hidden);assert(video.isOpen);assert($('videoStop').hidden);deferStop=false;
+console.log('PASS: in-panel stop, closed/disabled guards, finishing state and preview without leaving the modal.');
 globalThis.MediaRecorder=undefined;installVideo({renderer:{domElement:canvas}});assert($('videoStart').disabled);assert($('videoStatus').textContent.includes('does not support'));
 console.log('PASS: silent canvas capture, start/stop, timed/hidden/context stops, replacement cleanup, failed-start retention, memory limit and unsupported browsers.');

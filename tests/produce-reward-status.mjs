@@ -1,0 +1,11 @@
+import './school-seating.mjs';
+import assert from 'node:assert/strict';
+import * as T from '../dist/vendor/three.module.js';
+import {installProduceGarden} from '../dist/produce-garden.js';
+const $=s=>document.querySelector(s),camera=new T.PerspectiveCamera();camera.position.set(-37,1.75,53);let state={claims:[],done:[],saved:true},guided=null;
+const garden=installProduceGarden({scene:new T.Scene(),camera,colliders:[],pause(){},rewards:{state:()=>state,completeProduce(){state.done=['produce-water'];},guideTo:id=>guided=id,guideToPoint(){}}});
+const button=$('#produceRewards');assert(garden.open());assert.equal(button.textContent,'Find garden rewards');$('#produceWater').onclick();assert.equal(button.textContent,'Find my 20-point garden reward');assert($('#produceStatus').textContent.includes('20 task points'));const before=JSON.stringify(state);button.onclick();assert.equal(guided,'produce');assert(!garden.isOpen);assert.equal(JSON.stringify(state),before);
+state={claims:['produce:task'],done:['produce-water'],saved:true};assert(garden.open());assert.equal(button.textContent,'Revisit garden rewards · task claimed');$('#produceWater').onclick();assert.equal(button.textContent,'Revisit garden rewards · task claimed');$('#produceClose').onclick();
+state={claims:[],done:['produce-water'],saved:false};assert(garden.open());assert.equal(button.textContent,'Find my 20-point garden reward');assert($('#produceStatus').textContent.includes('storage is unavailable'));$('#produceClose').onclick();
+state={claims:[],done:[],saved:true};assert(garden.open());assert.equal(button.textContent,'Find garden rewards');
+console.log('PASS: produce reward labels track unfinished, ready, claimed, unsaved and restored progress; guidance leaves claims unchanged.');

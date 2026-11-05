@@ -40,7 +40,7 @@ Krownlandia predates this prototype. Its recorded community origins date to Janu
 
 ## Publication and licensing
 
-This source snapshot corresponds to hosted version 233. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
+This source snapshot corresponds to hosted version 252. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
 
 Three.js retains its license at `dist/vendor/LICENSE`. No project-wide open-source license has been selected; public visibility alone does not grant a general license to reuse project code, community material, branding or artwork.
 
@@ -73,3 +73,8 @@ The hosted `/admin/activity` page is restricted to the configured administrator 
 ## Scene video
 
 Activities → Record video captures up to 30 seconds of silent canvas video in supported browsers. Stop, preview and download manually. Clips stay in the page, are not uploaded or included in progress backups, and should be downloaded before recording a replacement or leaving. Actual codec/playback testing remains pending; lifecycle, gameplay and deployment checks are covered.
+
+## November 5 snapshot
+
+Includes optional Riverbend practice pottery (session-only, no reward changes), recovery improvements and visitor reports. Run `node scripts/check-release.mjs` for the selected source checks; see RELEASE_CHECKS.md for the built-artifact mode. Live rendering and codec verification remain pending.
+

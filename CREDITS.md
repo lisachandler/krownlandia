@@ -18,3 +18,4 @@ Public community information: https://www.krownlandia.com/
 Third-party software: Three.js, with its license preserved at dist/vendor/LICENSE.
 
 Internal development logs and hosting configuration are not part of this public source snapshot.
+

@@ -9,20 +9,21 @@ export function installVideo({renderer,pause=()=>{},getContext=()=>({})}){
  const preview=make('video','videoPreview');preview.controls=true;preview.playsInline=true;preview.hidden=true;preview.setAttribute('aria-label','Your recorded Krownlandia clip');
  const download=make('a','videoDownload','Download clip');download.hidden=true;
  const start=make('button','videoStart','Start recording');
+ const panelStop=make('button','videoPanelStop','Stop recording');panelStop.hidden=true;
  const discard=make('button','videoDiscard','Discard clip');discard.hidden=true;
  const confirm=make('div','videoDiscardConfirm');confirm.hidden=true;confirm.setAttribute('role','group');confirm.setAttribute('aria-labelledby','videoDiscardQuestion');
  const question=make('p','videoDiscardQuestion','Discard this clip from the page? This cannot be undone. Any file already downloaded is kept.');
  const keep=make('button','videoKeep','Keep clip'),remove=make('button','videoDiscardNow','Discard this clip');confirm.append(question,keep,remove);
  const close=make('button','videoClose','Back to the world');
  const note=make('p','videoNote','Clips stay in this page only. Download before recording a replacement or leaving. Nothing is uploaded or included in progress backups.');
- dialog.append(title,intro,status,preview,download,discard,confirm,start,close,note);document.body.append(dialog);
+ dialog.append(title,intro,status,preview,download,discard,confirm,start,panelStop,close,note);document.body.append(dialog);
  const stop=make('button','videoStop','Stop recording');stop.hidden=true;document.body.append(stop);
  const css=make('link','videoStyle');css.rel='stylesheet';css.href='video.css';document.head.append(css);
  const canvas=renderer.domElement,Recorder=globalThis.MediaRecorder;
  let active=null,clipUrl=null,interval=null,timeout=null,readyNotice=false,issue=false,discardPending=false;
  const supported=typeof Recorder==='function'&&typeof canvas.captureStream==='function';
  const unavailable=()=>renderer.getContext?.()?.isContextLost?.()===true;
- function controls(){nav.textContent=active?'Recording…':clipUrl?'Video ready · preview':issue?'Recording issue':'Record video';start.disabled=!supported||!!active||unavailable()||discardPending;discard.hidden=!clipUrl||!!active;confirm.hidden=!discardPending;start.textContent=clipUrl?'Record new clip (replace current)':'Start recording';stop.hidden=!active&&!readyNotice;if(!active){stop.disabled=false;stop.textContent=issue?'Recording issue':'Preview clip';}}
+ function controls(){panelStop.hidden=!active;panelStop.disabled=!active||!!active.stopping;panelStop.textContent=active?.stopping?'Finishing clip…':'Stop recording';nav.textContent=active?'Recording…':clipUrl?'Video ready · preview':issue?'Recording issue':'Record video';start.disabled=!supported||!!active||unavailable()||discardPending;discard.hidden=!clipUrl||!!active;confirm.hidden=!discardPending;start.textContent=clipUrl?'Record new clip (replace current)':'Start recording';stop.hidden=!active&&!readyNotice;if(!active){stop.disabled=false;stop.textContent=issue?'Recording issue':'Preview clip';}}
  function cancelDiscard(){discardPending=false;controls();}
  function releaseClip(){preview.pause();preview.removeAttribute('src');preview.load?.();if(clipUrl)URL.revokeObjectURL(clipUrl);clipUrl=null;preview.hidden=true;download.hidden=true;download.removeAttribute('href');download.removeAttribute('download');}
  discard.onclick=()=>{if(!dialog.open||discard.disabled||!clipUrl||active||discardPending)return;discardPending=true;controls();keep.focus?.();};
@@ -38,7 +39,7 @@ export function installVideo({renderer,pause=()=>{},getContext=()=>({})}){
   issue=false;readyNotice=!dialog.open;status.textContent='Clip ready. Preview and download it before leaving.';controls();
  }
  function end(reason='Recording stopped.'){
-  if(!active||active.stopping)return;const session=active;session.stopping=true;clearInterval(interval);clearTimeout(timeout);stop.disabled=true;stop.textContent='Finishing clip…';status.textContent=reason;
+  if(!active||active.stopping)return;const session=active;session.stopping=true;controls();clearInterval(interval);clearTimeout(timeout);stop.disabled=true;stop.textContent='Finishing clip…';status.textContent=reason;
   session.stopTimer=setTimeout(()=>{if(active!==session)return;session.failed=true;session.failureMessage='The browser did not finish this recording. The incomplete clip was discarded; you can try again or use Take photo.';finish(session);},10000);
   try{if(session.recorder.state!=='inactive')session.recorder.stop();else finish(session);}catch{session.failed=true;finish(session);}
  }
@@ -62,11 +63,17 @@ export function installVideo({renderer,pause=()=>{},getContext=()=>({})}){
    stop.textContent='Stop recording · 0/30s';timeout=setTimeout(()=>end('30-second clip finished.'),30000);
   }catch{if(stream)for(const t of stream.getTracks())t.stop();active=null;controls();status.textContent='Video recording is unavailable right now. Try another browser or use Take photo.';}
  };
+ panelStop.onclick=()=>{if(dialog.open&&!panelStop.disabled&&!panelStop.hidden&&active)end();};
  stop.onclick=()=>{if(stop.disabled||stop.hidden)return;if(active)end();else if(readyNotice&&(clipUrl||issue))open();};
  document.addEventListener('visibilitychange',()=>{if(document.hidden)end('Recording stopped when this page was hidden.');});
  canvas.addEventListener('webglcontextlost',()=>end('Recording stopped while graphics recover.'));
  canvas.addEventListener('webglcontextrestored',controls);
- globalThis.addEventListener?.('pagehide',()=>{if(active){active.failed=true;end();}if(clipUrl){URL.revokeObjectURL(clipUrl);clipUrl=null;}});
+ globalThis.addEventListener?.('pagehide',()=>{
+  const session=active;active=null;
+  if(session){cleanup(session);session.chunks=[];try{if(session.recorder.state!=='inactive')session.recorder.stop();}catch{}}
+  releaseClip();discardPending=false;readyNotice=false;issue=false;
+  status.textContent=supported?'Page-local clips were cleared when you left. You can record a new clip; downloaded files are unchanged.':'This browser does not support scene recording. You can still use Take photo.';controls();
+ });
  status.textContent=supported?'Ready when you are.':'This browser does not support scene recording. You can still use Take photo.';controls();
  return {get isOpen(){return dialog.open},get recording(){return !!active}};
 }
