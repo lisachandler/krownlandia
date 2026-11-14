@@ -21,6 +21,13 @@ try {
   assert.equal(runChecks([['timeout','hang.mjs'],['must not run','after.mjs']], {...options, timeout: 100}), 1);
   assert(!existsSync(join(cwd, 'unexpected')));
   assert(logs.some(x => x.includes('timed out')));
+  logs.length = 0;
+  assert.equal(runChecks([['missing suite','missing.mjs'],['must not run','after.mjs']], options), 1);
+  assert(!existsSync(join(cwd, 'unexpected')));
+  writeFileSync(join(cwd, 'signal.mjs'), "process.kill(process.pid,'SIGTERM');");
+  assert.equal(runChecks([['signal','signal.mjs'],['must not run','after.mjs']], options), 1);
+  assert(!existsSync(join(cwd, 'unexpected')));
+  assert(logs.some(x=>x.includes('SIGTERM')));
   const invalid = spawnSync(process.execPath, [new URL('../scripts/check-release.mjs', import.meta.url).pathname, '--unknown'], {cwd});
   assert.equal(invalid.status, 2);
   console.log('PASS: release runner reports success limits, stops after failure/timeout, skips later suites and rejects unknown options.');

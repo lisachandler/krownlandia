@@ -4,10 +4,19 @@ import {resolve} from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 export const CORE_CHECKS = [
+  ['Whispering Pines story controls', 'tests/whispering-pines.mjs'],
+  ['Whispering Pines actual-scene routes and seating', 'tests/whispering-pines-survey.mjs'],
+  ['Stonehearth pattern activity', 'tests/stonehearth-craft.mjs'],
+  ['Stonehearth actual-scene routes', 'tests/stonehearth-survey.mjs'],
   ['Saved visits', 'tests/visit.mjs'],
   ['Backup compatibility and rollback', 'tests/backup.mjs'],
   ['Reward eligibility', 'tests/rewards.mjs'],
   ['Reward history and time boundaries', 'tests/reward-history.mjs'],
+  ['Eldergrove decorative woodcraft', 'tests/eldergrove-craft.mjs'],
+  ['Riverbend pottery activity', 'tests/riverbend-craft.mjs'],
+  ['Meadowbrook weaving activity', 'tests/meadow-weaving.mjs'],
+  ['Meadowbrook market and village integration', 'tests/meadow-market.mjs'],
+  ['Meadowbrook full-scene placement and interaction', 'tests/meadow-placement.mjs'],
   ['Deterministic gameplay walkthrough', 'tests/smoke.mjs'],
   ['Walking routes and unchanged progress', 'tests/walk-routes.mjs'],
   ['Administrator authorization and exports', 'tests/admin-activity.mjs'],

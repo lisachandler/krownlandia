@@ -12,7 +12,7 @@ import {createVisit} from '../dist/visit-core.js';
 globalThis.createVisit=createVisit;
 import {STATIONS,createRewards} from '../dist/rewards-core.js';
 const nodes=new Map(),handlers={},ctx={fillRect(){},strokeRect(){},fillText(){},measureText(text){return{width:text.length*(parseFloat(this.font)||48)*.6}}};
-function el(){return{set id(v){nodes.set('#'+v,this)},style:{},classList:{values:new Set(),add(v){this.values.add(v)},remove(v){this.values.delete(v)},toggle(v,on){if(on)this.values.add(v);else this.values.delete(v)},contains(v){return this.values.has(v)}},children:[],firstElementChild:{style:{}},append(...v){this.children.push(...v)},replaceChildren(...v){this.children=v},addEventListener(){},setAttribute(){},click(){this.clicked=true},focus(){document.activeElement=this},toBlob(callback){callback(new Blob(['mock PNG'],{type:'image/png'}))},remove(){},getContext(){return ctx},showModal(){this.open=true},close(){this.open=false}}}
+function el(){return{set id(v){nodes.set('#'+v,this)},style:{},dataset:{},classList:{values:new Set(),add(v){this.values.add(v)},remove(v){this.values.delete(v)},toggle(v,on){if(on)this.values.add(v);else this.values.delete(v)},contains(v){return this.values.has(v)}},children:[],firstElementChild:{style:{}},append(...v){this.children.push(...v)},replaceChildren(...v){this.children=v},addEventListener(){},setAttribute(){},click(){this.clicked=true},focus(){document.activeElement=this},toBlob(callback){callback(new Blob(['mock PNG'],{type:'image/png'}))},remove(){},getContext(){return ctx},showModal(){this.open=true},close(){this.open=false}}}
 globalThis.document={head:el(),body:el(),querySelector(s){if(!nodes.has(s))nodes.set(s,el());return nodes.get(s)},createElement:el,addEventListener(){}};
 const saved=new Map();
 saved.set('krownlandia-visit-v1',JSON.stringify({x:2,z:28,yaw:0,pitch:0,night:false}));
@@ -44,6 +44,8 @@ globalThis.installRiverbend=new Function('T',source('riverbend.js')+';return ins
 globalThis.installGeneralStore=new Function('T',source('general-store.js')+';return installGeneralStore;')(T);
 globalThis.installClubhouse=new Function('T',source('clubhouse.js')+';return installClubhouse;')(T);
 globalThis.installProduceGarden=new Function('T',source('produce-garden.js')+';return installProduceGarden;')(T);
+globalThis.installWhisperingPines=new Function('T',source('whispering-pines.js')+';return installWhisperingPines;')(T);
+globalThis.installStonehearth=new Function('T',source('stonehearth.js')+';return installStonehearth;')(T);
 globalThis.installEldergrove=new Function('T',source('eldergrove.js')+';return installEldergrove;')(T);
 globalThis.installLibrary=new Function('T',source('library.js')+';return installLibrary;')(T);
 globalThis.installTownSquare=new Function('T',source('town-square.js')+';return installTownSquare;')(T);

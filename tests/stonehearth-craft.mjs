@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import * as T from '../dist/vendor/three.module.js';
+import {installStonehearth} from '../dist/stonehearth.js';
+const nodes=new Map();let dialog,other=false;
+function el(){const handlers={};return {dataset:{},children:[],attrs:{},set id(id){nodes.set(id,this);if(id==='stonehearthMenu')dialog=this},append(...v){this.children.push(...v)},setAttribute(k,v){this.attrs[k]=v},addEventListener(k,f){handlers[k]=f},focus(){document.activeElement=this},showModal(){this.open=true},close(){this.open=false;handlers.close?.()},getContext(){return {fillRect(){},fillText(){}}}};}
+const trigger=el();globalThis.document={createElement:el,head:el(),body:el(),querySelector:s=>s==='#interact'?trigger:other?{open:true}:dialog?.open?dialog:null};
+let allowed=false,pauses=0;const scene=new T.Scene(),camera=new T.PerspectiveCamera(),colliders=[];camera.position.set(-15,1.75,138);
+const a=installStonehearth({scene,camera,colliders,pause(){pauses++},canUse:()=>allowed});
+const n=id=>nodes.get(id),click=id=>n('stonehearth-'+id).onclick(),status=()=>n('stonehearthStatus').textContent;
+assert(!a.open());allowed=true;other=true;assert(!a.open());other=false;assert(a.open());assert.equal(document.activeElement,n('stonehearthClose'));assert(!n('stonehearthPractice').open);click('tile0');assert.match(status(),/Top left: empty/);n('stonehearthPractice').open=true;
+const meshes=a.root.children.length,materials=new Set(a.root.children.map(x=>x.material)).size;
+for(let pattern=0;pattern<16;pattern++){for(let i=0;i<4;i++){const surface=pattern&(1<<i)?'Striped':'Smooth';click(surface);click('tile'+i);assert.match(n('stonehearth-tile'+i).textContent,new RegExp(surface));}click('finish');assert.match(status(),/^Finished/);assert.equal(document.activeElement,n('stonehearth-reset'));const done=status();click('tile0');assert.equal(status(),done);click('reset');assert.equal(document.activeElement,n('stonehearth-Smooth'));}
+click('tile0');const before=status();n('stonehearthClose').onclick();assert.equal(document.activeElement,trigger);click('tile1');assert.equal(status(),before);assert(a.open());assert.equal(status(),before);n('stonehearthPractice').open=true;allowed=false;click('tile1');assert.equal(status(),before);allowed=true;camera.position.set(0,1.75,0);click('tile1');assert.equal(status(),before);n('stonehearthClose').onclick();assert(!a.open());assert.equal(a.root.children.length,meshes);assert.equal(new Set(a.root.children.map(x=>x.material)).size,materials);assert.equal(colliders.length,3);assert.equal(n('stonehearthStatus').attrs.role,'status');assert(pauses>0);
+console.log('PASS 16 stone patterns, closed/collapsed/distant/playing/modal guards, focus return, reopen persistence, fixed scene resources and no storage/rewards dependencies. DOM simulation only.');

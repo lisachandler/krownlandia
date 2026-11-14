@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import * as T from '../dist/vendor/three.module.js';
+import {installWhisperingPines} from '../dist/whispering-pines.js';
+const nodes=new Map();let dialog,other=false,current=null,allowed=false,pauses=0;
+function el(){const handlers={};return {children:[],attrs:{},set id(id){nodes.set(id,this);if(id==='pinesMenu')dialog=this},append(...v){this.children.push(...v)},setAttribute(k,v){this.attrs[k]=v},addEventListener(k,f){handlers[k]=f},focus(){document.activeElement=this},showModal(){this.open=true},close(){this.open=false;handlers.close?.()},getContext(){return {fillRect(){},fillText(){}}}};}
+const trigger=el(),seatedTrigger=el();globalThis.document={createElement:el,head:el(),body:el(),querySelector:s=>s==='#interact'?trigger:other?{open:true}:dialog?.open?dialog:null};globalThis.requestAnimationFrame=f=>f();globalThis.localStorage={setItem(){throw Error('No storage writes permitted')}};
+const camera=new T.PerspectiveCamera();camera.position.set(39,1.75,166.5);const scene=new T.Scene(),colliders=[];
+const options={scene,camera,colliders,pause(){pauses++},canUse:()=>allowed,getCurrentSeat:()=>current};const a=installWhisperingPines(options),n=id=>nodes.get(id),click=i=>n('pinesPrompt'+i).onclick();
+assert(!a.open());allowed=true;other=true;assert(!a.open());other=false;assert(a.open());assert.equal(document.activeElement,n('pinesClose'));assert(!n('pinesPrompts').open);const empty=n('pinesStory').textContent;click(0);assert.equal(n('pinesStory').textContent,empty);n('pinesPrompts').open=true;
+const count=a.root.children.length,materials=new Set(a.root.children.map(x=>x.material)).size;
+for(let repeat=0;repeat<10;repeat++)for(let i=0;i<3;i++){click(i);assert.equal(n('pinesPrompt'+i).attrs['aria-pressed'],'true');assert.match(n('pinesStory').textContent,/Imagine/);}
+const last=n('pinesStory').textContent;n('pinesClose').onclick();assert.equal(document.activeElement,trigger);click(0);assert.equal(n('pinesStory').textContent,last);assert(a.open());assert(!n('pinesPrompts').open);assert.equal(n('pinesStory').textContent,last);n('pinesPrompts').open=true;
+allowed=false;click(0);assert.equal(n('pinesStory').textContent,last);allowed=true;camera.position.set(0,1.75,0);click(0);assert.equal(n('pinesStory').textContent,last);current={kind:'whispering-pines'};click(0);assert.equal(n('pinesStory').textContent,last);n('pinesClose').onclick();assert(!a.open());
+current=a.seats[0];assert(a.open(seatedTrigger));n('pinesPrompts').open=true;click(0);assert.match(n('pinesStory').textContent,/small welcome/);dialog.close();assert.equal(document.activeElement,seatedTrigger);assert.equal(a.root.children.length,count);assert.equal(new Set(a.root.children.map(x=>x.material)).size,materials);assert.equal(a.bounds.length,5);assert.equal(n('pinesStory').attrs.role,'status');assert(pauses>0);
+for(const mesh of a.root.children.filter(x=>x.geometry.type==='ConeGeometry')){assert.equal(mesh.geometry.parameters.radius,1.2);assert.equal(mesh.position.y-mesh.geometry.parameters.height/2,2.4);}
+current=null;installWhisperingPines({...options,scene:new T.Scene(),colliders:[]});assert.equal(n('pinesStory').textContent,empty);
+console.log('PASS three optional prompts, collapse/reopen/reload, standing and exact-seat guards, inactive-play/dialog guards, close/Escape-path focus, fixed geometry/material counts and no storage writes. DOM simulation only.');

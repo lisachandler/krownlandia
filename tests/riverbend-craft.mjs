@@ -22,3 +22,32 @@ seat=river.seats[0];click('waves');click('finish');assert.match($('CraftStatus')
 assert.equal(discoveries,0,'practice does not alter discovery eligibility');
 assert.equal($('CraftStatus').attrs.role,'status');assert.equal($('Vessel').attrs['aria-hidden'],'true');
 console.log('PASS: four pottery designs, step guards, finish/restart, focus target, collapsed reopen, closed/distant guards, seated use and unchanged discovery eligibility. DOM simulation only.');
+
+// Basket practice is independent of pottery/rewards.
+let writes=0;globalThis.localStorage={getItem(){return null},setItem(){writes++}};
+const basket=id=>$('Basket'+id),bclick=id=>basket(id).onclick();
+assert.equal(basket('').open,false);bclick('light');assert.match(basket('Status').textContent,/Bands 0/);
+basket('').open=true;bclick('arched');bclick('Finish');assert.match(basket('Status').textContent,/Bands 0/);
+for(let n=0;n<16;n++)for(const handle of ['arched','low']){
+ const bands=Array.from({length:4},(_,i)=>n&(1<<i)?'dark':'light');
+ bands.forEach(bclick);assert.equal(document.activeElement,basket('arched'));
+ bclick('dark');assert.equal(basket('Preview').children.length,4,'fifth band ignored');
+ bclick(handle);assert.equal(document.activeElement,basket('Finish'));
+ assert.equal(basket(handle).attrs['aria-pressed'],'true');bclick('Finish');
+ assert.equal(document.activeElement,basket('Reset'));assert.match(basket('Status').textContent,new RegExp('Finished basket with a '+handle));
+ assert(basket('Status').textContent.includes(bands.join(', ')));const result=basket('Status').textContent;
+ for(const id of ['light','Undo','arched','Finish'])bclick(id);assert.equal(basket('Status').textContent,result);
+ bclick('Reset');assert.equal(document.activeElement,basket('light'));assert(basket('Preview').hidden);
+}
+for(let i=0;i<4;i++)bclick('light');bclick('low');bclick('Undo');assert.equal(basket('Finish').disabled,true);assert.equal(basket('low').attrs['aria-pressed'],'false');assert.equal(document.activeElement,basket('light'));
+bclick('dark');assert.match(basket('Status').textContent,/Choose a handle/);bclick('arched');bclick('Finish');
+const done=basket('Status').textContent;basket('').open=false;bclick('Reset');assert.equal(basket('Status').textContent,done);
+$('Close').onclick();basket('').open=true;bclick('Reset');assert.equal(basket('Status').textContent,done);
+assert(river.open());assert.equal(basket('').open,false);assert.equal(basket('Status').textContent,done);
+basket('').open=true;seat=null;bclick('Reset');assert.equal(basket('Status').textContent,done,'distant guard');
+seat=river.seats[0];bclick('Reset');assert.match(basket('Status').textContent,/Bands 0/,'bench access');
+assert.equal(discoveries,0);assert.equal(writes,0);assert.equal(basket('Status').attrs.role,'status');assert.equal(basket('Preview').attrs['aria-hidden'],'true');
+assert.match($('CraftStatus').textContent,/Finished: your vase/,'pottery independent');
+installRiverbend({scene:new T.Scene(),camera,colliders:[],pause(){},rewards:{state:()=>({claims:[],done:[],saved:true})},getCurrentSeat:()=>null});
+assert.equal(basket('').open,false);assert.match(basket('Status').textContent,/Bands 0/,'new page starts empty');
+console.log('PASS: all 32 basket patterns/handles, undo invalidation, stage focus, collapsed/closed/distant guards, reopen/reload, seated access, independent pottery and zero storage/reward writes. DOM simulation only.');

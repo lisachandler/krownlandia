@@ -4,3 +4,7 @@
 #selectedHomeDisplay{padding:14px;border:1px solid #b99d57;background:#f5f0df;border-radius:10px;margin-bottom:14px}#selectedHomeDisplay h3{margin-top:0}#selectedHomeDisplay button{margin:4px 6px 0 0}
 
 #currentHomeChoice{padding:14px;border:1px solid #b99d57;border-radius:10px;background:#f5f0df;margin-bottom:14px}#currentHomeChoice h3{margin-top:0}#currentHomeChoice button:disabled{opacity:.65;cursor:default}
+
+#meadowWeaving{padding:12px;border:1px solid #b99d57;border-radius:8px}#meadowWeaving summary{cursor:pointer;font-weight:bold}#meadowWeaving summary:focus-visible{outline:3px solid #315846;outline-offset:3px}.weavingPreview{max-width:240px;margin:12px auto;border:5px solid #76513b}.weavingRow{display:grid;grid-template-columns:repeat(8,1fr);height:18px}.weavingControls{display:flex;flex-wrap:wrap;gap:6px}#meadowWeaving button:disabled{opacity:.55;cursor:default}
+
+#meadowMarket{padding:12px;border:1px solid #b99d57;border-radius:8px}#meadowMarket summary{cursor:pointer;font-weight:bold}#meadowMarket summary:focus-visible{outline:3px solid #315846;outline-offset:3px}#marketBaskets{padding-left:26px}#marketBaskets li{padding:7px;background:#f5f0df;margin:5px 0;border-radius:5px}#meadowMarket button:disabled{opacity:.55;cursor:default}

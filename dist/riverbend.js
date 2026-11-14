@@ -48,6 +48,7 @@ export function installRiverbend({scene,camera,colliders,pause,rewards,getCurren
   craftStatus.textContent=craftFinished?'Finished: your '+design+'. Enjoy it here, or start another piece.':!craftShape?'Step 1 of 3 · Choose a bowl or vase.':!craftPattern?'Step 2 of 3 · Your '+craftShape+' is shaped. Choose a decoration.':'Step 3 of 3 · Your '+design+' is ready to finish.';
  }
  workshop.append(craftSummary,craftNote,shapes,patterns,vessel,craftStatus,finishCraft,resetCraft);dialog.append(workshop);renderCraft();
+ const basket=createBasketPractice({canUse:()=>dialog.open&&canRead()});dialog.append(basket.panel);
  const previewNote=document.createElement('p');previewNote.textContent='Lantern-boat preview · 36 seconds. Watch from the bank or viewing bench. Night view makes the lanterns brighter. This scenic preview does not add points.';
  const startButton=document.createElement('button');startButton.id='riverFestivalStart';startButton.textContent='Start lantern-boat preview';startButton.onclick=()=>{if(!canRead()||!dialog.open)return;start();};
  const benchButton=document.createElement('button');benchButton.id='riverFestivalBench';benchButton.textContent='Find the river viewing bench';benchButton.onclick=()=>{if(!canRead()||!dialog.open)return;pause();rewards.guideToPoint({...seats[0].approach,name:seats[0].name});dialog.close();};dialog.append(previewNote,startButton,benchButton);
@@ -57,5 +58,68 @@ export function installRiverbend({scene,camera,colliders,pause,rewards,getCurren
  function start(){if(active||!inArea())return false;pause();elapsed=0;active=true;held=false;finished=false;dialog.close();hold.hidden=false;hold.textContent='Pause';stop.textContent='Stop';dock.hidden=false;pose(lastNight);label.textContent='Lantern boats · 36s';return true;}
  function update(dt,blocked=false,night=0){lastNight=night;if((active||finished)&&!inArea()){stop.onclick();return;}if(active&&!held&&!blocked){elapsed=Math.min(36,elapsed+Math.max(0,Math.min(dt,.1)));if(elapsed>=36){active=false;finished=true;hold.hidden=true;stop.textContent='Dismiss';}}pose(night);dock.hidden=blocked||(!active&&!finished);if(active)label.textContent=(held||blocked?'Paused · ':'Lantern boats · ')+Math.ceil(36-elapsed)+'s';else if(finished)label.textContent='Preview finished · Visit the display to replay';}
  function refresh(){const st=rewards.state();status.textContent=st.claims.includes('riverbend:task')?'Your Riverbend discovery reward is collected.':st.done.includes('riverbend-board')?'Story explored · 20 task points are ready at the Riverbend rewards station.':'Explore one story to unlock 20 task points.';if(!st.saved)status.textContent+=' Progress lasts for this visit only.';}
- return {seats,boardPoint,start,update,state:()=>({active,paused:held,elapsed,finished}),get near(){return near()},get isOpen(){return dialog.open},open(){if(!canRead()||dialog.open)return false;pause();story.textContent='Choose a Riverbend story to explore.';refresh();refreshVillageLinks();workshop.open=false;dialog.showModal();return true;}};
+ return {seats,boardPoint,start,update,state:()=>({active,paused:held,elapsed,finished}),get near(){return near()},get isOpen(){return dialog.open},open(){if(!canRead()||dialog.open)return false;pause();story.textContent='Choose a Riverbend story to explore.';refresh();refreshVillageLinks();workshop.open=false;basket.panel.open=false;dialog.showModal();return true;}};
+}
+
+// Local practice only: no storage, rewards, timers or network calls.
+function createBasketPractice({canUse}) {
+  const make = (tag, id, text) => {
+    const node = document.createElement(tag);
+    if (id) node.id = 'riverbendBasket' + id;
+    if (text) node.textContent = text;
+    return node;
+  };
+  const panel = make('details', '');
+  panel.id = 'riverbendBasket'; panel.open = false;
+  const summary = make('summary', 'Summary', 'Try basket weaving · optional');
+  const note = make('p', 'Note', 'Inspired by Riverbend’s woven baskets (historical description, page 3). Add four bands, then choose a handle. These colors and steps are a playful prototype, not real basket-making instructions. No timer, points or purchases. Your design lasts until reload; it is not a saved keepsake.');
+  const preview = make('div', 'Preview'); preview.setAttribute('aria-hidden', 'true');
+  const status = make('p', 'Status'); status.setAttribute('role', 'status'); status.setAttribute('aria-atomic', 'true');
+  const bands = [], colors = ['light', 'dark'];
+  let handle = '', finished = false;
+  const allowed = () => panel.open && canUse();
+  const button = (id, label, action) => {
+    const b = make('button', id, label); b.type = 'button';
+    b.onclick = () => { if (allowed()) action(); }; return b;
+  };
+  const bandGroup = make('fieldset'); bandGroup.append(make('legend', null, '1. Weave four bands'));
+  const bandButtons = colors.map(color => button(color, 'Add ' + color + ' band', () => {
+    if (finished || bands.length >= 4) return;
+    bands.push(color); render(); if (bands.length === 4) handleButtons[0].focus();
+  }));
+  bandGroup.append(...bandButtons);
+  const undo = button('Undo', 'Undo last band', () => {
+    if (finished || !bands.length) return;
+    bands.pop(); handle = ''; render(); bandButtons[0].focus();
+  }); bandGroup.append(undo);
+  const handleGroup = make('fieldset'); handleGroup.append(make('legend', null, '2. Choose a handle'));
+  const handles = ['arched', 'low'];
+  const handleButtons = handles.map(value => button(value, value === 'arched' ? 'Arched handle' : 'Low handle', () => {
+    if (finished || bands.length !== 4) return;
+    handle = value; render(); finish.focus();
+  })); handleGroup.append(...handleButtons);
+  const finish = button('Finish', '3. Finish basket', () => {
+    if (finished || bands.length !== 4 || !handle) return;
+    finished = true; render(); reset.focus();
+  });
+  const reset = button('Reset', 'Start another basket', () => {
+    bands.length = 0; handle = ''; finished = false; render(); bandButtons[0].focus();
+  });
+  function render() {
+    bandButtons.forEach(b => { b.disabled = finished || bands.length === 4; });
+    handleButtons.forEach((b, i) => { b.disabled = finished || bands.length !== 4; b.setAttribute('aria-pressed', String(handle === handles[i])); });
+    undo.disabled = finished || !bands.length;
+    finish.disabled = finished || bands.length !== 4 || !handle;
+    reset.disabled = !bands.length;
+    preview.className = 'basket-preview ' + handle; preview.hidden = !bands.length;
+    preview.replaceChildren(...bands.map((color, i) => {
+      const row = make('div'); row.className = 'basket-band ' + color + (i % 2 ? ' offset' : ''); return row;
+    }));
+    const pattern = bands.length ? ' Bands from bottom to top: ' + bands.join(', ') + '.' : '';
+    status.textContent = (finished ? 'Finished basket with a ' + handle + ' handle.'
+      : bands.length < 4 ? 'Bands ' + bands.length + ' of 4. Add a light or dark band.'
+      : !handle ? 'Four bands woven. Choose a handle.' : 'Your basket is ready to finish with a ' + handle + ' handle.') + pattern;
+  }
+  panel.append(summary, note, bandGroup, handleGroup, preview, status, finish, reset);
+  render(); return {panel};
 }
