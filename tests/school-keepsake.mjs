@@ -45,6 +45,7 @@ globalThis.installGeneralStore=new Function('T',source('general-store.js')+';ret
 globalThis.installClubhouse=new Function('T',source('clubhouse.js')+';return installClubhouse;')(T);
 globalThis.installProduceGarden=new Function('T',source('produce-garden.js')+';return installProduceGarden;')(T);
 globalThis.installWhisperingPines=new Function('T',source('whispering-pines.js')+';return installWhisperingPines;')(T);
+globalThis.installCompositionStudio=new Function('T',source('composition-studio.js')+';return installCompositionStudio;')(T);
 globalThis.installStonehearth=new Function('T',source('stonehearth.js')+';return installStonehearth;')(T);
 globalThis.installEldergrove=new Function('T',source('eldergrove.js')+';return installEldergrove;')(T);
 globalThis.installLibrary=new Function('T',source('library.js')+';return installLibrary;')(T);

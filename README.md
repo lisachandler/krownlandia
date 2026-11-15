@@ -40,7 +40,7 @@ Krownlandia predates this prototype. Its recorded community origins date to Janu
 
 ## Publication and licensing
 
-This source snapshot corresponds to hosted version 270. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
+This source snapshot corresponds to hosted version 280. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
 
 Three.js retains its license at `dist/vendor/LICENSE`. No project-wide open-source license has been selected; public visibility alone does not grant a general license to reuse project code, community material, branding or artwork.
 
@@ -76,6 +76,6 @@ Activities → Record video captures up to 30 seconds of silent canvas video in 
 
 ## November 13 snapshot
 
-Includes Riverbend pottery and baskets, Meadowbrook weaving and market, Eldergrove woodcraft, Stonehearth pattern practice, Whispering Pines story glade, walking-map discovery and visitor reports. Activities remain session-only with no reward changes. Run `node scripts/check-release.mjs` for the selected source checks; see RELEASE_CHECKS.md for the built-artifact mode. Live rendering and codec verification remain pending.
+Includes the Express Yourself composition studio, Dancing Fountain, KROWN Cinema storyboard, Riverbend pottery and baskets, Meadowbrook weaving and market, Eldergrove woodcraft, Stonehearth pattern practice, Whispering Pines story glade, walking-map discovery and visitor reports. Activities remain session-only with no reward changes. Run `node scripts/check-release.mjs` for the selected source checks; see RELEASE_CHECKS.md for the built-artifact mode. Live rendering and codec verification remain pending.
 
 

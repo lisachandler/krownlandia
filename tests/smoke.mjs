@@ -17,6 +17,7 @@ globalThis.document={head:el(),body:el(),querySelector(s){if(!nodes.has(s))nodes
 const saved=new Map();
 saved.set('krownlandia-visit-v1',JSON.stringify({x:2,z:28,yaw:0,pitch:0,night:false}));
 Object.assign(globalThis,{window:{},innerWidth:1280,innerHeight:800,devicePixelRatio:1,addEventListener:(n,f)=>handlers[n]=f,localStorage:{getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)}});
+const fountainMedia={matches:false};globalThis.matchMedia=()=>fountainMedia;
 let next;globalThis.requestAnimationFrame=f=>next=f;
 let testRenderer;class Renderer{constructor(){testRenderer=this;this.domElement=el();this.shadowMap={}}setSize(){}setPixelRatio(value){this.pixelRatio=value}render(){}}
 class Environment{fromScene(){return{texture:new Real.Texture()}}dispose(){}}
@@ -45,6 +46,7 @@ globalThis.installGeneralStore=new Function('T',source('general-store.js')+';ret
 globalThis.installClubhouse=new Function('T',source('clubhouse.js')+';return installClubhouse;')(T);
 globalThis.installProduceGarden=new Function('T',source('produce-garden.js')+';return installProduceGarden;')(T);
 globalThis.installWhisperingPines=new Function('T',source('whispering-pines.js')+';return installWhisperingPines;')(T);
+globalThis.installCompositionStudio=new Function('T',source('composition-studio.js')+';return installCompositionStudio;')(T);
 globalThis.installStonehearth=new Function('T',source('stonehearth.js')+';return installStonehearth;')(T);
 globalThis.installEldergrove=new Function('T',source('eldergrove.js')+';return installEldergrove;')(T);
 globalThis.installLibrary=new Function('T',source('library.js')+';return installLibrary;')(T);
@@ -239,3 +241,35 @@ for(const p of [{x:-30,z:161},a.clubhouse.boardPoint,...a.clubhouse.seats.map(s=
 a.camera.position.set(-30,1.75,147);frame();assert.equal(a.getState().near,'clubhouse');a.interact();assert(document.querySelector('#clubhouseMenu').open);assert(!a.getState().rewards.done.includes('clubhouse-board'));const clubhouseBefore=a.camera.position.clone();handlers.keydown({key:'w',preventDefault(){}});frame();assert(a.camera.position.equals(clubhouseBefore));handlers.blur();document.querySelector('#clubhouseTopic-care').onclick();assert(a.getState().rewards.done.includes('clubhouse-board'));document.querySelector('#clubhouseClose').onclick();
 for(const seat of a.clubhouse.seats){a.camera.position.set(seat.approach.x,1.75,seat.approach.z);frame();assert.equal(a.seating.selected,seat);assert(a.seating.sit());frame();assert.equal(a.camera.position.x,seat.x);a.seating.stand();frame();assert(!a.blocked(a.camera.position.x,a.camera.position.z));}
 a.camera.position.set(-19,1.75,161);frame();a.interact();const clubhouseTask=document.querySelector('#rewardBody').children.find(n=>n.textContent?.startsWith('Claim task'));assert(clubhouseTask&&!clubhouseTask.disabled);const clubhousePoints=a.getState().rewards.points;clubhouseTask.onclick();clubhouseTask.onclick();assert.equal(a.getState().rewards.points,clubhousePoints+20);document.querySelector('#rewardClose').onclick();assert(parseBackup(exportBackup(localStorage)).data['krownlandia-rewards-v1'].includes('clubhouse-board'));const clubhouseLounge=a.lounges.spots.find(s=>s.id==='clubhouse');assert(clubhouseLounge);assert(planner.route({x:0,z:161},{x:clubhouseLounge.x,z:clubhouseLounge.z+1.3}).length);console.log('PASS: clubhouse entrance, board, four seats, modal pause, task, one-time points, backup and lounge',clubhouseLounge.x,clubhouseLounge.z);
+
+const spray=a.scene.getObjectByName('Royal Plaza Fountain spray'),motion=document.querySelector('#fountainMotion');
+assert(document.querySelector('#graphicsSettings').innerHTML.includes('<label for="fountainMotion">Royal Plaza Fountain spray</label>'));
+const setMotion=value=>{motion.value=value;motion.onchange();};
+const writeMatrix=spray.setMatrixAt;let sprayWrites=0;spray.setMatrixAt=function(...args){sprayWrites++;return writeMatrix.apply(this,args);};
+function checkSpray(moving){sprayWrites=0;const version=spray.instanceMatrix.version;frame();assert.equal(spray.visible,moving);assert.equal(sprayWrites,moving?240:0);assert.equal(spray.instanceMatrix.version,version+Number(moving));}
+for(const profile of ['detailed','balanced','lightweight']){
+ document.querySelector('#graphics-'+profile).onclick();setMotion('system');fountainMedia.matches=false;checkSpray(true);
+ fountainMedia.matches=true;checkSpray(false);fountainMedia.matches=false;checkSpray(true);
+ setMotion('still');checkSpray(false);fountainMedia.matches=true;checkSpray(false);fountainMedia.matches=false;checkSpray(false);
+}
+assert.equal(saved.get('krownlandia-fountain-still-v1'),'1');
+if(!a.getState().night)document.querySelector('#night').onclick();
+a.camera.position.set(4,1.75,-25);frame();assert(a.getState().rewards.done.includes('night-water'));a.interact();
+const nightClaim=document.querySelector('#rewardBody').children.find(n=>n.textContent?.startsWith('Claim task'));const priorPoints=a.getState().rewards.points;nightClaim.onclick();setMotion('system');checkSpray(true);nightClaim.onclick();assert.equal(a.getState().rewards.points,priorPoints+25);document.querySelector('#rewardClose').onclick();
+console.log('PASS: moving/still spray writes, live system preferences, explicit still override across graphics profiles, and a single night reward across modes.');
+
+a.interact();const score=document.querySelector('#fountainScore'),playShow=document.querySelector('#fountainPlay'),stageName=document.querySelector('#fountainStage');
+score.open=true;score.ontoggle();const balance=a.getState().rewards.points;
+const advanceShow=n=>{ms+=n;next(ms);};
+for(const profile of ['balanced','lightweight','detailed']){
+ document.querySelector('#graphics-'+profile).onclick();frame();playShow.onclick();assert.equal(playShow.textContent,'Stop');
+ advanceShow(3999);assert.equal(stageName.textContent,'Ring');advanceShow(1);assert.equal(stageName.textContent,'Pairs');
+ advanceShow(4000);assert.equal(stageName.textContent,'Crown');advanceShow(4000);assert.equal(playShow.textContent,'Play once');
+}
+playShow.onclick();checkSpray(true);playShow.onclick();assert.equal(stageName.textContent,'');
+playShow.onclick();fountainMedia.matches=true;checkSpray(false);assert(playShow.hidden);fountainMedia.matches=false;checkSpray(true);assert(!playShow.hidden);assert.equal(playShow.textContent,'Play once');
+playShow.onclick();score.open=false;score.ontoggle();score.open=true;frame();assert.equal(stageName.textContent,'');
+playShow.onclick();a.camera.position.z+=5;frame();assert.equal(playShow.textContent,'Play once');assert.equal(a.getState().rewards.points,balance);
+console.log('PASS: fountain score timing, stop, replay, reduced-motion interruption, collapse, departure and unchanged points.');
+
+spray.setMatrixAt=writeMatrix;

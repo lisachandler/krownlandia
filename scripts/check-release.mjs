@@ -4,6 +4,8 @@ import {resolve} from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 export const CORE_CHECKS = [
+  ['Composition studio activity', 'tests/composition-studio.mjs'],
+  ['Composition studio routes and seating', 'tests/composition-studio-survey.mjs'],
   ['Whispering Pines story controls', 'tests/whispering-pines.mjs'],
   ['Whispering Pines actual-scene routes and seating', 'tests/whispering-pines-survey.mjs'],
   ['Stonehearth pattern activity', 'tests/stonehearth-craft.mjs'],

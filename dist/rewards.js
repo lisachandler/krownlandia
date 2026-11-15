@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
 import {STATIONS,createRewards} from './rewards-core.js';
-export function installRewards({scene,colliders,pause,getHomes=()=>[]}){
+export function installRewards({scene,colliders,pause,stillWater=()=>false,getHomes=()=>[]}){
  const stylesheet=document.createElement('link');stylesheet.rel='stylesheet';stylesheet.href='rewards.css';document.head.append(stylesheet);
  let storage;try{storage=localStorage;}catch{storage={getItem(){throw Error()},setItem(){throw Error()}};}
  const model=createRewards(storage),$=s=>document.querySelector(s);
@@ -11,6 +11,27 @@ export function installRewards({scene,colliders,pause,getHomes=()=>[]}){
  let passportFilter='all';
  const search=$('#passportSearch'),searchControls=$('#passportSearchControls'),searchCount=$('#passportSearchCount');search.value='';const normalizeSearch=value=>String(value).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/['’]/g,'').replace(/[^a-z0-9]+/g,' ').trim();search.oninput=()=>render();$('#passportSearchClear').onclick=()=>{search.value='';render();search.focus();};
  let current=null,near=null,last=null,dwell=0,renderAt=0,target=null,snapshot={},renderSignature='';
+ const score=document.createElement('details');score.id='fountainScore';score.hidden=true;
+ score.innerHTML='<summary id="scoreTitle">Dancing Fountain</summary><p>Three patterns for the Royal Plaza Fountain. Read at your own pace or play once for 12 seconds.</p>';
+ for(const [name,shape,description] of [
+  ['Ring','M2 22q6 -10 12 0q6 -10 12 0q6 -10 12 0q6 -10 12 0','Low arcs spread evenly around the rim.'],
+  ['Pairs','M2 22q6 -32 12 0q6 -6 12 0q6 -32 12 0q6 -6 12 0','Opposite arcs rise together, with low gaps between them.'],
+  ['Crown','M2 22q3 -32 6 0q3 -6 6 0q3 -32 6 0q3 -6 6 0q3 -32 6 0q3 -6 6 0q3 -32 6 0q3 -6 6 0','Four high points alternate with lower arcs.']
+ ]){const row=document.createElement('p');row.innerHTML='<svg width="60" height="28" viewBox="0 0 52 28" aria-hidden="true"><path d="'+shape+'" fill="none" stroke="currentColor" stroke-width="2"/></svg> <b>'+name+'</b> · '+description;score.append(row);}
+ const play=document.createElement('button');play.id='fountainPlay';play.type='button';play.textContent='Play once';
+ const stage=document.createElement('span');stage.id='fountainStage';stage.setAttribute('role','status');score.append(play,stage);dialog.append(score);
+ let started=null;
+ function stopFountain(){started=null;play.textContent='Play once';stage.textContent='';}
+ function canPlay(){return dialog.open&&score.open&&current==='fountain'&&near==='fountain'&&snapshot.playing&&!document.hidden&&!stillWater();}
+ play.onclick=()=>{if(started!==null){stopFountain();return;}if(canPlay()){started=last;play.textContent='Stop';stage.textContent='Ring';}};
+ score.ontoggle=()=>{if(!score.open)stopFountain();};
+ dialog.onclose=()=>{score.open=false;stopFountain();};
+ function fountainTime(ms){if(!score.open&&started===null)return -1;
+  const still=stillWater();if(still&&!play.hidden&&document.activeElement===play)$('#scoreTitle').focus();play.hidden=still;
+  if(started===null||!canPlay()||ms-started>=12000){if(started!==null)stopFountain();return -1;}
+  const elapsed=Math.max(0,ms-started),name=['Ring','Pairs','Crown'][Math.floor(elapsed/4000)];
+  if(stage.textContent!==name)stage.textContent=name;return elapsed;
+ }
  const history=document.createElement('details');history.id='rewardHistory';const historyTitle=document.createElement('summary');historyTitle.textContent='My points over time';const historyNote=document.createElement('p');historyNote.textContent='Private, browser-local history · Pacific Time. Uses this device’s clock; these are not verified leaderboard scores.';const historyList=document.createElement('dl');const historyValues={};for(const[key,label]of [['hour','This hour'],['day','Today'],['month','This month'],['year','This year'],['all','All time']]){const term=document.createElement('dt'),value=document.createElement('dd');term.textContent=label;value.id='rewardHistory-'+key;historyValues[key]=value;historyList.append(term,value);}const historyLegacy=document.createElement('p');historyLegacy.id='rewardHistoryLegacy';const historyDate=document.createElement('p');historyDate.id='rewardHistoryDate';history.append(historyTitle,historyNote,historyDate,historyList,historyLegacy);dialog.append(history);
  function renderHistory(){if(!history.open||history.hidden)return;const h=model.history();for(const key of Object.keys(historyValues))historyValues[key].textContent=h.totals[key]+' points';historyDate.textContent='Current hour: '+h.period.hour+' · periods restart at the hour, midnight, month and year boundaries.';historyLegacy.textContent=h.legacy+' legacy points with no recorded date. Included in All time, excluded from dated periods.'+(h.future?' '+h.future+' points have future device timestamps and are excluded from dated periods until that time.':'')+(h.saved?' Included when you export a progress backup.':' Storage is unavailable; this history lasts for this visit only.');}
  history.ontoggle=()=>{if(dialog.open)renderHistory();};
@@ -24,6 +45,9 @@ export function installRewards({scene,colliders,pause,getHomes=()=>[]}){
   const go=document.createElement('button');go.id='roastedMealGuide';const carried=meal.status==='carried';go.textContent=carried?'Find the container return':'Find my bowl at Roasted';go.onclick=()=>{target=carried?{x:-7,z:-86,name:'Roasted container return'}:{x:0,z:-88,name:'Roasted food counter'};dialog.close();};body.append(go);
  }
  function render(){
+  score.hidden=current!=='fountain'||near!=='fountain';
+  if(score.hidden){score.open=false;stopFountain();}
+  else play.hidden=stillWater();
   history.hidden=!!current;renderHistory();
   searchControls.hidden=!!current;const st=model.state();renderSignature=JSON.stringify([st,current,near]);button.textContent='Rewards · '+st.points+' pts';$('#rewardSummary').textContent=st.points+' points · '+st.visits+' / '+STATIONS.length+' stations visited';
   const suggestion=model.nextReward(snapshot);nextButton.hidden=nextHint.hidden=!!current&&!STATIONS.some(s=>s.id===current);nextButton.disabled=!suggestion;nextButton.textContent=suggestion?(suggestion.kind==='progress'?'Continue my discovery':'Find my next reward'):'All station rewards collected';nextHint.textContent=suggestion?suggestion.name+' · '+(suggestion.kind==='task'?'Earned task reward ready: +'+suggestion.points+' points':suggestion.kind==='pin'?'Your coffee-shop pin is ready':suggestion.kind==='progress'?'Continue exploring · '+suggestion.progress+' / '+suggestion.total+' steps completed'+(suggestion.progress===suggestion.total?' · collect your keepsake to finish':''):suggestion.kind==='arrival'?'New check-in: +'+suggestion.points+' points':'Next activity: '+suggestion.task):'Every station arrival and task reward is collected. Keep exploring your favorite places.';
@@ -130,5 +154,5 @@ export function installRewards({scene,colliders,pause,getHomes=()=>[]}){
  }
  render();
  function guideTo(id){const s=STATIONS.find(s=>s.id===id);if(s)target={x:s.x,z:s.z,name:s.name+' rewards'};}
- return {update,open,guideTo,recordSafariSighting:id=>model.mark('safari-sighting-'+id),completeSchool:()=>model.mark('school-pattern'),completeBridge:()=>model.mark('bridge-board'),completeRiverbend:()=>model.mark('riverbend-board'),completeGeneralStore:()=>model.mark('generalstore-board'),completeClubhouse:()=>model.mark('clubhouse-board'),completeProduce:()=>model.mark('produce-water'),recordEldergrove:id=>model.recordEldergrove(id),recordLibraryPage:id=>{if([0,1,2].includes(id))model.mark('library-page-'+id);},completeLibrary:()=>model.mark('library-read'),completeSquareWelcome:()=>model.mark('square-welcome'),completeOfficeIdea:()=>model.mark('office-idea'),recordBuildersPage:id=>{if([0,1,2].includes(id))model.mark('builders-page-'+id);},completeBuilders:()=>model.mark('builders-story'),clearGuide:()=>{target=null;},guideToPoint:point=>{target={...point};},get roastedOrder(){return model.state().meal},get drink(){return drink},get near(){return near},get isOpen(){return dialog.open},get target(){return target},state:model.state};
+ return {update,open,guideTo,fountainTime,stopFountain,recordSafariSighting:id=>model.mark('safari-sighting-'+id),completeSchool:()=>model.mark('school-pattern'),completeBridge:()=>model.mark('bridge-board'),completeRiverbend:()=>model.mark('riverbend-board'),completeGeneralStore:()=>model.mark('generalstore-board'),completeClubhouse:()=>model.mark('clubhouse-board'),completeProduce:()=>model.mark('produce-water'),recordEldergrove:id=>model.recordEldergrove(id),recordLibraryPage:id=>{if([0,1,2].includes(id))model.mark('library-page-'+id);},completeLibrary:()=>model.mark('library-read'),completeSquareWelcome:()=>model.mark('square-welcome'),completeOfficeIdea:()=>model.mark('office-idea'),recordBuildersPage:id=>{if([0,1,2].includes(id))model.mark('builders-page-'+id);},completeBuilders:()=>model.mark('builders-story'),clearGuide:()=>{target=null;},guideToPoint:point=>{target={...point};},get roastedOrder(){return model.state().meal},get drink(){return drink},get near(){return near},get isOpen(){return dialog.open},get target(){return target},state:model.state};
 }

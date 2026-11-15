@@ -1,0 +1,10 @@
+import './library-report.mjs';
+import assert from 'node:assert/strict';
+const $=s=>document.querySelector('#'+s),a=window.krownlandia;
+if(a.library.isOpen)$('libraryClose').onclick();
+assert(a.library.open());const state=()=>JSON.stringify(a.getState().rewards),baseline=state(),cinema=$('libraryCinema'),prev=$('cinemaPrev'),next=$('cinemaNext'),shot=$('cinemaShot');
+assert.equal(cinema.open,false);cinema.open=true;cinema.ontoggle();
+const drawings=new Set(),check=(i,name)=>{assert.equal(shot.textContent,'Shot '+i+' of 3 · '+name);assert.equal(prev.disabled,i===1);assert.equal(next.disabled,i===3);assert($('cinemaDescription').textContent.length>20);assert($('cinemaCaption').textContent.length>20);drawings.add($('cinemaDrawing').innerHTML);assert.equal(state(),baseline);};
+check(1,'Wide');prev.onclick();check(1,'Wide');next.onclick();check(2,'Close');next.onclick();check(3,'Detail');next.onclick();check(3,'Detail');assert.equal(document.activeElement,prev);prev.onclick();check(2,'Close');prev.onclick();check(1,'Wide');assert.equal(document.activeElement,next);assert.equal(drawings.size,3);
+next.onclick();cinema.open=false;cinema.ontoggle();assert.equal(document.activeElement,$('cinemaSummary'));cinema.open=true;cinema.ontoggle();check(1,'Wide');assert.equal($('libraryReport').open,false);$('libraryClose').onclick();next.onclick();check(1,'Wide');
+console.log('PASS: three distinct drawings, text, bounds, focus, guarded navigation, reset, unchanged chapter/reward state.');

@@ -3,3 +3,5 @@
 #libraryReport{margin-top:14px}#libraryReport summary{cursor:pointer;padding:10px 0;min-height:24px}#libraryReport a{display:block;padding:12px;border:1px solid #dfba69;border-radius:8px;color:#fff1d1;text-decoration:underline}#libraryReport a:focus-visible,#libraryReport summary:focus-visible{outline:3px solid #dfba69;outline-offset:3px}
 
 #libraryReport a+a{margin-top:10px}
+
+#libraryCinema{margin-block:12px;border-block:1px solid #7795a9;padding-block:4px}#libraryCinema summary{cursor:pointer;padding:12px 0}#libraryCinema summary:focus-visible{outline:3px solid #dfba69}#cinemaDrawing{background:#10283c;border-radius:8px}#cinemaDrawing svg{display:block;width:100%;max-height:165px}#cinemaDrawing .spray{stroke:#a5e9ef}#cinemaShot{color:#f4d895}#cinemaCaption{font-style:italic}#cinemaControls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}#cinemaCredit{display:block;margin-bottom:8px}
