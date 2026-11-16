@@ -13,3 +13,17 @@ a.camera.position.set(p.x,1.75,p.z);current.onclick();assert(!club.isOpen);frame
 assert(club.open());const before=a.camera.position.clone();reward.onclick();assert(!club.isOpen);frame();assert(guide().includes('Clubhouse'));assert(a.camera.position.equals(before));
 assert.equal(JSON.stringify(a.getState().rewards),progress,'directions do not change reward progress');
 console.log('PASS: closed, remote, disabled and replaced clubhouse controls are inert; current directions and reward guidance work without moving or changing progress.');
+
+assert(club.open());const panel=$('#clubCrossing'),status=$('#crossingStatus'),move=i=>$('#crossingCell'+i).onclick();
+assert(!panel.open);const first=status.textContent;move(1);assert.equal(status.textContent,first);
+panel.open=true;move(2);assert.equal(status.textContent,first,'gap cannot move');
+a.camera.position.set(0,1.75,0);move(1);assert.equal(status.textContent,first);a.camera.position.set(p.x,1.75,p.z);
+move(1);move(0);assert.match(status.textContent,/No moves left/);
+$('#crossingUndo').onclick();assert.match(status.textContent,/Move undone/);
+$('#crossingReset').onclick();assert.equal(status.textContent,first);
+for(const i of [1,3,4,2,0,1,3,2])move(i);
+assert.match(status.textContent,/Crossing complete.*8 moves/);
+assert.deepEqual([0,1,2,3,4].map(i=>$('#crossingCell'+i).dataset.kind),['M','M','.','S','S']);
+$('#clubhouseClose').onclick();$('#crossingReset').onclick();assert.match(status.textContent,/Crossing complete/);
+assert(club.open());assert(!panel.open);assert.equal(status.textContent,first);assert.equal(JSON.stringify(a.getState().rewards),progress);
+console.log('PASS: Game Club legal and blocked moves, eight-move solution, undo, reset, range, reopen and unchanged rewards.');

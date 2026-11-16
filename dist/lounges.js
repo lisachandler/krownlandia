@@ -3,13 +3,13 @@ import {STATIONS} from './rewards-core.js';
 export function installLounges({scene,camera,colliders,blocked,pause,seat,stand,guideTo,getRewardState=()=>null,takePhoto=()=>false,faceForward=()=>{},lookUp=()=>{}}){
  const themes=[
  ['arrival','Welcome Terrace','#244d71','Citrus fruit cup','Welcome pennant'],
- ['gate','Crown Pavilion','#284b8d','Crown-shaped biscuit','Golden gate miniature'],
+ ['gate','Krown Pavilion','#284b8d','Krown-shaped biscuit','Golden gate miniature'],
  ['gardens','Pollinator Nook','#58864e','Berry oat bites','Butterfly keepsake'],
  ['shop','Collectors’ Corner','#765794','Chocolate buttons','Collector’s ribbon'],
  ['cafe','Lisa’s Pink Patio','#ee78b5','Mini cinnamon roll','Pink coffee cup charm'],
  ['fountain','Fountain Retreat','#4199a8','Lemon ice','Water-drop charm'],
  ['discovery','Discovery Hideaway','#367d69','Apple crisps','Leaf bookmark'],
- ['palace','Royal Terrace','#54417d','Mini fruit tart','Crown ornament'],
+ ['palace','Royal Terrace','#54417d','Mini fruit tart','Krown ornament'],
  ['journey','World Travelers’ Rest','#397a92','Trail mix','Journey compass'],
  ['safari','Savanna Lookout','#a47739','Dried mango','Giraffe keepsake'],
  ['popcorn','Popcorn Picnic','#bb3d43','Sweet popcorn','Striped popcorn charm'],

@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.js';
 
 export function installCircus({scene,camera,colliders,guideTo,rewardClaimed,rewardCompleted=()=>false,pause=()=>{},guideToPoint=()=>{},getSeats=()=>[],getLounge=()=>null}){
- const root=new T.Group();root.name='Crown Circus Tent';root.position.set(39,0,-62);scene.add(root);
+ const root=new T.Group();root.name='Krown Circus Tent';root.position.set(39,0,-62);scene.add(root);
  const material=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.75,...extra});
  const red=material('#ae2442',{side:T.DoubleSide}),cream=material('#fff0cf',{side:T.DoubleSide}),gold=material('#e5b553',{metalness:.55}),navy=material('#182947'),skin=material('#ba7957'),pink=material('#ec6fbd'),floor=material('#bd966a');
  function part(geometry,mat,x,y,z,parent=root){const m=new T.Mesh(geometry,mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
@@ -17,7 +17,7 @@ export function installCircus({scene,camera,colliders,guideTo,rewardClaimed,rewa
  for(let i=2;i<47;i++){const a=i*Math.PI/24;colliders.push({x:39+Math.sin(a)*9,z:-62+Math.cos(a)*9,r:.55});}
  for(let i=0;i<12;i++){const a=(i+.5)*Math.PI/6;part(new T.CylinderGeometry(.075,.075,4.4,8),gold,Math.sin(a)*9,2.3,Math.cos(a)*9);}
  part(new T.CylinderGeometry(.08,.08,2,8),gold,0,11.9,0);box(.65,12.3,0,1.3,.65,.07,red);ball(0,12.95,0,.16,gold);
- const c=document.createElement('canvas');c.width=768;c.height=192;const ctx=c.getContext('2d');ctx.fillStyle='#182947';ctx.fillRect(0,0,768,192);ctx.fillStyle='#ffe2a0';ctx.textAlign='center';ctx.font='bold 60px serif';ctx.fillText('CROWN CIRCUS',384,83);ctx.font='30px sans-serif';ctx.fillText('JUGGLING · AERIAL HOOP · WONDER',384,145);
+ const c=document.createElement('canvas');c.width=768;c.height=192;const ctx=c.getContext('2d');ctx.fillStyle='#182947';ctx.fillRect(0,0,768,192);ctx.fillStyle='#ffe2a0';ctx.textAlign='center';ctx.font='bold 60px serif';ctx.fillText('KROWN CIRCUS',384,83);ctx.font='30px sans-serif';ctx.fillText('JUGGLING · AERIAL HOOP · WONDER',384,145);
  const texture=new T.CanvasTexture(c);texture.colorSpace=T.SRGBColorSpace;part(new T.PlaneGeometry(5.7,1.4),material('#ffffff',{map:texture,side:T.DoubleSide}),0,3.9,9.12);
  part(new T.CylinderGeometry(3.5,3.5,.1,48),red,0,.22,-2);
  const ring=part(new T.TorusGeometry(3.5,.09,8,48),gold,0,.3,-2);ring.rotation.x=Math.PI/2;
@@ -50,13 +50,13 @@ export function installCircus({scene,camera,colliders,guideTo,rewardClaimed,rewa
  reward.onclick=()=>{if(panel.hidden||!finished||program.open||rewardClaimed())return;guideTo('circus');leave();};
  stop.onclick=leave;
  const inside=()=>Math.hypot(camera.position.x-39,camera.position.z+62)<8.3;
- const program=document.createElement('dialog');program.id='circusProgram';program.setAttribute('aria-labelledby','circusProgramTitle');const programTitle=document.createElement('h2');programTitle.id='circusProgramTitle';programTitle.textContent='Crown Circus · Show program';const introduction=document.createElement('p');introduction.textContent='A 36-second performance in three acts. Start when you are ready inside the tent; you can pause or replay the show.';const acts=document.createElement('ol');acts.id='circusProgramActs';for(const text of ['Golden juggling · A three-ball opening act.','Aerial hoop · A turning hoop routine above the ring.','Grand finale · Both performers join in, then take a bow.']){const item=document.createElement('li');item.textContent=text;acts.append(item);}program.append(programTitle,introduction,acts);
+ const program=document.createElement('dialog');program.id='circusProgram';program.setAttribute('aria-labelledby','circusProgramTitle');const programTitle=document.createElement('h2');programTitle.id='circusProgramTitle';programTitle.textContent='Krown Circus · Show program';const introduction=document.createElement('p');introduction.textContent='A 36-second performance in three acts. Start when you are ready inside the tent; you can pause or replay the show.';const acts=document.createElement('ol');acts.id='circusProgramActs';for(const text of ['Golden juggling · A three-ball opening act.','Aerial hoop · A turning hoop routine above the ring.','Grand finale · Both performers join in, then take a bow.']){const item=document.createElement('li');item.textContent=text;acts.append(item);}program.append(programTitle,introduction,acts);
  function programButton(id,label,action){const b=document.createElement('button');b.id=id;b.textContent=label;b.onclick=()=>{if(!program.open||b.disabled)return false;return action();};program.append(b);return b;}
  const programStatus=document.createElement('p');programStatus.id='circusProgramStatus';programStatus.setAttribute('role','status');program.append(programStatus);
  const programReward=programButton('circusProgramReward','Find circus rewards',()=>{if(!program.open)return;pause();guideTo('circus');program.close();});
  const programWatch=programButton('circusProgramWatch','Start the show',()=>{if(start()){pause();program.close();}});
  const walk=p=>{pause();guideToPoint(p);program.close();};
- programButton('circusProgramEntrance','Walk to the circus entrance',()=>walk({x:39,z:-51,name:'Crown Circus entrance'}));
+ programButton('circusProgramEntrance','Walk to the circus entrance',()=>walk({x:39,z:-51,name:'Krown Circus entrance'}));
  const programSeat=programButton('circusProgramSeat','Find an audience bench',()=>{const seat=[...getSeats()].sort((a,b)=>Math.hypot(camera.position.x-a.approach.x,camera.position.z-a.approach.z)-Math.hypot(camera.position.x-b.approach.x,camera.position.z-b.approach.z))[0];if(seat)walk({...seat.approach,name:seat.name});});
  programButton('circusProgramPopcorn','Find the popcorn stand',()=>walk({x:34,z:-56.3,name:'Circus popcorn stand'}));
  const after=document.createElement('details');after.id='circusAfterShow';const afterTitle=document.createElement('summary');afterTitle.textContent='After the show';const loungeInfo=document.createElement('p');loungeInfo.id='circusLoungeInfo';const loungeButton=programButton('circusProgramLounge','Find the circus lounge',()=>{const lounge=getLounge();if(lounge)walk({x:lounge.x,z:lounge.z+1.3,name:lounge.name});});after.append(afterTitle,loungeInfo,loungeButton);program.append(after);
@@ -70,7 +70,7 @@ export function installCircus({scene,camera,colliders,guideTo,rewardClaimed,rewa
   update(dt,paused){
    if((active||finished)&&!inside())leave();
    if(active&&!paused&&!manualPause){elapsed+=dt;if(elapsed>=36){elapsed=36;completed=true;active=false;finished=true;title.textContent=rewardClaimed()?'Bravo! Circus reward already collected.':'Bravo! Your 30-point reward is ready at the circus station.';controls();}}
-   const next=Math.min(2,Math.floor(elapsed/12));if(active&&act!==next){act=next;title.textContent=['Crown Circus · Golden juggling','Crown Circus · Aerial hoop','Crown Circus · Grand finale'][act];}
+   const next=Math.min(2,Math.floor(elapsed/12));if(active&&act!==next){act=next;title.textContent=['Krown Circus · Golden juggling','Krown Circus · Aerial hoop','Krown Circus · Grand finale'][act];}
    const t=active||finished?elapsed:0;
    if(active){progress.value=t;const label=(manualPause||paused?'Paused · ':'')+'Act '+(next+1)+' / 3 · '+Math.ceil(36-t)+'s left';if(time.textContent!==label)time.textContent=label;}
    // Each solo has its own clock; both performers join the finale, then hold a bow.

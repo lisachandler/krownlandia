@@ -1,22 +1,22 @@
 // Every future ride can add the same station + arrival + task definition.
 export const STATIONS=[
- {id:'arrival',name:'Arrival Plaza',x:-4,z:26,arrival:10,task:{id:'first-gate',label:'Check in at the Crown Gate',points:20}},
- {id:'gate',name:'Crown Gate',x:4,z:10,arrival:10,task:{id:'three-stops',label:'Check in at three different stations',points:15}},
+ {id:'arrival',name:'Arrival Plaza',x:-4,z:26,arrival:10,task:{id:'first-gate',label:'Check in at the Krown Gate',points:20}},
+ {id:'gate',name:'Krown Gate',x:4,z:10,arrival:10,task:{id:'three-stops',label:'Check in at three different stations',points:15}},
  {id:'gardens',name:'Welcome Gardens',x:-5,z:-4,arrival:10,task:{id:'meet-pip',label:'Talk to Pip, Keeper of the Gardens',points:25}},
- {id:'shop',name:'Crown & Co.',x:-20,z:-9,arrival:10,task:{id:'collection',label:'Open your collection at this station',points:15}},
+ {id:'shop',name:'Krown & Co.',x:-20,z:-9,arrival:10,task:{id:'collection',label:'Open your collection at this station',points:15}},
  {id:'cafe',name:"Lisa's Coffee Shop",x:20,z:-9,arrival:10,task:{id:'rest',label:"Take a 15-second break near Lisa's rewards station",points:15}},
  {id:'fountain',name:'Royal Plaza Fountain',x:4,z:-25,arrival:10,task:{id:'night-water',label:'Visit this station after dark',points:25}},
- {id:'discovery',name:'Discovery Garden',x:17,z:-53,arrival:10,task:{id:'find-crown',label:"Find the Founder's Crown pin",points:50}},
- {id:'palace',name:'Crown Palace Approach',x:4,z:-73,arrival:10,task:{id:'all-stops',label:'Check in at all eight Gateway stations',points:50}},
+ {id:'discovery',name:'Discovery Garden',x:17,z:-53,arrival:10,task:{id:'find-crown',label:"Find the Founder's Krown pin",points:50}},
+ {id:'palace',name:'Krown Palace Approach',x:4,z:-73,arrival:10,task:{id:'all-stops',label:'Check in at all eight Gateway stations',points:50}},
  {id:'journey',name:'The Great Journey',x:-26,z:-34,arrival:10,task:{id:'great-journey',label:'Complete all six stops of The Great Journey',points:75}},
  {id:'safari',name:'Safari entrance',x:44,z:-22,arrival:10,task:{id:'safari-complete',label:'Visit all six safari habitats and return to the entrance',points:60}},
  {id:'popcorn',name:'Circus Popcorn',x:35,z:-51,arrival:10,task:{id:'popcorn-pickup',label:'Pick up a serving at the popcorn stand inside the tent',points:15}},
- {id:'circus',name:'Crown Circus',x:45,z:-49,arrival:10,task:{id:'circus-complete',label:'Watch the complete 36-second circus performance',points:30}},
+ {id:'circus',name:'Krown Circus',x:45,z:-49,arrival:10,task:{id:'circus-complete',label:'Watch the complete 36-second circus performance',points:30}},
  {id:'meadow',name:'Meadow Village',x:-29,z:83,arrival:10,task:{id:'visit-meadow',label:'Step inside a Meadow Village home',points:20}},
  {id:'harbor',name:'Bluewater Village',x:29,z:83,arrival:10,task:{id:'visit-harbor',label:'Step inside a Bluewater Village home',points:20}},
  {id:'woodland',name:'Woodland Village',x:0,z:123,arrival:10,task:{id:'visit-woodland',label:'Step inside a Woodland Village home',points:20}},
- {id:'roasted',name:'Roasted · Crown Palace',x:5,z:-85,arrival:10,task:{id:'roasted-return',label:'Choose a vegetable bowl, then return its reusable container',points:25}}
- ,{id:'builders',name:'Making of Krownlandia Garden',x:-18,z:33,arrival:10,task:{id:'builders-story',label:'Explore all three garden exhibit chapters and collect the Builder’s Crown',points:20}}
+ {id:'roasted',name:'Roasted · Krown Palace',x:5,z:-85,arrival:10,task:{id:'roasted-return',label:'Choose a vegetable bowl, then return its reusable container',points:25}}
+ ,{id:'builders',name:'Making of Krownlandia Garden',x:-18,z:33,arrival:10,task:{id:'builders-story',label:'Explore all three garden exhibit chapters and collect the Builder’s Krown',points:20}}
  ,{id:'office',name:'Community Office Garden',x:13.5,z:-2.3,arrival:10,task:{id:'office-idea',label:'Explore a community idea at the garden project board',points:20}}
  ,{id:'library',name:'Library of Alexandria',x:39,z:49,arrival:10,task:{id:'library-read',label:'Explore three readings and collect the Alexandria Bookmark',points:20}}
  ,{id:'square',name:'Krownlandia Town Square',x:8,z:57,arrival:10,task:{id:'square-welcome',label:'Read the community welcome at the Town Square board',points:20}}

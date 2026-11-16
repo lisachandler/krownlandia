@@ -1,15 +1,16 @@
 import assert from 'node:assert/strict';
 import {installFoodGuide} from '../dist/food-guide.js';
+import {roastedMenu,roastedReturnPoint} from '../dist/rewards.js';
 const nodes=new Map();function el(){return {children:[],attributes:{},focus(){document.activeElement=this},set id(v){nodes.set('#'+v,this)},append(...v){this.children.push(...v)},replaceChildren(...v){this.children=v},setAttribute(k,v){this.attributes[k]=v},showModal(){this.open=true},close(){this.open=false}};}
 globalThis.document={head:el(),body:el(),createElement:el,querySelector(s){if(!nodes.has(s))nodes.set(s,el());return nodes.get(s)}};
 let position={x:0,z:0},destination=null,pauses=0;
 const lounge={id:'test',name:'Garden Rest',snack:'Oat bites',souvenir:'Flower charm',x:1,z:0},lounges={spots:[lounge]};
-const guide=installFoodGuide({pause:()=>pauses++,guideTo:p=>destination=p,lounges,getPosition:()=>position}),$=s=>document.querySelector(s),open=()=>$('#foodGuideButton').onclick(),names=()=>$('#foodGuidePlaces').children.map(n=>n.children?.[0]?.textContent);
+const guide=installFoodGuide({roastedReturnPoint,roastedMenu,pause:()=>pauses++,guideTo:p=>destination=p,lounges,getPosition:()=>position}),$=s=>document.querySelector(s),open=()=>$('#foodGuideButton').onclick(),names=()=>$('#foodGuidePlaces').children.map(n=>n.children?.[0]?.textContent);
 open();assert.equal(names()[0],'Lisa’s Coffee Shop');$('#foodGuideNearest').onclick();assert.equal(names()[0],'Garden Rest');assert($('#foodGuideCount').textContent.endsWith('nearest first'));assert.equal($('#foodGuideNearest').attributes['aria-pressed'],'true');assert(!$('#foodGuideOrderNote').hidden);
-const search=$('#foodGuideSearch');search.value='roast';search.oninput();assert.deepEqual(names(),['Roasted · Crown Palace']);$('#foodGuideGo-roasted').onclick();assert.deepEqual(destination,{x:0,z:-86.5,name:'Roasted · Crown Palace'});assert(!guide.isOpen);assert.deepEqual(position,{x:0,z:0});
-position={x:34,z:-56.3};open();assert.equal(search.value,'roast');assert.deepEqual(names(),['Roasted · Crown Palace']);assert(!$('#foodGuideClear').hidden);$('#foodGuideClear').onclick();assert.equal(document.activeElement,search);assert($('#foodGuideClear').hidden);assert.equal(names()[0],'Circus popcorn stand');assert.equal(search.value,'');assert.equal($('#foodGuideSearch'),search);search.value='zzzz';search.oninput();assert($('#foodGuideCount').textContent.startsWith('0 places'));$('#foodGuideClose').onclick();open();assert.equal(search.value,'zzzz');assert($('#foodGuideCount').textContent.startsWith('0 places'));$('#foodGuideClear').onclick();$('#foodGuideNearest').onclick();assert.equal(names()[0],'Lisa’s Coffee Shop');assert($('#foodGuideOrderNote').hidden);
+const search=$('#foodGuideSearch');search.value='roast';search.oninput();assert.deepEqual(names(),['Roasted · Krown Palace']);$('#foodGuideGo-roasted').onclick();assert.deepEqual(destination,{x:0,z:-86.5,name:'Roasted · Krown Palace'});assert(!guide.isOpen);assert.deepEqual(position,{x:0,z:0});
+position={x:34,z:-56.3};open();assert.equal(search.value,'roast');assert.deepEqual(names(),['Roasted · Krown Palace']);assert(!$('#foodGuideClear').hidden);$('#foodGuideClear').onclick();assert.equal(document.activeElement,search);assert($('#foodGuideClear').hidden);assert.equal(names()[0],'Circus popcorn stand');assert.equal(search.value,'');assert.equal($('#foodGuideSearch'),search);search.value='zzzz';search.oninput();assert($('#foodGuideCount').textContent.startsWith('0 places'));$('#foodGuideClose').onclick();open();assert.equal(search.value,'zzzz');assert($('#foodGuideCount').textContent.startsWith('0 places'));$('#foodGuideClear').onclick();$('#foodGuideNearest').onclick();assert.equal(names()[0],'Lisa’s Coffee Shop');assert($('#foodGuideOrderNote').hidden);
 const distanceTexts=()=>$('#foodGuidePlaces').children.flatMap(card=>card.children.filter(n=>n.textContent?.includes('straight-line distance')).map(n=>n.textContent));
-function checkWalkNames(){const labels=[];for(const card of $('#foodGuidePlaces').children){const name=card.children[0].textContent,button=card.children.find(n=>n.textContent==='Walk here');assert(button);assert.equal(button.attributes['aria-label'],'Walk to '+name);labels.push(button.attributes['aria-label']);}assert.equal(new Set(labels).size,labels.length);}
+function checkWalkNames(){const labels=[];for(const card of $('#foodGuidePlaces').children){const name=card.children[0].textContent,button=card.children.find(n=>n.textContent===(name==='Roasted · Krown Palace'?'Walk to the food counter':'Walk here'));assert(button);assert.equal(button.attributes['aria-label'],name==='Roasted · Krown Palace'?'Walk to the Roasted food counter':'Walk to '+name);labels.push(button.attributes['aria-label']);}assert.equal(new Set(labels).size,labels.length);}
 checkWalkNames();
 assert.deepEqual(distanceTexts(),[],'default order stays compact');
 $('#foodGuideNearest').onclick();assert.equal($('#foodGuideDistance-popcorn').textContent,'About 0 m away · straight-line distance');
@@ -29,6 +30,23 @@ assert.equal(search.attributes['aria-describedby'],'foodGuideCount');
 const walk=$('#foodGuideGo-popcorn'),before=destination;walk.disabled=true;walk.onclick();assert.equal(destination,before);assert(guide.isOpen);
 const close=$('#foodGuideClose');close.disabled=true;close.onclick();assert(guide.isOpen);close.disabled=false;
 const clear=$('#foodGuideClear');clear.disabled=true;clear.onclick();assert.equal(search.value,'popcorn');clear.disabled=false;
-search.disabled=true;const resultBefore=$('#foodGuidePlaces').children;search.value='roast';search.oninput();assert.equal($('#foodGuidePlaces').children,resultBefore);search.disabled=false;search.oninput();assert.deepEqual(names(),['Roasted · Crown Palace']);
-$('#foodGuideGo-roasted').onclick();assert(!guide.isOpen);assert.equal(destination.name,'Roasted · Crown Palace');
+search.disabled=true;const resultBefore=$('#foodGuidePlaces').children;search.value='roast';search.oninput();assert.equal($('#foodGuidePlaces').children,resultBefore);search.disabled=false;search.oninput();assert.deepEqual(names(),['Roasted · Krown Palace']);
+$('#foodGuideGo-roasted').onclick();assert(!guide.isOpen);assert.equal(destination.name,'Roasted · Krown Palace');
 console.log('PASS: disabled navigation, search, clear, close and walking controls are inert; enabled search and directions recover; search describes its result count.');
+
+open();
+for(const [query,expected] of [['broccoli',['Rainbow Roast']],['crown quinoa',['Mediterranean Roast']],['barley',['Harvest Roast']],['chickpeas',['Rainbow Roast','Mediterranean Roast']],['broccoli barley',[]]]){
+ search.value=query;search.oninput();
+ assert.deepEqual(names(),expected.length?['Roasted · Krown Palace']:[undefined]);
+ if(expected.length){const menu=$('#foodGuidePlaces').children[0].children[1].textContent;assert.deepEqual(menu.split('\n').map(line=>line.split(' · ')[0]),expected);assert(menu.toLowerCase().includes(query.split(' ').at(-1)));}
+}
+console.log('PASS: ingredient searches identify matching bowls and do not combine ingredients across recipes.');
+
+search.value='container return';search.oninput();assert.deepEqual(names(),['Roasted · Krown Palace']);
+const oldReturn=$('#foodGuideReturn'),prior=destination;
+search.value='popcorn';search.oninput();oldReturn.onclick();assert.equal(destination,prior);assert(guide.isOpen);
+search.value='container return';search.oninput();const returnWalk=$('#foodGuideReturn');
+returnWalk.disabled=true;returnWalk.onclick();assert(guide.isOpen);returnWalk.disabled=false;
+returnWalk.onclick();assert(!guide.isOpen);assert.deepEqual(destination,{x:-7,z:-86,name:'Roasted container return'});
+assert(Math.hypot(destination.x+7,destination.z+84.5)<2);assert.deepEqual(position,{x:0,z:0});
+console.log('PASS: bowl return directions reach the existing interaction area; stale and disabled controls cannot redirect visitors.');

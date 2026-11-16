@@ -12,5 +12,5 @@ open();assert($('#circusProgramWatch').disabled);click('circusProgramWatch');ass
 open();assert.equal(click('circusReplay'),false);click('circusReward');assert.equal(guides.length,0);click('circusProgramClose');assert(click('circusReplay'));assert(c.active);c.update(36,false);
 claimed=true;click('circusReward');assert.equal(guides.length,0);claimed=false;click('circusReward');assert.deepEqual(guides,['circus']);click('circusReward');assert.equal(guides.length,1);
 for(const id of ['circusProgramEntrance','circusProgramSeat','circusProgramPopcorn']){open();click(id);assert(!c.isOpen);const n=guides.length;click(id);assert.equal(guides.length,n);}
-assert.deepEqual(guides,['circus','Crown Circus entrance','Audience bench','Circus popcorn stand']);
+assert.deepEqual(guides,['circus','Krown Circus entrance','Audience bench','Circus popcorn stand']);
 console.log('PASS: closed/disabled program actions, finished-show replay and reward guards, modal pause, normal starts and directions.');

@@ -4,7 +4,7 @@ export const CHAPTERS=[
  {title:'Room for the wild',action:'Open the sanctuary',text:'Create a safe place for wildlife to flourish.',color:'#dfad62'},
  {title:'Better together',action:'Light the gathering place',text:'Connect a community around a shared light.',color:'#efaa79'},
  {title:'Imagine a brighter world',action:'Build the dream',text:'Raise a sparkling symbol of possibility.',color:'#ba91df'},
- {title:'Carry the light forward',action:'Make the crown shine',text:'Bring everything you have discovered into the future.',color:'#f0cf72'}
+ {title:'Carry the light forward',action:'Make the Krown shine',text:'Bring everything you have discovered into the future.',color:'#f0cf72'}
 ];
 export function createJourney(){
  let phase='idle',stop=-1,elapsed=0,completed=false;

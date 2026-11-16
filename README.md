@@ -40,7 +40,7 @@ Krownlandia predates this prototype. Its recorded community origins date to Janu
 
 ## Publication and licensing
 
-This source snapshot corresponds to hosted version 280. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
+This source snapshot tracks hosted version 293 with one retained public file: the Town Square activity board still uses the earlier circus spelling. Its existing external-link configuration was left untouched. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
 
 Three.js retains its license at `dist/vendor/LICENSE`. No project-wide open-source license has been selected; public visibility alone does not grant a general license to reuse project code, community material, branding or artwork.
 
@@ -74,8 +74,8 @@ The hosted `/admin/activity` page is restricted to the configured administrator 
 
 Activities → Record video captures up to 30 seconds of silent canvas video in supported browsers. Stop, preview and download manually. Clips stay in the page, are not uploaded or included in progress backups, and should be downloaded before recording a replacement or leaving. Actual codec/playback testing remains pending; lifecycle, gameplay and deployment checks are covered.
 
-## November 13 snapshot
+## November 15 snapshot
 
-Includes the Express Yourself composition studio, Dancing Fountain, KROWN Cinema storyboard, Riverbend pottery and baskets, Meadowbrook weaving and market, Eldergrove woodcraft, Stonehearth pattern practice, Whispering Pines story glade, walking-map discovery and visitor reports. Activities remain session-only with no reward changes. Run `node scripts/check-release.mjs` for the selected source checks; see RELEASE_CHECKS.md for the built-artifact mode. Live rendering and codec verification remain pending.
+Includes Krown Bowling, Riverbend casting, the garden layout exercise, ingredient search and container-return directions, the Sticker Shop strip and Game Club crossing puzzle. Park names use Krown; legacy saved identifiers are preserved. Also includes the Express Yourself composition studio, Dancing Fountain, KROWN Cinema storyboard, Riverbend pottery and baskets, Meadowbrook weaving and market, Eldergrove woodcraft, Stonehearth pattern practice, Whispering Pines story glade, walking-map discovery and visitor reports. Activities remain session-only with no reward changes. Run `node scripts/check-release.mjs` for the selected source checks; see RELEASE_CHECKS.md for the built-artifact mode. Live rendering and codec verification remain pending.
 
 

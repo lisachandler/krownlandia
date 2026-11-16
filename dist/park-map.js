@@ -1,5 +1,37 @@
 import {STATIONS} from './rewards-core.js';
 
+// This map activity has no destination, reward action or persistence.
+function installBowling(map) {
+ const make=(tag,id,text)=>{const node=document.createElement(tag);node.id=id;if(text)node.textContent=text;return node;};
+ const card=make('details','mapBowling'), opener=make('summary','bowlingOpener','Krown Bowling · tabletop practice');
+ const intro=make('p','bowlingIntro','Choose an aim for each of two rolls. Only standing pins in that group fall.');
+ const label=make('label','bowlingLabel','Aim '), aim=make('select','bowlingAim');
+ label.htmlFor='bowlingAim';
+ const groups={Left:[2,4,7,8],Center:[1,2,3,5],Right:[3,6,9,10]};
+ for(const [name,pins] of Object.entries(groups)){
+  const option=document.createElement('option');option.value=name;option.textContent=name+' · '+pins.join(', ');aim.append(option);
+ }
+ const roll=make('button','bowlingRoll','Roll'), restart=make('button','bowlingRestart','Restart rack');
+ const status=make('p','bowlingStatus');status.setAttribute('role','status');status.setAttribute('aria-atomic','true');
+ const credit=make('small','bowlingCredit','Krown Bowling · @mariromero22, community inventory p. 10. This tabletop game is a new interpretation.');
+ let standing,rolls;
+ function describe(hit=''){
+  status.textContent=hit+'Rolls: '+rolls+' of 2. Standing pins: '+[...standing].join(', ')+'.'+(rolls===2?' Rack finished.':'');
+ }
+ function reset(){standing=new Set([1,2,3,4,5,6,7,8,9,10]);rolls=0;aim.value='Center';aim.disabled=roll.disabled=false;describe();}
+ function close(){card.open=false;reset();}
+ roll.onclick=()=>{
+  if(!map.open||!card.open||rolls>=2)return;
+  const hit=groups[aim.value].filter(pin=>standing.delete(pin));rolls++;
+  describe(hit.length?'Knocked down '+hit.join(', ')+'. ':'No more pins fell. ');
+  if(rolls===2){aim.disabled=roll.disabled=true;restart.focus();}
+ };
+ restart.onclick=()=>{if(map.open&&card.open){reset();aim.focus();}};
+ card.ontoggle=()=>{if(!card.open)reset();};
+ card.append(opener,intro,label,aim,roll,restart,status,credit);map.append(card);close();
+ return {close,open(){if(map.open){card.open=true;opener.focus();}}};
+}
+
 // Map includes the courtyard and residential paths: x -63..55, z -92..180.
 export function installParkMap({pause,guideTo,rewards,guideToPoint=()=>{},destinations=()=>[]}){
  const $=s=>document.querySelector(s),style=document.createElement('link');style.rel='stylesheet';style.href='park-map.css';document.head.append(style);
@@ -12,8 +44,8 @@ export function installParkMap({pause,guideTo,rewards,guideToPoint=()=>{},destin
  const habitats=[['Acacia savanna','Giraffes',65,-15],['The waterhole','Elephants',87,-15],['Open grassland','Zebras',116,-42],['Rocky savanna','Lions',102,-77],['Riverbank','Hippos',70,-77],['Shallow wetlands','Flamingos',61,-44]];
  const tabs=document.createElement('div');tabs.id='mapViews';for(const [id,title] of [['courtyard','Park & villages'],['safari','Safari route']]){const tab=document.createElement('button');tab.id='mapView'+id;tab.textContent=title;tab.onclick=()=>{view=id;render();};tabs.append(tab);}dialog.append(tabs);
 
- const searchBox=document.createElement('div');searchBox.id='mapSearchBox';const searchLabel=document.createElement('label');searchLabel.htmlFor='mapSearch';searchLabel.textContent='Find a destination';const search=document.createElement('input');search.id='mapSearch';search.type='search';search.placeholder='Try coffee, home, lounge or picnic';search.value='';const clear=document.createElement('button');clear.id='mapSearchClear';clear.textContent='Clear search';const count=document.createElement('p');count.id='mapSearchCount';count.setAttribute('role','status');search.setAttribute('aria-describedby','mapSearchCount');const scenic=document.createElement('button');scenic.id='mapScenicSeats';scenic.textContent='Scenic seats';scenic.onclick=()=>{rewardsOnly=false;search.value='scenic';render();};const crafts=document.createElement('button');crafts.id='mapCraftActivities';crafts.textContent='Craft activities';crafts.onclick=()=>{rewardsOnly=false;search.value='craft activity';render();};const collect=document.createElement('button');collect.id='mapCollectRewards';collect.textContent='Rewards to collect';collect.onclick=()=>{rewardsOnly=!rewardsOnly;search.value='';render();};const shortcuts=document.createElement('div');shortcuts.id='mapShortcuts';shortcuts.append(scenic,crafts,collect);searchBox.append(searchLabel,search,clear,shortcuts,count);dialog.append(searchBox);search.oninput=()=>render();clear.onclick=()=>{search.value='';rewardsOnly=false;render();search.focus();};
- const normalize=value=>value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/['’]/g,'');
+ const searchBox=document.createElement('div');searchBox.id='mapSearchBox';const searchLabel=document.createElement('label');searchLabel.htmlFor='mapSearch';searchLabel.textContent='Find a destination or activity';const search=document.createElement('input');search.id='mapSearch';search.type='search';search.placeholder='Try coffee, fishing or bowling';search.value='';const clear=document.createElement('button');clear.id='mapSearchClear';clear.textContent='Clear search';const count=document.createElement('p');count.id='mapSearchCount';count.setAttribute('role','status');search.setAttribute('aria-describedby','mapSearchCount');const scenic=document.createElement('button');scenic.id='mapScenicSeats';scenic.textContent='Scenic seats';scenic.onclick=()=>{rewardsOnly=false;search.value='scenic';render();};const crafts=document.createElement('button');crafts.id='mapCraftActivities';crafts.textContent='Craft activities';crafts.onclick=()=>{rewardsOnly=false;search.value='craft activity';render();};const collect=document.createElement('button');collect.id='mapCollectRewards';collect.textContent='Rewards to collect';collect.onclick=()=>{rewardsOnly=!rewardsOnly;search.value='';render();};const shortcuts=document.createElement('div');shortcuts.id='mapShortcuts';shortcuts.append(scenic,crafts,collect);searchBox.append(searchLabel,search,clear,shortcuts,count);dialog.append(searchBox);search.oninput=()=>render();clear.onclick=()=>{search.value='';rewardsOnly=false;render();search.focus();};
+ const normalize=value=>value.toLowerCase().replace(/\bcrown\b/g,'krown').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/['’]/g,'');
  const position=(node,x,z)=>{node.style.left=((view==='safari'?(x-38)/90:(x+63)/118)*100)+'%';node.style.top=((view==='safari'?(z+88)/85:(z+92)/272)*100)+'%';};
  function render(){
   const query=normalize(search.value.trim()),matches=text=>query.split(/\s+/).every(word=>normalize(text).includes(word));
@@ -46,11 +78,19 @@ export function installParkMap({pause,guideTo,rewards,guideToPoint=()=>{},destin
    row.append(name,detail);list.append(row);
   });
   if(query&&!rewardsOnly)for(const place of destinations().filter(p=>matches(p.name+' '+p.kind+' '+(p.keywords||''))).sort((a,b)=>distance(a)-distance(b))){resultCount++;const choose=()=>{selected=place.id;guideToPoint({x:place.x,z:place.z,name:place.name});dialog.close();};const row=document.createElement('button');row.id='mapGo-'+place.id;row.className='map-location';row.onclick=choose;const name=document.createElement('strong');name.textContent=place.name;const detail=document.createElement('span');detail.textContent=place.kind+' · '+distanceLabel(place)+' · Walking directions'+(place.detail?' · '+place.detail:'');row.append(name,detail);list.append(row);const marker=document.createElement('button');marker.className='map-marker';marker.textContent=place.kind[0];marker.setAttribute('aria-label',place.name+'. Walking directions');marker.onclick=choose;position(marker,place.x,place.z);$('#mapDrawing').append(marker);markers.push(marker);}
-  count.textContent=rewardsOnly?(resultCount?resultCount+' station'+(resultCount===1?'':'s')+' with arrival points or completed-task points to collect. Nearest first; distances are direct estimates, and walking routes may be longer.':query?'No rewards match this search. Clear search to see all stations.':'No rewards ready to collect. Complete more activities to unlock task points.'):query?(resultCount?resultCount+' matching destination'+(resultCount===1?'':'s'):'No destinations found. Try a place name, home, lounge or picnic, or clear the search.'):'Search destinations, find Craft activities or Scenic seats, or choose Rewards to collect.';
+  const tabletop=query&&!rewardsOnly&&matches('Krown Bowling tabletop practice recreation pins two rolls');
+  if(tabletop){
+   const play=document.createElement('button');play.type='button';play.id='mapPlayBowling';play.className='map-location';
+   const title=document.createElement('strong');title.textContent='Krown Bowling';
+   const hint=document.createElement('span');hint.textContent='Tabletop practice · Play here in the map';
+   play.append(title,hint);play.onclick=()=>bowling.open();list.append(play);
+  }
+  count.textContent=rewardsOnly?(resultCount?resultCount+' station'+(resultCount===1?'':'s')+' with arrival points or completed-task points to collect. Nearest first; distances are direct estimates, and walking routes may be longer.':query?'No rewards match this search. Clear search to see all stations.':'No rewards ready to collect. Complete more activities to unlock task points.'):query?(tabletop?(resultCount?resultCount+' walking destination'+(resultCount===1?'':'s')+' and ':'')+'1 activity to play in the map.':resultCount?resultCount+' matching destination'+(resultCount===1?'':'s'):'No destinations found. Try a place name, home, lounge or picnic, or clear the search.'):'Search destinations, find Craft activities or Scenic seats, or choose Rewards to collect.';
   update(snapshot);
  }
+ const bowling=installBowling(dialog);
  let markers=[];
- function open(){pause();view=snapshot.safari?.active?'safari':'courtyard';render();dialog.showModal();}
+ function open(){bowling.close();pause();view=snapshot.safari?.active?'safari':'courtyard';render();dialog.showModal();}
  function update(state){snapshot=state;const visitor=$('#mapVisitor');visitor.hidden=view==='safari'?(state.x<38||state.x>128||state.z<-88||state.z>-3):(state.x<-63||state.x>55||state.z<-92||state.z>180);position(visitor,state.x,state.z);visitor.style.transform='translate(-50%,-50%) rotate('+(-state.yaw*180/Math.PI)+'deg)';}
  button.onclick=open;$('#mapClose').onclick=()=>dialog.close();
  return {open,update,get isOpen(){return dialog.open},get selected(){return selected}};

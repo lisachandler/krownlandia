@@ -48,6 +48,21 @@ basket('').open=true;seat=null;bclick('Reset');assert.equal(basket('Status').tex
 seat=river.seats[0];bclick('Reset');assert.match(basket('Status').textContent,/Bands 0/,'bench access');
 assert.equal(discoveries,0);assert.equal(writes,0);assert.equal(basket('Status').attrs.role,'status');assert.equal(basket('Preview').attrs['aria-hidden'],'true');
 assert.match($('CraftStatus').textContent,/Finished: your vase/,'pottery independent');
+const cast=id=>$('Cast'+id);
+const festivalBefore=river.state();
+cast('Near').onclick();assert.equal(cast('Reel').disabled,true);
+cast('').open=true;seat=null;cast('Far').onclick();assert.equal(cast('Reel').disabled,true);
+seat=river.seats[0];
+for(const [id,pattern] of [['Near',/ring by the bank/],['Far',/curved wake/]]){
+ cast(id).onclick();assert.equal(document.activeElement,cast('Reel'));assert(cast('Near').disabled&&cast('Far').disabled);
+ cast(id==='Far'?'Near':'Far').onclick();cast('Reel').onclick();assert.match(cast('Status').textContent,pattern);assert.equal(document.activeElement,cast(id));assert(cast('Reel').disabled);
+}
+cast('Far').onclick();$('Close').onclick();cast('Reel').onclick();assert.match(cast('Status').textContent,/drifts/);
+assert(river.open());assert.equal(cast('').open,false);assert(cast('Reel').disabled);
+seat=null;camera.position.set(-41,1.75,133.5);cast('').open=true;cast('Near').onclick();assert.match(cast('Status').textContent,/rests beside/);
+cast('').open=false;cast('').ontoggle();assert(cast('Reel').disabled);
+assert.deepEqual(river.state(),festivalBefore);assert.equal(discoveries,0);assert.equal(writes,0);
+console.log('PASS: both casts, board and bench, guarded actions, focus, reset, and unchanged boat/reward/storage state.');
 installRiverbend({scene:new T.Scene(),camera,colliders:[],pause(){},rewards:{state:()=>({claims:[],done:[],saved:true})},getCurrentSeat:()=>null});
 assert.equal(basket('').open,false);assert.match(basket('Status').textContent,/Bands 0/,'new page starts empty');
 console.log('PASS: all 32 basket patterns/handles, undo invalidation, stage focus, collapsed/closed/distant guards, reopen/reload, seated access, independent pottery and zero storage/reward writes. DOM simulation only.');

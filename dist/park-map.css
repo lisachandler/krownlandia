@@ -5,3 +5,5 @@
 #mapSearchBox{order:-1;margin:0 0 16px;display:grid;grid-template-columns:1fr auto;gap:8px}#mapSearchBox[hidden]{display:none}#mapSearchBox label,#mapSearchCount{grid-column:1 / -1;font-size:14px}#mapSearch{min-width:0;width:100%;font:inherit;font-size:16px;padding:12px;border:1px solid #bda66c;border-radius:8px;background:#173c4c;color:#fff4d7}#mapSearch::placeholder{color:#c5d3d8}#mapSearchCount{margin:0;line-height:1.4;color:#e6d6ad}#mapSearchClear[hidden]{display:none}@media(max-width:620px){#parkMap.map-searching .map-layout{display:flex;flex-direction:column}#parkMap.map-searching #mapLocations{order:-1;width:100%}}
 
 #mapShortcuts{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px}#mapShortcuts button[aria-pressed=true]{background:#e1c583;color:#183549}
+
+#mapBowling{margin:12px 0;padding:10px 12px;border:1px solid #728b88;border-radius:8px}#mapBowling summary{cursor:pointer;font-weight:600}#mapBowling select{font:inherit;padding:.4em}#mapBowling button{margin:.3em}#mapBowling :focus-visible{outline:3px solid #ffe0a0;outline-offset:2px}

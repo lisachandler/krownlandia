@@ -67,6 +67,18 @@ new Function('T','enrich','finishGardens','batchStatic','installRewards','instal
 let ms=0;const frame=()=>next(ms+=16);frame();
 const a=window.krownlandia;document.querySelector('#enter').onclick();const planner=createNavigator(a.blocked);
 for(const p of [{x:38,z:-8},a.generalStore.boardPoint,{x:38,z:-3},{x:44,z:-20}]){assert(!a.blocked(p.x,p.z),'clear '+JSON.stringify(p));assert(planner.route({x:0,z:30},p).length,'route '+JSON.stringify(p));}
-a.camera.position.set(38,1.75,-16.8);frame();assert.equal(a.getState().near,'generalstore');a.interact();assert(document.querySelector('#generalstoreMenu').open);assert(!a.getState().rewards.done.includes('generalstore-board'));const pos=a.camera.position.clone();handlers.keydown({key:'w',preventDefault(){}});frame();assert(a.camera.position.equals(pos));handlers.blur();document.querySelector('#generalstoreTopic-bottle').onclick();assert(a.getState().rewards.done.includes('generalstore-board'));document.querySelector('#generalstoreClose').onclick();
+a.camera.position.set(38,1.75,-16.8);frame();assert.equal(a.getState().near,'generalstore');a.interact();assert(document.querySelector('#generalstoreMenu').open);assert(!a.getState().rewards.done.includes('generalstore-board'));const pos=a.camera.position.clone();handlers.keydown({key:'w',preventDefault(){}});frame();assert(a.camera.position.equals(pos));handlers.blur();
+const q=id=>document.querySelector('#'+id),sheet=q('storeStickerSheet'),beforeSheet=JSON.stringify([...saved]);
+assert(!sheet.open);q('storeSticker0').onclick();assert.match(q('storeSticker0').textContent,/Empty/);
+sheet.open=true;
+for(let i=0;i<3;i++){q('storeStamp'+i).onclick();q('storeSticker'+i).onclick();}
+assert.match(q('storeStickerStatus').textContent,/3 of 3/);assert.match(q('storeSticker1').textContent,/Flower/);
+q('storeStamp2').onclick();q('storeSticker0').onclick();assert.match(q('storeSticker0').textContent,/Star/);
+a.camera.position.x+=5;q('storeStickerClear').onclick();assert.match(q('storeSticker0').textContent,/Star/);a.camera.position.x-=5;
+q('storeStickerClear').onclick();assert.match(q('storeSticker1').textContent,/Empty/);q('storeSticker1').onclick();assert.match(q('storeSticker1').textContent,/Krown/);
+q('generalstoreClose').onclick();q('storeSticker0').onclick();assert.match(q('storeSticker0').textContent,/Empty/);
+assert(a.generalStore.open());assert(!sheet.open);assert.match(q('storeSticker1').textContent,/Empty/);
+assert.equal(JSON.stringify([...saved]),beforeSheet);assert(!a.getState().rewards.done.includes('generalstore-board'));
+document.querySelector('#generalstoreTopic-bottle').onclick();assert(a.getState().rewards.done.includes('generalstore-board'));document.querySelector('#generalstoreClose').onclick();
 a.camera.position.set(38,1.75,-3);frame();a.interact();const task=document.querySelector('#rewardBody').children.find(n=>n.textContent?.startsWith('Claim task'));assert(task&&!task.disabled);const points=a.getState().rewards.points;task.onclick();task.onclick();assert.equal(a.getState().rewards.points,points+20);document.querySelector('#rewardClose').onclick();
 const lounge=a.lounges.spots.find(s=>s.id==='generalstore');assert(lounge);const approach={x:lounge.x,z:lounge.z+1.3};assert(planner.route({x:0,z:30},approach).length);a.camera.position.set(approach.x,1.75,approach.z);frame();a.interact();assert(document.querySelector('#loungeMenu').open);document.querySelector('#loungeSnack').onclick();assert(lounge.treat.visible);document.querySelector('#loungeCollect').onclick();assert(a.journal.items().find(i=>i.id==='lounge-generalstore').owned);assert(parseBackup(exportBackup(localStorage)).data['krownlandia-lounge-souvenirs-v1'].includes('generalstore'));console.log('PASS: store entrance, browsing counter, safari approach, pause, explicit task, one-time points, lounge snack, souvenir and backup',lounge.x,lounge.z);

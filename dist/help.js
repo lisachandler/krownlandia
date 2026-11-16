@@ -43,7 +43,7 @@ export function installHelp({pause}){
  const count=document.createElement('p');count.id='helpSearchCount';count.setAttribute('role','status');search.setAttribute('aria-describedby','helpSearchCount');
  dialog.append(label,search,clear,count);
  const groups=sections.map(([heading,rows],index)=>{const details=document.createElement('details');details.id='helpSection-'+index;details.open=index===0;const summary=document.createElement('summary');summary.textContent=heading;details.append(summary);const entries=rows.map(([label,copy],i)=>{const p=document.createElement('p'),strong=document.createElement('strong'),text=document.createElement('span');p.id='helpEntry-'+index+'-'+i;strong.textContent=label+'. ';text.textContent=copy;p.append(strong,text);details.append(p);return {p,text:heading+' '+label+' '+copy};});dialog.append(details);return {details,entries};});
- const normalize=value=>value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,'').replace(/[^a-z0-9]+/g,' ').trim();let previousOpen=null;
+ const normalize=value=>value.toLowerCase().replace(/\bcrown\b/g,'krown').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,'').replace(/[^a-z0-9]+/g,' ').trim();let previousOpen=null;
  function filter(){const query=normalize(search.value.trim()),terms=query.split(/\s+/);let matches=0;
   if(query&&!previousOpen)previousOpen=groups.map(g=>g.details.open);
   groups.forEach(({details,entries},i)=>{let found=0;entries.forEach(({p,text})=>{p.hidden=!!query&&!terms.every(term=>normalize(text).includes(term));if(!p.hidden)found++;});matches+=found;details.hidden=!found;if(query)details.open=!!found;else if(previousOpen)details.open=previousOpen[i];});

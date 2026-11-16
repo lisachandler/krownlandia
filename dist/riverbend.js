@@ -49,6 +49,7 @@ export function installRiverbend({scene,camera,colliders,pause,rewards,getCurren
  }
  workshop.append(craftSummary,craftNote,shapes,patterns,vessel,craftStatus,finishCraft,resetCraft);dialog.append(workshop);renderCraft();
  const basket=createBasketPractice({canUse:()=>dialog.open&&canRead()});dialog.append(basket.panel);
+ const casting=createCastingPractice(()=>dialog.open&&canRead());dialog.append(casting.panel);
  const previewNote=document.createElement('p');previewNote.textContent='Lantern-boat preview · 36 seconds. Watch from the bank or viewing bench. Night view makes the lanterns brighter. This scenic preview does not add points.';
  const startButton=document.createElement('button');startButton.id='riverFestivalStart';startButton.textContent='Start lantern-boat preview';startButton.onclick=()=>{if(!canRead()||!dialog.open)return;start();};
  const benchButton=document.createElement('button');benchButton.id='riverFestivalBench';benchButton.textContent='Find the river viewing bench';benchButton.onclick=()=>{if(!canRead()||!dialog.open)return;pause();rewards.guideToPoint({...seats[0].approach,name:seats[0].name});dialog.close();};dialog.append(previewNote,startButton,benchButton);
@@ -58,7 +59,7 @@ export function installRiverbend({scene,camera,colliders,pause,rewards,getCurren
  function start(){if(active||!inArea())return false;pause();elapsed=0;active=true;held=false;finished=false;dialog.close();hold.hidden=false;hold.textContent='Pause';stop.textContent='Stop';dock.hidden=false;pose(lastNight);label.textContent='Lantern boats · 36s';return true;}
  function update(dt,blocked=false,night=0){lastNight=night;if((active||finished)&&!inArea()){stop.onclick();return;}if(active&&!held&&!blocked){elapsed=Math.min(36,elapsed+Math.max(0,Math.min(dt,.1)));if(elapsed>=36){active=false;finished=true;hold.hidden=true;stop.textContent='Dismiss';}}pose(night);dock.hidden=blocked||(!active&&!finished);if(active)label.textContent=(held||blocked?'Paused · ':'Lantern boats · ')+Math.ceil(36-elapsed)+'s';else if(finished)label.textContent='Preview finished · Visit the display to replay';}
  function refresh(){const st=rewards.state();status.textContent=st.claims.includes('riverbend:task')?'Your Riverbend discovery reward is collected.':st.done.includes('riverbend-board')?'Story explored · 20 task points are ready at the Riverbend rewards station.':'Explore one story to unlock 20 task points.';if(!st.saved)status.textContent+=' Progress lasts for this visit only.';}
- return {seats,boardPoint,start,update,state:()=>({active,paused:held,elapsed,finished}),get near(){return near()},get isOpen(){return dialog.open},open(){if(!canRead()||dialog.open)return false;pause();story.textContent='Choose a Riverbend story to explore.';refresh();refreshVillageLinks();workshop.open=false;basket.panel.open=false;dialog.showModal();return true;}};
+ return {seats,boardPoint,start,update,state:()=>({active,paused:held,elapsed,finished}),get near(){return near()},get isOpen(){return dialog.open},open(){if(!canRead()||dialog.open)return false;pause();story.textContent='Choose a Riverbend story to explore.';refresh();refreshVillageLinks();workshop.open=false;basket.panel.open=false;casting.close();dialog.showModal();return true;}};
 }
 
 // Local practice only: no storage, rewards, timers or network calls.
@@ -122,4 +123,28 @@ function createBasketPractice({canUse}) {
   }
   panel.append(summary, note, bandGroup, handleGroup, preview, status, finish, reset);
   render(); return {panel};
+}
+
+
+function createCastingPractice(canRead){
+ const make=(tag,id,text)=>{const n=document.createElement(tag);n.id='riverbendCast'+id;if(text)n.textContent=text;return n;};
+ const panel=make('details',''),summary=make('summary','Summary','Try a riverside cast');
+ const note=make('p','Note','Riverbend’s page-3 village description mentions fishing. Try an imagined float cast from the bank. There is no timer, catch or score.');
+ const status=make('p','Status');status.setAttribute('role','status');status.setAttribute('aria-atomic','true');
+ const near=make('button','Near','Cast near the bank'),far=make('button','Far','Cast into the current'),reel=make('button','Reel','Reel in');
+ let cast=null;
+ function show(line){status.textContent=line;near.disabled=far.disabled=cast!==null;reel.disabled=cast===null;}
+ function reset(){cast=null;show('Line ready. Choose where to cast.');}
+ for(const [button,water] of [[near,'bank'],[far,'current']]){
+  button.type='button';button.onclick=()=>{
+   if(!panel.open||!canRead()||cast!==null)return;
+   cast=water;show(water==='bank'?'The float rests beside the bank. Reel in when ready.':'The float drifts along the current. Reel in when ready.');reel.focus();
+  };
+ }
+ reel.type='button';reel.onclick=()=>{
+  if(!panel.open||!canRead()||cast===null)return;
+  const last=cast;cast=null;show(last==='bank'?'The float lifts out, leaving a ring by the bank. Your line is ready again.':'The float trails a curved wake back to shore. Your line is ready again.');(last==='bank'?near:far).focus();
+ };
+ panel.append(summary,note,near,far,reel,status);panel.ontoggle=()=>{if(!panel.open)reset();};
+ reset();return {panel,close(){panel.open=false;reset();}};
 }

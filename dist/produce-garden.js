@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-export function installProduceGarden({scene,camera,colliders,pause,rewards,getCurrentSeat=()=>null}){
+export function installProduceGarden({scene,camera,colliders,pause,rewards,getCurrentSeat=()=>null,getRoastedCounter=()=>null}){
  const root=new T.Group();root.name='Community Produce Garden';scene.add(root);
  const mat=color=>new T.MeshStandardMaterial({color,roughness:.85}),wood=mat('#80563c'),green=mat('#426d45'),stone=mat('#d9c7a1'),soil=mat('#826144'),orange=mat('#e89539'),red=mat('#c74737');
  const add=(g,m,x,y,z)=>{const o=new T.Mesh(g,m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;root.add(o);return o;};
@@ -19,10 +19,33 @@ export function installProduceGarden({scene,camera,colliders,pause,rewards,getCu
   ['tomatoes','Tomatoes','The back-right bed has wooden supports, green foliage and red tomatoes. Can you spot the small red shapes tucked beside the leaves?'],
   ['greens','Leafy greens','The bed closest to the left bench holds low, rounded green plants. Compare their shapes with the taller carrot leaves and supported tomatoes.']
  ];let selectedCrop=0;const cropButtons=crops.map(([id,name,text],i)=>{const b=document.createElement('button');b.id='produceCrop-'+id;b.textContent=name;b.onclick=()=>{if(!dialog.open||!canRead())return;selectedCrop=i;renderNotes();};choices.append(b);return b;});function renderNotes(){note.textContent=crops[selectedCrop][2];cropButtons.forEach((b,i)=>b.setAttribute('aria-pressed',String(i===selectedCrop)));}
- const attribution=document.createElement('p');attribution.textContent='These observation notes describe the prototype garden.';notes.append(summary,choices,note,attribution);renderNotes();
- const tend=document.createElement('button');tend.id='produceFindWater';tend.textContent='Walk to the watering bench';tend.onclick=()=>{if(!dialog.open||!canRead())return;pause();rewards.guideToPoint(boardPoint);dialog.close();};dialog.replaceChildren(title,intro,notes,status,water,tend,reward,close);
+ const attribution=document.createElement('p');attribution.textContent='These observation notes describe the prototype garden.';const kitchen=document.createElement('button');kitchen.type='button';kitchen.id='produceVisitRoasted';kitchen.textContent='Get walking directions to Roasted';
+ kitchen.onclick=()=>{if(!dialog.open||!notes.open||!canRead())return;const target=getRoastedCounter();if(!target)return;pause();rewards.guideToPoint({x:target.x,z:target.z,name:target.name});dialog.close();};
+ const kitchenNote=document.createElement('p');kitchenNote.textContent='For a vegetable bowl, visit Roasted in Krown Palace. You can go before or after watering.';
+ notes.append(summary,choices,note,attribution,kitchenNote,kitchen);renderNotes();
+ const planner=createPracticePlot(()=>dialog.open&&canRead());
+ const tend=document.createElement('button');tend.id='produceFindWater';tend.textContent='Walk to the watering bench';tend.onclick=()=>{if(!dialog.open||!canRead())return;pause();rewards.guideToPoint(boardPoint);dialog.close();};dialog.replaceChildren(title,intro,notes,planner.panel,status,water,tend,reward,close);
 
  function render(){soil.color.set(watered()?'#49392e':'#826144');const seated=seats.includes(getCurrentSeat());water.hidden=seated;water.disabled=watered()||seated;tend.hidden=!seated||watered();water.textContent=watered()?'Garden watered':'Water the vegetable beds';const st=rewards.state();reward.textContent=st.claims.includes('produce:task')?'Revisit garden rewards · task claimed':watered()?'Find my 20-point garden reward':'Find garden rewards';status.textContent=st.claims.includes('produce:task')?'Thank you for tending the garden. Your task reward is collected.':watered()?'The beds are watered. Collect 20 task points at the garden rewards station.':seated?'Stand up and follow directions to the watering bench to tend the beds and unlock 20 task points.':'Use the watering can here to tend the beds and unlock 20 task points.';if(!st.saved)status.textContent+=' Progress lasts for this visit; browser storage is unavailable.';}
  water.onclick=()=>{if(!dialog.open||!near()||seats.includes(getCurrentSeat())||watered())return;rewards.completeProduce();render();};soil.color.set(watered()?'#49392e':'#826144');
- return {seats,boardPoint,get watered(){return watered()},get near(){return near()},get isOpen(){return dialog.open},open(){if(!canRead()||dialog.open)return false;pause();notes.open=false;render();dialog.showModal();return true;}};
+ return {seats,boardPoint,get watered(){return watered()},get near(){return near()},get isOpen(){return dialog.open},open(){if(!canRead()||dialog.open)return false;pause();notes.open=false;planner.close();render();dialog.showModal();return true;}};
+}
+
+
+function createPracticePlot(canRead){
+ const el=(tag,id,text)=>{const node=document.createElement(tag);node.id='plot'+id;if(text)node.textContent=text;return node;};
+ const panel=el('details','Planner'), summary=el('summary','Summary','Plan a practice plot');
+ const note=el('p','Note','Arrange three beds on paper. Swap neighbors to design a layout, or rotate to move each crop one bed to the right. The last crop wraps to the first bed.');
+ const list=el('ol','Beds');list.setAttribute('aria-label','Practice beds from left to right');
+ const names=['Carrots','Tomatoes','Leafy greens'];let order=[...names];
+ const status=el('p','Status');status.setAttribute('role','status');status.setAttribute('aria-atomic','true');
+ const beds=names.map((name,i)=>el('li','Bed'+i,name));list.append(...beds);
+ function draw(message){beds.forEach((node,i)=>node.textContent=order[i]);status.textContent=message?message+' Left to right: '+order.join(', ')+'.':'';}
+ const control=(id,label,change)=>{const b=el('button',id,label);b.type='button';b.onclick=()=>{if(panel.open&&canRead()){change();draw(label+'.');}};return b;};
+ const swap=i=>{[order[i],order[i+1]]=[order[i+1],order[i]];};
+ const left=control('Left','Swap beds 1 and 2',()=>swap(0)),right=control('Right','Swap beds 2 and 3',()=>swap(1));
+ const rotate=control('Rotate','Rotate crops',()=>order.unshift(order.pop()));
+ const reset=control('Reset','Restore starting layout',()=>{order=[...names];});
+ panel.append(summary,note,list,left,right,rotate,reset,status);
+ return {panel,close(){panel.open=false;order=[...names];draw('');}};
 }
