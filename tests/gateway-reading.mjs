@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const html=fs.readFileSync('dist/index.html','utf8');
+const panel=html.match(/<section id="gatewayReading"[^>]* hidden>([\s\S]*?)<\/section>/)[1];
+const paths=[...panel.matchAll(/href="(\/reports\/[^"]+)"/g)].map(m=>m[1]);assert.equal(new Set(paths).size,3);
+for(const path of paths)assert(fs.statSync('dist'+path).size>0);
+const nodes=new Map();let focus;
+globalThis.innerWidth=800;globalThis.innerHeight=600;
+globalThis.document={querySelector(k){if(!nodes.has(k))nodes.set(k,{hidden:k==='#gatewayReading',focus(){focus=k}});return nodes.get(k)},createElementNS(){throw Error('test: graphics canvas unavailable')}};
+await assert.rejects(import('../dist/world.js'),/test: graphics canvas unavailable/);
+assert.equal(focus,'#gatewayReadingTitle');assert.equal(nodes.get('#gatewayReading').hidden,false);
+for(const key of ['#welcome','#quest','#crosshair','#joystick','#place','nav'])assert(nodes.get(key).hidden);
+console.log('PASS: renderer initialization failure exposes reading links and focuses the heading.');

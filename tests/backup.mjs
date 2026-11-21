@@ -4,7 +4,17 @@ const map=new Map([['unrelated','keep'],['krownPin','1'],['krownlandia-home-v1',
 const storage={getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)};
 const backup=parseBackup(exportBackup(storage));assert.equal(backup.summary.keepsakes,2);assert.equal(backup.summary.home,'meadow-1');assert.equal(Object.keys(backup.data).length,BACKUP_KEYS.length);storage.setItem('krownPin','0');restoreBackup(storage,backup);assert.equal(map.get('krownPin'),'1');assert.equal(map.get('unrelated'),'keep');
 for(const text of ['{}','{broken',JSON.stringify({...backup,version:99}),JSON.stringify({...backup,data:{...backup.data,'krownlandia-home-v1':'imaginary-home'}}),JSON.stringify({...backup,data:{...backup.data,'krownlandia-visit-v1':'{"x":999,"z":30,"yaw":0,"pitch":0,"night":false}'}})])assert.throws(()=>parseBackup(text));
-const prior=JSON.stringify([...map]);let failed=false;const flaky={...storage,setItem(k,v){if(k==='krownlandia-home-v1'&&!failed){failed=true;throw Error('quota');}storage.setItem(k,v);}};assert.throws(()=>restoreBackup(flaky,backup),/previous progress was kept/);assert.equal(JSON.stringify([...map]),prior);
+const untouched={...storage,setItem(){assert.fail('identical backup wrote storage')},removeItem(){assert.fail('identical backup removed storage')}};
+restoreBackup(untouched,backup);
+const home='krownlandia-home-v1',neighbors='krownlandia-neighbors-v1';
+const swap={...backup,data:{...backup.data,[neighbors]:null,[home]:'riverbend-1'}};
+const prior=Object.fromEntries(map);
+const flaky={...storage,setItem(k,v){if(k===home)throw Error('quota');storage.setItem(k,v);}};
+assert.throws(()=>restoreBackup(flaky,swap),/previous progress was kept/);assert.deepEqual(Object.fromEntries(map),prior);
+const interrupted={...flaky,setItem(k){if(k===home||k===neighbors)throw Error('storage unavailable');}};
+assert.throws(()=>restoreBackup(interrupted,swap),/could not be fully undone/);assert(!map.has(neighbors));storage.setItem(neighbors,prior[neighbors]);
+const limited={...storage,setItem(k,v){if(k===home&&map.has(neighbors))throw Error('over quota');storage.setItem(k,v);}};
+restoreBackup(limited,swap);assert.equal(map.get(home),'riverbend-1');assert(!map.has(neighbors));restoreBackup(storage,backup);
 console.log('PASS: backup round trip, invalid input rejection, isolated keys and rollback on failed restore.');
 const partialForest={...backup,data:{...backup.data,'krownlandia-rewards-v1':JSON.stringify({claims:[],done:['eldergrove-stop-tree','eldergrove-stop-craft']})}};const checkedForest=parseBackup(JSON.stringify(partialForest));assert(checkedForest.data['krownlandia-rewards-v1'].includes('eldergrove-stop-craft'));assert.equal(checkedForest.summary.keepsakes,2);restoreBackup(storage,checkedForest);assert.equal(JSON.parse(map.get('krownlandia-rewards-v1')).done.length,2);assert.throws(()=>parseBackup(JSON.stringify({...partialForest,data:{...partialForest.data,'krownlandia-rewards-v1':JSON.stringify({claims:[],done:['eldergrove-stop-invented']})}})));
 console.log('PASS: partial forest trail backup restores recorded stops without granting a completed keepsake.');

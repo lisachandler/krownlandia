@@ -22,4 +22,15 @@ export function parseBackup(text){
  return {format:b.format,version:1,createdAt,data,summary:{points:st.points,keepsakes,home:data['krownlandia-home-v1']||'Not selected'}};
 }
 export function exportBackup(storage){return JSON.stringify({format:'krownlandia-progress',version:1,createdAt:new Date().toISOString(),data:Object.fromEntries(BACKUP_KEYS.map(k=>[k,storage.getItem(k)??null]))},null,2);}
-export function restoreBackup(storage,backup){const checked=parseBackup(JSON.stringify(backup)),previous=BACKUP_KEYS.map(k=>[k,storage.getItem(k)]);const write=(k,v)=>v===null?storage.removeItem(k):storage.setItem(k,v);try{for(const k of BACKUP_KEYS)write(k,checked.data[k]);}catch{let rollbackOK=true;for(const[k,v]of previous)try{write(k,v);}catch{rollbackOK=false;}throw Error(rollbackOK?'Restore failed. Your previous progress was kept.':'Restore was interrupted and could not be fully undone. Keep your backup and retry when browser storage is available.');}return checked.summary;}
+export function restoreBackup(storage,backup){
+ const checked=parseBackup(JSON.stringify(backup));
+ const changes=BACKUP_KEYS.map(key=>({key,old:storage.getItem(key)??null,next:checked.data[key]})).filter(c=>c.old!==c.next);
+ // Free space before growing other records, so the intermediate state need not exceed the final size.
+ const delta=c=>(c.next===null?0:c.key.length+c.next.length)-(c.old===null?0:c.key.length+c.old.length);
+ changes.sort((a,b)=>delta(a)-delta(b));
+ const written=[],write=(k,v)=>v===null?storage.removeItem(k):storage.setItem(k,v);
+ try{for(const c of changes){write(c.key,c.next);written.push(c);}}
+ catch{let rollbackOK=true;for(const c of written.reverse())try{write(c.key,c.old);}catch{rollbackOK=false;}
+  throw Error(rollbackOK?'Restore failed. Your previous progress was kept.':'Restore was interrupted and could not be fully undone. Keep your backup and retry when browser storage is available.');}
+ return checked.summary;
+}

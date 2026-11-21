@@ -66,6 +66,14 @@ const installGraphics=new Function(source('graphics.js')+';return installGraphic
 new Function('T','enrich','finishGardens','batchStatic','installRewards','installJourney','enrichCourtyard','installParkMap','installCoffeeScene','installInterface','installSafari','installPhotography','installRoasted','installNavigation','installGraphics',source('world.js'))(T,enrich,finishGardens,batchStatic,installRewards,installJourney,enrichCourtyard,installParkMap,installCoffeeScene,installInterface,installSafari,installPhotography,installRoasted,installNavigation,installGraphics);
 let ms=0;const frame=()=>next(ms+=16);frame();
 const a=window.krownlandia;document.querySelector('#enter').onclick();const planner=createNavigator(a.blocked);
+// Search the actual park destinations, including both spellings of Lisa’s name.
+const mapSearch=document.querySelector('#mapSearch'),mapRows=document.querySelector('#mapLocations');
+mapSearch.value='';document.querySelector('#mapButton').onclick();
+for(const [term,id,label] of [["Lisa's Sticker Shop",'generalstore-counter','Lisa’s Sticker Shop'],['Lisa’s Sticker Shop','generalstore-counter','Lisa’s Sticker Shop'],['Game Club','clubhouse-board','Crossing stones'],['crossing stones','clubhouse-board','Crossing stones']]){
+ mapSearch.value=term;mapSearch.oninput();const row=nodes.get('#mapGo-'+id);
+ assert(row&&mapRows.children.includes(row),term);assert(row.children[1].textContent.includes(label));
+}
+document.querySelector('#mapClose').onclick();
 for(const p of [{x:38,z:-8},a.generalStore.boardPoint,{x:38,z:-3},{x:44,z:-20}]){assert(!a.blocked(p.x,p.z),'clear '+JSON.stringify(p));assert(planner.route({x:0,z:30},p).length,'route '+JSON.stringify(p));}
 a.camera.position.set(38,1.75,-16.8);frame();assert.equal(a.getState().near,'generalstore');a.interact();assert(document.querySelector('#generalstoreMenu').open);assert(!a.getState().rewards.done.includes('generalstore-board'));const pos=a.camera.position.clone();handlers.keydown({key:'w',preventDefault(){}});frame();assert(a.camera.position.equals(pos));handlers.blur();
 const q=id=>document.querySelector('#'+id),sheet=q('storeStickerSheet'),beforeSheet=JSON.stringify([...saved]);
