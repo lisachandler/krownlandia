@@ -1,6 +1,6 @@
 # Repeatable release checks
 
-From the project root, run `node scripts/check-release.mjs` for twelve selected source suites covering saved visits, backups/rollback, reward eligibility and history, Eldergrove woodcraft, Riverbend pottery/basket weaving, Meadowbrook weaving, market/village integration, full-scene worktable placement and interaction, a deterministic gameplay walkthrough, walking routes and administrator authorization/export. Suites run in isolated processes and stop on the first failure or ten-minute per-suite timeout. A nonzero exit blocks publication. Unknown arguments fail before tests run.
+From the project root, run `node scripts/check-release.mjs` for 21 selected source suites covering saved visits, backups/rollback, reward eligibility and history, Eldergrove woodcraft, Riverbend pottery/basket weaving, Meadowbrook weaving, market/village integration, full-scene worktable placement and interaction, a deterministic gameplay walkthrough, walking routes and administrator authorization/export, the non-3D reading fallback, guest sticker-counter/map discovery, and school progress/Dragons Math Club. Suites run in isolated processes and stop on the first failure or ten-minute per-suite timeout. A nonzero exit blocks publication. Unknown arguments fail before tests run.
 
 For a Site release, prepare server dependencies through the Sites installer if missing, then run:
 

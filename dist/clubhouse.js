@@ -46,10 +46,34 @@ export function installClubhouse({scene,camera,colliders,pause,rewards,getCurren
  undo.onclick=()=>{if(!active()||!history.length)return;stones=history.pop();draw('Move undone.');if(!history.length)cells[1].focus();};
  function resetGame(){stones='SS.MM';history=[];draw();}
  restart.onclick=()=>{if(!active()||restart.disabled)return;resetGame();cells[1].focus();};
- game.append(summary,rules,path,message,undo,restart,credit);dialog.replaceChildren(title,intro,actions,story,status,reward,game,nearby,managed,close);
+ game.append(summary,rules,path,message,undo,restart,credit);
+ const sewing=document.createElement('details');sewing.id='clubSewing';
+ const sewingTitle=document.createElement('summary');sewingTitle.textContent='Sewing Club · Stitch sampler';
+ const sewingCredit=document.createElement('small');sewingCredit.textContent='Sewing Club · @lisachandler, page 16. The sampler and its Clubhouse placement are prototype choices.';
+ const pattern=['Short','Long','Short','Short','Long','Short'];
+ const sewingRules=document.createElement('p');sewingRules.textContent='Follow the practice pattern: '+pattern.join(', ')+'. Pick a stitch length at each step.';
+ const sewingStatus=document.createElement('p');sewingStatus.id='sewingStatus';sewingStatus.setAttribute('role','status');
+ const short=document.createElement('button'),long=document.createElement('button'),unpick=document.createElement('button'),clear=document.createElement('button');
+ short.id='sewingShort';short.textContent='Short stitch';long.id='sewingLong';long.textContent='Long stitch';
+ unpick.id='sewingUndo';unpick.textContent='Undo stitch';clear.id='sewingReset';clear.textContent='Start sampler over';
+ let stitched=0;
+ function drawSewing(note=''){
+  const finished=stitched===pattern.length;
+  for(const button of [short,long])button.setAttribute('aria-disabled',String(finished));
+  for(const button of [unpick,clear])button.setAttribute('aria-disabled',String(stitched===0));
+  const made=stitched?' Your stitches: '+pattern.slice(0,stitched).join(', ')+'.':'';
+  sewingStatus.textContent=(note?note+' ':'')+(finished?'Sampler complete.':'Stitch '+(stitched+1)+' of '+pattern.length+': '+pattern[stitched].toLowerCase()+'.')+made;
+ }
+ const sewingActive=()=>sewing.open&&dialog.open&&canRead();
+ function addStitch(length){if(!sewingActive()||stitched===pattern.length)return;if(pattern[stitched]!==length){drawSewing('That stitch does not match.');return;}stitched++;drawSewing();}
+ short.onclick=()=>addStitch('Short');long.onclick=()=>addStitch('Long');
+ unpick.onclick=()=>{if(sewingActive()&&stitched){stitched--;drawSewing('Last stitch removed.');}};
+ clear.onclick=()=>{if(sewingActive()&&stitched){stitched=0;drawSewing();short.focus();}};
+ sewing.append(sewingTitle,sewingRules,short,long,sewingStatus,unpick,clear,sewingCredit);
+ dialog.replaceChildren(title,intro,actions,story,status,reward,game,sewing,nearby,managed,close);
  let managedRevision=0;
  function refreshManaged(){const revision=++managedRevision;managed.open=false;managedList.replaceChildren();for(const point of getManagedPlaces()){const row=document.createElement('p'),label=document.createElement('span'),button=document.createElement('button');label.textContent=point.name+' · Place manager: '+point.manager;button.id='clubhouseManaged-'+point.id;button.textContent='Walk to '+point.name;button.onclick=()=>{if(button.disabled||revision!==managedRevision||!canRead()||!dialog.open)return;pause();rewards.guideToPoint({x:point.x,z:point.z,name:point.name});dialog.close();};row.append(label,button);managedList.append(row);}managed.hidden=managedList.children.length===0;}
  let nearbyRevision=0;
  function refreshNearby(){const revision=++nearbyRevision;nearby.open=false;nearbyList.replaceChildren();for(const point of getNearbyPlaces()){const button=document.createElement('button');button.id='clubhouseWalk-'+point.id;button.textContent='Walk to '+point.name;button.onclick=()=>{if(button.disabled||revision!==nearbyRevision||!canRead()||!dialog.open)return;pause();rewards.guideToPoint({x:point.x,z:point.z,name:point.name});dialog.close();};nearbyList.append(button);}nearby.hidden=nearbyList.children.length===0;}
- return {seats,boardPoint,get near(){return near()},get isOpen(){return dialog.open},open(){if(!canRead()||dialog.open)return false;pause();story.textContent='Choose a topic to explore the spirit of caring for a community place.';refresh();refreshNearby();refreshManaged();game.open=false;resetGame();dialog.showModal();return true;}};
+ return {seats,boardPoint,get near(){return near()},get isOpen(){return dialog.open},open(){if(!canRead()||dialog.open)return false;pause();story.textContent='Choose a topic to explore the spirit of caring for a community place.';refresh();refreshNearby();refreshManaged();game.open=false;resetGame();sewing.open=false;stitched=0;drawSewing();dialog.showModal();return true;}};
 }

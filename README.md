@@ -40,7 +40,7 @@ Krownlandia predates this prototype. Its recorded community origins date to Janu
 
 ## Publication and licensing
 
-This source snapshot tracks hosted version 299 with one retained public file: the Town Square activity board still uses the earlier circus spelling. Its existing external-link configuration was left untouched. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
+This source snapshot tracks hosted version 307 with one retained public file: the Town Square activity board still uses the earlier circus spelling. Its existing external-link configuration was left untouched. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
 
 Three.js retains its license at `dist/vendor/LICENSE`. No project-wide open-source license has been selected; public visibility alone does not grant a general license to reuse project code, community material, branding or artwork.
 
@@ -81,3 +81,7 @@ Includes Krown Bowling, Riverbend casting, the garden layout exercise, ingredien
 
 
 The November 21 sync also includes map directions for the Sticker Shop and Game Club, storage-efficient backup restore, Dragons Math Club equal-sharing puzzles, and reading links when 3D initialization fails. Hosted version 299 only updates private build history; those records are excluded here.
+
+## November 22 sync
+
+Adds the Sewing Club sampler, Village Craft Trail and printable guide, Whispering Pines inlay practice, and reading and backup options when graphics cannot start. During a graphics interruption, the guide can open separately. These additions do not add reward claims or change the backup format. Live browser downloads, rendering and assistive-technology behavior remain unverified.

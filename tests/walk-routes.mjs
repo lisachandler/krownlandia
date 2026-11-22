@@ -22,3 +22,24 @@ open();assert.deepEqual(a.communityWalk.stops[0].point,a.eldergrove.progress().n
 assert($('#communityWalkProgress').textContent.startsWith('0 / 3'),'Partial discoveries do not finish the walk activity');
 $('#communityWalkClose').onclick();
 console.log('PASS: three reachable forest stops, retained route, home doorway, next unrecorded forest discovery, partial-progress status and read-only directions.');
+
+const beforeCraft=a.camera.position.clone(),craftProgress=JSON.stringify(a.getState().rewards);
+open();$('#communityWalkRoute-crafts').onclick();
+assert.equal(a.communityWalk.route,'crafts');
+assert.equal($('#communityWalkTitle').textContent,'Village Craft Trail');
+assert.equal(a.communityWalk.stops.length,3);
+for(const id of ['Progress','Next','Rewards','Ready','Filters'])assert($('#communityWalk'+id).hidden,id);
+assert.equal($('#communityWalkStops').children.length,3);
+let start={x:2,z:28};
+for(const stop of a.communityWalk.stops){
+ assert(!a.blocked(stop.point.x,stop.point.z));
+ assert(planner.route(start,stop.point).length,stop.name);
+ $('#communityWalkGo-'+stop.id).onclick();assert(!a.communityWalk.isOpen);
+ open();assert.equal(a.communityWalk.route,'crafts');start=stop.point;
+}
+$('#communityWalkRoute-community').onclick();
+for(const id of ['Progress','Next','Rewards','Filters'])assert(!$('#communityWalk'+id).hidden,id);
+$('#communityWalkClose').onclick();
+assert(a.camera.position.equals(beforeCraft));
+assert.equal(JSON.stringify(a.getState().rewards),craftProgress);
+console.log('PASS: three connected Village Craft Trail stops with directions, retained selection, no reward tracking, and unchanged position/progress.');

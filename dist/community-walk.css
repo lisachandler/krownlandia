@@ -5,3 +5,5 @@
 #communityWalkFilters button{min-height:44px;margin:8px 0}#communityWalkFilters button[aria-pressed=true]{background:#244f46;color:#fff0c7}
 
 #communityWalkFilters{display:flex;flex-wrap:wrap;gap:8px}#communityWalkFilters button:focus-visible{outline:2px solid #244f46;outline-offset:3px}
+
+#communityWalkFilters[hidden],#communityWalkNext[hidden]{display:none}

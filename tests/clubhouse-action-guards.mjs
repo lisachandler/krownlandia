@@ -27,3 +27,17 @@ assert.deepEqual([0,1,2,3,4].map(i=>$('#crossingCell'+i).dataset.kind),['M','M',
 $('#clubhouseClose').onclick();$('#crossingReset').onclick();assert.match(status.textContent,/Crossing complete/);
 assert(club.open());assert(!panel.open);assert.equal(status.textContent,first);assert.equal(JSON.stringify(a.getState().rewards),progress);
 console.log('PASS: Game Club legal and blocked moves, eight-move solution, undo, reset, range, reopen and unchanged rewards.');
+
+const sewing=$('#clubSewing'),stitchStatus=$('#sewingStatus'),short=$('#sewingShort'),long=$('#sewingLong');
+assert(!sewing.open);short.onclick();assert.match(stitchStatus.textContent,/Stitch 1 of 6/);
+sewing.open=true;long.onclick();assert.match(stitchStatus.textContent,/does not match.*Stitch 1/);
+a.camera.position.set(0,1.75,0);short.onclick();assert.match(stitchStatus.textContent,/Stitch 1/);
+a.camera.position.set(p.x,1.75,p.z);
+for(const button of [short,long,short,short,long,short])button.onclick();
+assert.match(stitchStatus.textContent,/Sampler complete/);
+$('#sewingUndo').onclick();assert.match(stitchStatus.textContent,/Last stitch removed.*Stitch 6/);
+$('#sewingReset').onclick();assert.equal(document.activeElement,short);
+short.onclick();$('#clubhouseClose').onclick();long.onclick();assert.match(stitchStatus.textContent,/Stitch 2/);
+assert(club.open());assert(!sewing.open);assert.match(stitchStatus.textContent,/Stitch 1/);
+assert.equal(JSON.stringify(a.getState().rewards),progress);
+console.log('PASS: Sewing Club wrong choice, complete sampler, undo, reset, closed and remote guards, reopen and unchanged rewards.');

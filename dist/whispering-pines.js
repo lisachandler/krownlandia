@@ -23,6 +23,31 @@ export function installWhisperingPines({scene,camera,colliders,pause,canUse=()=>
  const buttons=prompts.map(([label,text],i)=>{const b=document.createElement('button');b.type='button';b.id='pinesPrompt'+i;b.textContent=label;b.onclick=()=>{if(!dialog.open||!details.open||!canUse()||!accessible())return;selected=i;render();};controls.append(b);return b;});
  function render(){story.textContent=selected<0?'Choose any prompt. There is no required order.':prompts[selected][1];buttons.forEach((b,i)=>b.setAttribute('aria-pressed',String(i===selected)));}
  const close=document.createElement('button');close.id='pinesClose';close.textContent='Return to the glade';close.onclick=()=>dialog.close();dialog.addEventListener('close',()=>{pause();requestAnimationFrame(()=>{if(!dialog.open)returnFocus?.focus();});});
- details.append(summary,note,controls,story);dialog.append(title,intro,details,close);document.body.append(dialog);const css=document.createElement('link');css.rel='stylesheet';css.href='whispering-pines.css';document.head.append(css);render();
- return {root,bounds,point,seats:[seat],get near(){return near()},get isOpen(){return dialog.open},open(launcher){if(!canUse()||!accessible()||dialog.open||document.querySelector('dialog[open]')?.open)return false;returnFocus=launcher||document.querySelector('#interact');pause();details.open=false;dialog.showModal();close.focus();return true;}};
+ const craft=document.createElement('details');craft.id='pinesInlay';
+ const craftSummary=document.createElement('summary');craftSummary.textContent='Pinewood inlay practice';
+ const craftNote=document.createElement('p');craftNote.textContent='Inspired by the recorded Whispering Pines woodworking and resin crafts. These dry, imaginary pieces and their pattern are prototype choices. Choose a piece and fill three slots. Try matching the two ends with a different piece in the center.';
+ const craftStatus=document.createElement('p');craftStatus.id='pinesInlayStatus';craftStatus.setAttribute('role','status');
+ const materials=['Pinewood','Amber inlay'],names=['Left','Center','Right'];
+ let material=0,slots=[null,null,null];
+ const canCraft=()=>dialog.open&&craft.open&&canUse()&&accessible();
+ function craftButton(id,text,action){
+  const b=document.createElement('button');b.id=id;b.type='button';b.textContent=text;
+  b.onclick=()=>{if(canCraft()&&!b.disabled)action();};return b;
+ }
+ const selectors=materials.map((name,i)=>craftButton('pinesInlayMaterial'+i,name,()=>{material=i;renderCraft();}));
+ const positions=names.map((name,i)=>craftButton('pinesInlaySlot'+i,name,()=>{slots[i]=material;renderCraft();}));
+ const reset=craftButton('pinesInlayReset','Clear pattern',()=>{slots.fill(null);renderCraft();positions[0].focus();});
+ function renderCraft(){
+  selectors.forEach((b,i)=>b.setAttribute('aria-pressed',String(i===material)));
+  positions.forEach((b,i)=>{b.textContent=names[i]+': '+(materials[slots[i]]||'empty');});
+  reset.disabled=slots.every(v=>v===null);
+  const count=slots.filter(v=>v!==null).length;
+  const feedback=count<3?count+' of 3 slots filled.':slots[0]!==slots[2]?'The ends differ.':slots[0]===slots[1]?'The ends match; try a different center for contrast.':'The ends match and the center contrasts.';
+  craftStatus.textContent=feedback;
+ }
+ const craftMaterials=document.createElement('div');craftMaterials.setAttribute('role','group');craftMaterials.setAttribute('aria-label','Choose an inlay piece');craftMaterials.append(...selectors);
+ const craftSlots=document.createElement('div');craftSlots.setAttribute('role','group');craftSlots.setAttribute('aria-label','Place the chosen piece');craftSlots.append(...positions);
+ craft.append(craftSummary,craftNote,craftMaterials,craftSlots,reset,craftStatus);renderCraft();
+ details.append(summary,note,controls,story);dialog.append(title,intro,details,craft,close);document.body.append(dialog);const css=document.createElement('link');css.rel='stylesheet';css.href='whispering-pines.css';document.head.append(css);render();
+ return {root,bounds,point,seats:[seat],get near(){return near()},get isOpen(){return dialog.open},open(launcher){if(!canUse()||!accessible()||dialog.open||document.querySelector('dialog[open]')?.open)return false;returnFocus=launcher||document.querySelector('#interact');pause();details.open=false;craft.open=false;material=0;slots.fill(null);renderCraft();dialog.showModal();close.focus();return true;}};
 }

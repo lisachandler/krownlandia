@@ -15,3 +15,21 @@ current=a.seats[0];assert(a.open(seatedTrigger));n('pinesPrompts').open=true;cli
 for(const mesh of a.root.children.filter(x=>x.geometry.type==='ConeGeometry')){assert.equal(mesh.geometry.parameters.radius,1.2);assert.equal(mesh.position.y-mesh.geometry.parameters.height/2,2.4);}
 current=null;installWhisperingPines({...options,scene:new T.Scene(),colliders:[]});assert.equal(n('pinesStory').textContent,empty);
 console.log('PASS three optional prompts, collapse/reopen/reload, standing and exact-seat guards, inactive-play/dialog guards, close/Escape-path focus, fixed geometry/material counts and no storage writes. DOM simulation only.');
+
+const craft=n('pinesInlay'),state=n('pinesInlayStatus'),choose=i=>n('pinesInlayMaterial'+i).onclick(),place=i=>n('pinesInlaySlot'+i).onclick();
+camera.position.set(39,1.75,166.5);
+assert(n('pinesInlayReset').disabled);
+assert(!craft.open);place(0);assert.match(state.textContent,/0 of 3/);
+craft.open=true;place(0);assert.match(state.textContent,/0 of 3/,'closed dialog cannot change craft');
+const inlayOptions={...options,scene:new T.Scene(),colliders:[]},inlay=installWhisperingPines(inlayOptions);
+const panel=n('pinesInlay'),status=n('pinesInlayStatus');
+assert(inlay.open());assert(!panel.open);place(0);assert.match(status.textContent,/0 of 3/);
+panel.open=true;place(0);choose(1);place(1);place(2);assert.match(status.textContent,/ends differ/);
+choose(0);place(2);assert.match(status.textContent,/ends match and the center contrasts/);
+camera.position.set(0,1.75,0);place(1);assert.match(status.textContent,/center contrasts/);
+camera.position.set(39,1.75,166.5);n('pinesInlayReset').onclick();assert.match(status.textContent,/0 of 3/);assert.equal(document.activeElement,n('pinesInlaySlot0'));
+place(0);dialog.close();
+current=inlay.seats[0];assert(inlay.open(seatedTrigger));assert(!panel.open);assert.match(status.textContent,/0 of 3/);
+panel.open=true;place(1);assert.match(n('pinesInlaySlot1').textContent,/Pinewood/);dialog.close();assert.equal(document.activeElement,seatedTrigger);
+assert.equal(inlay.root.children.length,count);assert.equal(inlay.bounds.length,5);
+console.log('PASS: inlay choices, contrast feedback, remote and collapsed guards, fresh reopen, seated access, and fixed geometry.');
