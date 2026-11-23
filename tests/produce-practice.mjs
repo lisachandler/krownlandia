@@ -37,3 +37,17 @@ for(const current of [null,...garden.seats]){
  guide=null;walk();assert.equal(guide,null,'closed dialog does not route');
 }
 console.log('PASS: board and both seated visitors receive actual food-guide counter directions without moving or watering.');
+
+seat=null;camera.position.set(garden.boardPoint.x,1.75,garden.boardPoint.z);assert(garden.open());
+const care=node('plotCare'),planner=node('plotPlanner'),prompt=node('plotCarePrompt'),feedback=node('plotCareFeedback'),next=node('plotCareNext');
+const choose=i=>node('plotCareChoice'+i).onclick();
+assert(!care.open&&!planner.open);choose(0);assert.equal(feedback.textContent,'');
+planner.open=true;care.open=true;choose(1);assert.match(feedback.textContent,/does not match/);assert(next.hidden);
+camera.position.set(0,1.75,0);choose(0);assert(next.hidden);
+seat=garden.seats[0];choose(0);assert.match(feedback.textContent,/dry-bed cue/);assert(!next.hidden);
+next.onclick();assert.equal(document.activeElement,node('plotCareChoice0'));assert.match(prompt.textContent,/2 of 3/);
+choose(1);next.onclick();assert.match(prompt.textContent,/3 of 3/);
+choose(2);assert.match(feedback.textContent,/needs no action/);assert.equal(waterCalls,1);
+node('produceClose').onclick();next.onclick();assert.match(prompt.textContent,/3 of 3/);
+assert(garden.open());assert(!care.open&&!planner.open);assert.match(prompt.textContent,/1 of 3/);assert.equal(feedback.textContent,'');
+console.log('PASS: three practice care choices, retry, seated access, focus, remote/closed guards and no watering writes.');

@@ -52,16 +52,20 @@ export function installParkMap({pause,guideTo,rewards,guideToPoint=()=>{},destin
   searchBox.hidden=view==='safari';clear.hidden=!query&&!rewardsOnly;clear.textContent=rewardsOnly?'Clear search and filter':'Clear search';collect.setAttribute('aria-pressed',String(rewardsOnly));scenic.setAttribute('aria-pressed',String(query==='scenic'&&!rewardsOnly));crafts.setAttribute('aria-pressed',String(query==='craft activity'&&!rewardsOnly));dialog.classList.toggle('map-searching',(!!query||rewardsOnly)&&view!=='safari');let resultCount=0;
   const st=rewards();$('#mapSummary').textContent=st.visits+' of '+STATIONS.length+' stations visited · '+st.points+' points';
   const list=$('#mapLocations');list.replaceChildren();
-  // Recreate markers only when the dialog opens; movement updates the visitor alone.
-  for(const node of markers)node.remove();markers=[];
+  // Reuse the background, player arrow and marker nodes until the map view changes.
+  for(const marker of placeMarkers)marker.remove();placeMarkers.length=0;
+  if(drawnView!==view){drawnView=view;markers.clear();
   $('#mapDrawing').innerHTML=(view==='safari'?safariDrawing:courtyardDrawing.replace('</svg>','<rect x="-52" y="132" width="6" height="42" fill="#58aebc"/><path d="M0 40V176 M-46 76H46 M-18 116H35 M7 96V136H0 M25 128V140H0 M0 161H50 M-18 160H0 M-57 130V176 M-57 172.5H-43 M-43 132V177" stroke="#c6b990" stroke-width="4" fill="none"/><path d="M-47 64h36v8h-36z M11 64h36v8H11z M-18 104h36v8h-36z M10.5 149h37v8h-37z" fill="#ecd2a2"/></svg>').replace('</svg>','<circle cx="39" cy="-62" r="9" fill="#ae2442" stroke="#fff0cf" stroke-width="2"/><path d="M39 -53V-50" stroke="#e5b553" stroke-width="3"/></svg>'))+'<span id="mapVisitor" aria-label="Your position">▲</span>';
   $('#mapDrawing').style.aspectRatio=view==='safari'?'90 / 85':'118 / 272';$('#mapDrawing').setAttribute('aria-label',view==='safari'?'Safari habitats and ride route':'Courtyard and rewards stations');
+   if(view==='courtyard')STATIONS.forEach((s,i)=>mapMarker(i,'button',s.x,s.z));
+  }
+  for(const node of markers.values())node.hidden=true;
   for(const id of ['courtyard','safari'])$('#mapView'+id).setAttribute('aria-pressed',String(view===id));
   $('#parkMap .map-note').textContent=view==='safari'?'The line shows the safari route. Numbers mark animal habitats. The white arrow is your position when you are in this area. Open the map during the ride to pause and check your progress.':'Numbers mark rewards stations. Select a destination for walking directions. Distances are direct estimates; follow the paths around obstacles.';
   if(view==='safari'){
    const ride=snapshot.safari,seen=ride?.active?Math.min(6,Math.max(0,ride.stop+(ride.phase==='stop'?1:0))):st.done.includes('safari-complete')?6:0;
    $('#mapSummary').textContent=(ride?.active?'This safari: ':'Safari progress: ')+seen+' / 6 habitats reached';
-   habitats.forEach(([name,animal,x,z],i)=>{const marker=document.createElement('span');marker.className='map-marker'+(i<seen?' visited':'');marker.textContent=String(i+1);position(marker,x,z);$('#mapDrawing').append(marker);markers.push(marker);const row=document.createElement('div');row.className='map-location habitat-row';const title=document.createElement('strong');title.textContent=(i+1)+'. '+name;const info=document.createElement('span');info.textContent=animal+' · '+(i<seen?'Reached':'Ahead on the route');row.append(title,info);list.append(row);});
+   habitats.forEach(([name,animal,x,z],i)=>{const marker=mapMarker(i,'span',x,z);marker.className='map-marker'+(i<seen?' visited':'');const row=document.createElement('div');row.className='map-location habitat-row';const title=document.createElement('strong');title.textContent=(i+1)+'. '+name;const info=document.createElement('span');info.textContent=animal+' · '+(i<seen?'Reached':'Ahead on the route');row.append(title,info);list.append(row);});
    if(!ride?.active){const go=document.createElement('button');go.id='mapSafariEntrance';go.textContent='Guide me to the safari entrance';go.onclick=()=>{guideTo('safari');dialog.close();};list.append(go);}update(snapshot);return;
   }
   const distance=p=>Math.hypot(p.x-snapshot.x,p.z-snapshot.z),distanceLabel=p=>'About '+Math.round(distance(p))+' m away';
@@ -71,13 +75,13 @@ export function installParkMap({pause,guideTo,rewards,guideToPoint=()=>{},destin
    const visited=st.claims.includes(s.id+':arrival'),taskDone=st.claims.includes(s.id+':task'),ready=st.done.includes(s.task.id)&&!taskDone;
    if(rewardsOnly&&visited&&!ready)return;resultCount++;
    const choose=()=>{selected=s.id;guideTo(s.id);dialog.close();};
-   const marker=document.createElement('button');marker.className='map-marker'+(visited?' visited':'');marker.textContent=String(i+1);marker.setAttribute('aria-label',s.name+(visited?', visited':'')+'. Guide me');marker.onclick=choose;position(marker,s.x,s.z);$('#mapDrawing').append(marker);markers.push(marker);
+   const marker=mapMarker(i,'button',s.x,s.z);marker.className='map-marker'+(visited?' visited':'');marker.setAttribute('aria-label',s.name+(visited?', visited':'')+'. Guide me');marker.onclick=()=>{if(dialog.open&&!marker.hidden&&view==='courtyard')choose();};
    const row=document.createElement('button');row.id='mapGo-'+s.id;row.className='map-location';row.onclick=choose;
    const name=document.createElement('strong');name.textContent=(i+1)+'. '+s.name;
    const detail=document.createElement('span');detail.textContent=distanceLabel(s)+' · '+(visited?'Arrival collected':'Arrival +'+s.arrival)+' · '+(taskDone?'Task collected':ready?'Task ready: +'+s.task.points:'Task +'+s.task.points);
    row.append(name,detail);list.append(row);
   });
-  if(query&&!rewardsOnly)for(const place of destinations().filter(p=>matches(p.name+' '+p.kind+' '+(p.keywords||''))).sort((a,b)=>distance(a)-distance(b))){resultCount++;const choose=()=>{selected=place.id;guideToPoint({x:place.x,z:place.z,name:place.name});dialog.close();};const row=document.createElement('button');row.id='mapGo-'+place.id;row.className='map-location';row.onclick=choose;const name=document.createElement('strong');name.textContent=place.name;const detail=document.createElement('span');detail.textContent=place.kind+' · '+distanceLabel(place)+' · Walking directions'+(place.detail?' · '+place.detail:'');row.append(name,detail);list.append(row);const marker=document.createElement('button');marker.className='map-marker';marker.textContent=place.kind[0];marker.setAttribute('aria-label',place.name+'. Walking directions');marker.onclick=choose;position(marker,place.x,place.z);$('#mapDrawing').append(marker);markers.push(marker);}
+  if(query&&!rewardsOnly)for(const place of destinations().filter(p=>matches(p.name+' '+p.kind+' '+(p.keywords||''))).sort((a,b)=>distance(a)-distance(b))){resultCount++;const choose=()=>{selected=place.id;guideToPoint({x:place.x,z:place.z,name:place.name});dialog.close();};const row=document.createElement('button');row.id='mapGo-'+place.id;row.className='map-location';row.onclick=choose;const name=document.createElement('strong');name.textContent=place.name;const detail=document.createElement('span');detail.textContent=place.kind+' · '+distanceLabel(place)+' · Walking directions'+(place.detail?' · '+place.detail:'');row.append(name,detail);list.append(row);const marker=document.createElement('button');marker.className='map-marker';marker.textContent=place.kind[0];marker.setAttribute('aria-label',place.name+'. Walking directions');marker.onclick=choose;position(marker,place.x,place.z);$('#mapDrawing').append(marker);placeMarkers.push(marker);}
   const tabletop=query&&!rewardsOnly&&matches('Krown Bowling tabletop practice recreation pins two rolls');
   if(tabletop){
    const play=document.createElement('button');play.type='button';play.id='mapPlayBowling';play.className='map-location';
@@ -89,7 +93,16 @@ export function installParkMap({pause,guideTo,rewards,guideToPoint=()=>{},destin
   update(snapshot);
  }
  const bowling=installBowling(dialog);
- let markers=[];
+ let drawnView=null;
+ const markers=new Map(),placeMarkers=[];
+ function mapMarker(i,tag,x,z){
+  let marker=markers.get(i);
+  if(!marker){
+   marker=document.createElement(tag);marker.textContent=String(i+1);position(marker,x,z);
+   $('#mapDrawing').append(marker);markers.set(i,marker);
+  }
+  marker.hidden=false;return marker;
+ }
  function open(){bowling.close();pause();view=snapshot.safari?.active?'safari':'courtyard';render();dialog.showModal();}
  function update(state){snapshot=state;const visitor=$('#mapVisitor');visitor.hidden=view==='safari'?(state.x<38||state.x>128||state.z<-88||state.z>-3):(state.x<-63||state.x>55||state.z<-92||state.z>180);position(visitor,state.x,state.z);visitor.style.transform='translate(-50%,-50%) rotate('+(-state.yaw*180/Math.PI)+'deg)';}
  button.onclick=open;$('#mapClose').onclick=()=>dialog.close();

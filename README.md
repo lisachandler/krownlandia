@@ -40,7 +40,7 @@ Krownlandia predates this prototype. Its recorded community origins date to Janu
 
 ## Publication and licensing
 
-This source snapshot tracks hosted version 307 with one retained public file: the Town Square activity board still uses the earlier circus spelling. Its existing external-link configuration was left untouched. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
+This source snapshot tracks hosted version 318 with one retained public file: the Town Square activity board still uses the earlier circus spelling. Its existing external-link configuration was left untouched. Private Sites hosting configuration and prior hosting-repository history are excluded. Publishing this repository does not automatically deploy GitHub changes to the hosted Site or synchronize later Site changes back here.
 
 Three.js retains its license at `dist/vendor/LICENSE`. No project-wide open-source license has been selected; public visibility alone does not grant a general license to reuse project code, community material, branding or artwork.
 

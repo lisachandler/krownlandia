@@ -10,11 +10,13 @@ export const CORE_CHECKS = [
   ['Whispering Pines actual-scene routes and seating', 'tests/whispering-pines-survey.mjs'],
   ['Stonehearth pattern activity', 'tests/stonehearth-craft.mjs'],
   ['Stonehearth actual-scene routes', 'tests/stonehearth-survey.mjs'],
-  ['Non-3D reading fallback', 'tests/gateway-reading.mjs'],
+  ['Non-3D reading and backup fallback', 'tests/gateway-reading.mjs'],
+  ['In-visit graphics recovery', 'tests/render-recovery.mjs'],
   ['Guest sticker counter and map discovery', 'tests/general-store.mjs'],
   ['School progress and Dragons Math Club', 'tests/school-resume.mjs'],
   ['Saved visits', 'tests/visit.mjs'],
   ['Backup compatibility and rollback', 'tests/backup.mjs'],
+  ['Backup preview and restore controls', 'tests/backup-panel.mjs'],
   ['Reward eligibility', 'tests/rewards.mjs'],
   ['Reward history and time boundaries', 'tests/reward-history.mjs'],
   ['Eldergrove decorative woodcraft', 'tests/eldergrove-craft.mjs'],
@@ -24,6 +26,7 @@ export const CORE_CHECKS = [
   ['Meadowbrook full-scene placement and interaction', 'tests/meadow-placement.mjs'],
   ['Deterministic gameplay walkthrough', 'tests/smoke.mjs'],
   ['Walking routes and unchanged progress', 'tests/walk-routes.mjs'],
+  ['Community Walk and the Village Craft Trail', 'tests/community-walk.mjs'],
   ['Administrator authorization and exports', 'tests/admin-activity.mjs'],
 ];
 

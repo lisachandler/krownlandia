@@ -7,3 +7,13 @@ for(const id of ['squareStage','squareRest','squareOffice','squareHistory','squa
 directions.open=true;assert.equal(square.open(),false);assert(directions.open,'duplicate open preserves current disclosure');const position=a.camera.position.clone();$('#squareStage').onclick();frame();assert(!square.isOpen);assert(a.camera.position.equals(position));assert($('#guide').textContent.includes('stage'));assert(square.open());assert(!directions.open,'new opening starts compact');$('#townSquareClose').onclick();
 const seat=square.seats[0];a.camera.position.set(seat.approach.x,1.75,seat.approach.z);frame();assert(a.seating.sit());assert(square.open());assert(!directions.open);directions.open=true;const seated=a.camera.position.clone();$('#square-emoji-house').onclick();assert(a.seating.active);assert(a.camera.position.equals(seated));assert.equal(JSON.stringify(a.getState().rewards),before);
 console.log('PASS: three primary actions, eight grouped shortcuts, compact reopening, duplicate-open continuity and seated/standing guidance without progress changes.');
+
+assert(square.open());
+const bulletin=$('#squareBulletin'),link=$('#squareBulletinLink');
+assert(!bulletin.open);
+assert(bulletin.children.includes(link));assert.equal(link.href,'reports/community-bulletin.html');
+assert.equal(link.target,'_blank');assert.equal(link.rel,'noopener');assert.match(link.textContent,/new tab/i);
+assert(!$('#eventCalendar').open);
+assert.equal(JSON.stringify(a.getState().rewards),before);
+$('#townSquareClose').onclick();
+console.log('PASS: optional Town Square bulletin links to a separate same-site news page without opening the calendar or changing rewards.');

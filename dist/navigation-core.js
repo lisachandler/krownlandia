@@ -4,9 +4,20 @@ export function createNavigator(blocked){
  const point=i=>({x:minX+i%width,z:minZ+Math.floor(i/width)});
  for(let i=0;i<walk.length;i++){const p=point(i);walk[i]=!blocked(p.x,p.z);}
  function clear(a,b){const n=Math.ceil(Math.hypot(b.x-a.x,b.z-a.z)*5);for(let j=0;j<=n;j++){const t=n?j/n:0;if(blocked(a.x+(b.x-a.x)*t,a.z+(b.z-a.z)*t))return false;}return true;}
+ // Enumerate only nearby cells, in the same row-major order as the full grid.
+ // Keep the strict distance checks and segment tests, including existing tie-breaking.
+ function nearby(center,radius,visit){
+  const left=Math.max(0,Math.ceil(center.x-radius-minX)),right=Math.min(width-1,Math.floor(center.x+radius-minX));
+  const top=Math.max(0,Math.ceil(center.z-radius-minZ)),bottom=Math.min(height-1,Math.floor(center.z+radius-minZ));
+  for(let z=top;z<=bottom;z++)for(let x=left;x<=right;x++){
+   const i=z*width+x;
+   if(walk[i])visit(i,{x:minX+x,z:minZ+z});
+  }
+ }
  function route(start,target){
   let first=-1,distance=Infinity;const goals=new Set();
-  for(let i=0;i<walk.length;i++){if(!walk[i])continue;const p=point(i),d=Math.hypot(p.x-start.x,p.z-start.z);if(d<distance&&d<2&&clear(start,p)){first=i;distance=d;}if(Math.hypot(p.x-target.x,p.z-target.z)<1.8)goals.add(i);}
+  nearby(start,2,(i,p)=>{const d=Math.hypot(p.x-start.x,p.z-start.z);if(d<distance&&d<2&&clear(start,p)){first=i;distance=d;}});
+  nearby(target,1.8,(i,p)=>{if(Math.hypot(p.x-target.x,p.z-target.z)<1.8)goals.add(i);});
   if(first<0||!goals.size)return [];
   const costs=new Float64Array(walk.length).fill(Infinity),parents=new Int32Array(walk.length).fill(-1),closed=new Uint8Array(walk.length),heap=[];
   function push(i,f){let at=heap.length;heap.push({i,f});while(at){const up=(at-1)>>1;if(heap[up].f<=f)break;heap[at]=heap[up];at=up;}heap[at]={i,f};}

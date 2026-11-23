@@ -6,3 +6,5 @@ nav{flex-wrap:wrap;max-width:55vw;justify-content:flex-end}#guide{font-size:14px
 #gatewayReading ul,#gatewayNoScript ul{padding-left:1.4rem}#gatewayReading li,#gatewayNoScript li{margin:.65rem 0}#gatewayReading a,#gatewayNoScript a{color:#ffe2a1;text-underline-offset:.2em}#gatewayReading summary{cursor:pointer}#gatewayReading :focus-visible,#gatewayNoScript :focus-visible{outline:3px solid #ffd470;outline-offset:3px}nav[hidden]{display:none}
 
 body:has(#gatewayNoScript)>:is(header,nav,#welcome,#quest,#world,#crosshair,#joystick,#place){display:none}
+
+#welcome .welcome-guide{margin:12px 0 0;font-size:.9rem}#welcome .welcome-guide a{color:#ffe2a1;text-underline-offset:.2em}#welcome .welcome-guide a:focus-visible{outline:3px solid #ffd470;outline-offset:3px}

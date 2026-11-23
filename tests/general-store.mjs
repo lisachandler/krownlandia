@@ -69,7 +69,7 @@ const a=window.krownlandia;document.querySelector('#enter').onclick();const plan
 // Search the actual park destinations, including both spellings of Lisa’s name.
 const mapSearch=document.querySelector('#mapSearch'),mapRows=document.querySelector('#mapLocations');
 mapSearch.value='';document.querySelector('#mapButton').onclick();
-for(const [term,id,label] of [["Lisa's Sticker Shop",'generalstore-counter','Lisa’s Sticker Shop'],['Lisa’s Sticker Shop','generalstore-counter','Lisa’s Sticker Shop'],['Game Club','clubhouse-board','Crossing stones'],['crossing stones','clubhouse-board','Crossing stones'],['sewing club','clubhouse-board','Stitch sampler'],['pinewood inlay','pines-story','inlay practice']]){
+for(const [term,id,label] of [["Lisa's Sticker Shop",'generalstore-counter','Lisa’s Sticker Shop'],['Lisa’s Sticker Shop','generalstore-counter','Lisa’s Sticker Shop'],['Game Club','clubhouse-board','Crossing stones'],['crossing stones','clubhouse-board','Crossing stones'],['sewing club','clubhouse-board','Stitch sampler'],['pinewood inlay','pines-story','inlay practice'],['Krownlandia Storytelling','pines-story','short story workshop']]){
  mapSearch.value=term;mapSearch.oninput();const row=nodes.get('#mapGo-'+id);
  assert(row&&mapRows.children.includes(row),term);assert(row.children[1].textContent.includes(label));
 }

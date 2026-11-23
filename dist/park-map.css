@@ -7,3 +7,5 @@
 #mapShortcuts{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px}#mapShortcuts button[aria-pressed=true]{background:#e1c583;color:#183549}
 
 #mapBowling{margin:12px 0;padding:10px 12px;border:1px solid #728b88;border-radius:8px}#mapBowling summary{cursor:pointer;font-weight:600}#mapBowling select{font:inherit;padding:.4em}#mapBowling button{margin:.3em}#mapBowling :focus-visible{outline:3px solid #ffe0a0;outline-offset:2px}
+
+#mapDrawing .map-marker[hidden]{display:none}

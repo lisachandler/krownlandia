@@ -27,9 +27,11 @@ const beforeCraft=a.camera.position.clone(),craftProgress=JSON.stringify(a.getSt
 open();$('#communityWalkRoute-crafts').onclick();
 assert.equal(a.communityWalk.route,'crafts');
 assert.equal($('#communityWalkTitle').textContent,'Village Craft Trail');
-assert.equal(a.communityWalk.stops.length,3);
+assert.deepEqual(a.communityWalk.stops.map(s=>s.id),['meadowbrook-crafts','riverbend-crafts','eldergrove-crafts','stonehearth-crafts','pines-crafts']);
+assert.deepEqual(a.communityWalk.stops[0].point,a.villages.craftPlaces.find(p=>p.id==='meadow-loom'));
+assert.deepEqual(a.communityWalk.stops.at(-1).point,a.whisperingPines.seats[0].approach);
 for(const id of ['Progress','Next','Rewards','Ready','Filters'])assert($('#communityWalk'+id).hidden,id);
-assert.equal($('#communityWalkStops').children.length,3);
+assert.equal($('#communityWalkStops').children.length,5);
 let start={x:2,z:28};
 for(const stop of a.communityWalk.stops){
  assert(!a.blocked(stop.point.x,stop.point.z));
@@ -42,4 +44,4 @@ for(const id of ['Progress','Next','Rewards','Filters'])assert(!$('#communityWal
 $('#communityWalkClose').onclick();
 assert(a.camera.position.equals(beforeCraft));
 assert.equal(JSON.stringify(a.getState().rewards),craftProgress);
-console.log('PASS: three connected Village Craft Trail stops with directions, retained selection, no reward tracking, and unchanged position/progress.');
+console.log('PASS: five connected Village Craft Trail stops with directions, retained selection, no reward tracking, and unchanged position/progress.');

@@ -46,6 +46,29 @@ function createPracticePlot(canRead){
  const left=control('Left','Swap beds 1 and 2',()=>swap(0)),right=control('Right','Swap beds 2 and 3',()=>swap(1));
  const rotate=control('Rotate','Rotate crops',()=>order.unshift(order.pop()));
  const reset=control('Reset','Restore starting layout',()=>{order=[...names];});
- panel.append(summary,note,list,left,right,rotate,reset,status);
- return {panel,close(){panel.open=false;order=[...names];draw('');}};
+ const care=el('details','Care'),careTitle=el('summary','CareTitle','Practice garden care');
+ const credit=el('p','CareCredit','Inspired by Gardening, credited to @josefan12 on page 16 of the original places list. The practice beds are imagined and separate from the real park task.');
+ const prompt=el('p','CarePrompt'),feedback=el('p','CareFeedback');feedback.setAttribute('role','status');
+ const situations=[
+  ['1 of 3 · The practice carrot bed is marked dry.',0,'Watering matches the dry-bed cue.'],
+  ['2 of 3 · The practice tomato support is loose.',1,'Checking the support addresses the loose frame.'],
+  ['3 of 3 · The leafy bed is marked tended, with nothing to fix.',2,'Observation is a choice: this bed needs no action now.']
+ ];
+ let situation=0,answered=false;
+ const careActive=()=>panel.open&&care.open&&canRead();
+ function showCare(){prompt.textContent=situations[situation][0];feedback.textContent='';answered=false;next.hidden=true;}
+ const answers=['Water the practice bed','Check the support','Look without changing the bed'].map((label,i)=>{
+  const b=el('button','CareChoice'+i,label);b.type='button';
+  b.onclick=()=>{
+   if(!careActive()||answered)return;
+   const [cue,correct,message]=situations[situation];
+   if(correct!==i){feedback.textContent='That does not match this cue. '+cue;return;}
+   answered=true;feedback.textContent=message;next.hidden=false;
+  };return b;
+ });
+ const next=el('button','CareNext','Next practice bed');next.type='button';
+ next.onclick=()=>{if(!careActive()||!answered||next.hidden)return;situation=(situation+1)%situations.length;showCare();answers[0].focus();};
+ care.append(careTitle,credit,prompt,...answers,feedback,next);showCare();
+ panel.append(summary,note,list,left,right,rotate,reset,status,care);
+ return {panel,close(){panel.open=false;care.open=false;situation=0;showCare();order=[...names];draw('');}};
 }

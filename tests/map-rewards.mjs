@@ -3,12 +3,14 @@ import {STATIONS} from '../dist/rewards-core.js';
 import {installParkMap} from '../dist/park-map.js';
 
 const nodes=new Map();
-function element(){return {children:[],style:{},attributes:{},classList:{toggle(){}},set id(v){nodes.set('#'+v,this)},append(...items){this.children.push(...items)},replaceChildren(...items){this.children=items},setAttribute(k,v){this.attributes[k]=v},remove(){},focus(){document.activeElement=this},showModal(){this.open=true},close(){this.open=false}};}
+function element(){return {children:[],style:{},attributes:{},classList:{toggle(){}},set id(v){nodes.set('#'+v,this)},append(...items){for(const item of items)item.parentElement=this;this.children.push(...items)},replaceChildren(...items){this.children=items},setAttribute(k,v){this.attributes[k]=v},remove(){if(this.parentElement)this.parentElement.children=this.parentElement.children.filter(item=>item!==this);},focus(){document.activeElement=this},showModal(){this.open=true},close(){this.open=false}};}
 globalThis.document={head:element(),body:element(),createElement:element,querySelector(s){if(!nodes.has(s))nodes.set(s,element());return nodes.get(s)}};
 const $=s=>document.querySelector(s);
 let state={visits:0,points:0,claims:[],done:[]},paused=0,guided=null;
 let walk=null;const recreationPlaces=[];
 const map=installParkMap({pause:()=>paused++,guideTo:id=>guided=id,guideToPoint:p=>walk=p,rewards:()=>state,destinations:()=>[{id:'scenic-test',name:'Forest bench',kind:'Scenic seating',x:0,z:20},...recreationPlaces]});
+const drawing=$('#mapDrawing');let drawingWrites=0;
+Object.defineProperty(drawing,'innerHTML',{set(){drawingWrites++;this.children=[]}});
 const rows=()=>$('#mapLocations').children;
 map.open();$('#mapCollectRewards').onclick();
 assert.equal(rows().length,STATIONS.length);
@@ -77,3 +79,17 @@ find('recreation');assert.equal(rows().length,2);assert.match($('#mapSearchCount
 find('fishing');assert.equal(rows().length,1);rows()[0].onclick();assert(!map.isOpen);assert.deepEqual(walk,{x:1,z:2,name:'Riverside display'});
 map.open();$('#mapCollectRewards').onclick();find('bowling');assert.equal(rows().length,0);assert.equal(JSON.stringify(state),saved);
 console.log('PASS: play here versus walking directions, mixed count, tabletop focus, reward-only exclusion and unchanged progress.');
+
+state={visits:0,points:0,claims:[],done:[]};map.open();
+const mapWrites=drawingWrites,markers=[...drawing.children],firstMarker=markers.find(m=>m.textContent==='1');
+assert.deepEqual(markers.map(m=>Number(m.textContent)),STATIONS.map((_,i)=>i+1));
+search.value='nothingmatches';search.oninput();
+assert.equal(drawingWrites,mapWrites);assert.deepEqual(drawing.children,markers);
+assert(markers.every(m=>m.hidden));const oldGuide=guided;firstMarker.onclick();assert.equal(guided,oldGuide);
+search.value=STATIONS[0].name;search.oninput();
+assert.equal(drawingWrites,mapWrites);assert(drawing.children.includes(firstMarker));assert(!firstMarker.hidden);
+firstMarker.onclick();assert.equal(guided,STATIONS[0].id);assert(!map.isOpen);
+map.open();$('#mapViewsafari').onclick();assert.equal(drawingWrites,mapWrites+1);assert.equal(drawing.children.length,6);
+$('#mapViewcourtyard').onclick();assert.equal(drawingWrites,mapWrites+2);
+assert(!drawing.children.includes(firstMarker));
+console.log('PASS: search and reopening reuse map artwork and markers; hidden markers are inert; changing map view redraws once.');

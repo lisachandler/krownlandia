@@ -33,3 +33,22 @@ current=inlay.seats[0];assert(inlay.open(seatedTrigger));assert(!panel.open);ass
 panel.open=true;place(1);assert.match(n('pinesInlaySlot1').textContent,/Pinewood/);dialog.close();assert.equal(document.activeElement,seatedTrigger);
 assert.equal(inlay.root.children.length,count);assert.equal(inlay.bounds.length,5);
 console.log('PASS: inlay choices, contrast feedback, remote and collapsed guards, fresh reopen, seated access, and fixed geometry.');
+
+current=null;camera.position.set(39,1.75,166.5);assert(inlay.open());
+const workshop=n('pinesWorkshop'),stage=n('pinesWorkshopStage'),draft=n('pinesWorkshopDraft');
+const visible=()=>draft.children.filter(line=>!line.hidden);
+const pick=i=>n('pinesWorkshopChoice'+i).onclick();assert(!workshop.open);pick(0);assert(draft.hidden);
+workshop.open=true;pick(1);assert.match(stage.textContent,/discovery/);
+camera.position.set(0,1.75,0);pick(1);assert.equal(visible().length,1);
+camera.position.set(39,1.75,166.5);pick(1);pick(0);
+assert.match(stage.textContent,/complete/);
+assert.deepEqual(visible().map(el=>el.textContent),['A visitor began the morning under the pines.','Along the path, they heard a bell ringing softly beyond the trees.','A neighbor joined them, and they walked together to see what was ahead.']);
+assert.equal(document.activeElement,n('pinesWorkshopUndo'));pick(0);assert.equal(visible().length,3);
+n('pinesWorkshopUndo').onclick();assert.match(stage.textContent,/ending/);assert.equal(visible().length,2);
+n('pinesWorkshopReset').onclick();assert(draft.hidden);assert.equal(document.activeElement,n('pinesWorkshopChoice0'));
+pick(0);dialog.close();pick(0);assert.equal(visible().length,1);
+current=inlay.seats[0];assert(inlay.open(seatedTrigger));assert(!workshop.open&&draft.hidden);
+workshop.open=true;pick(0);assert.match(draft.children[0].textContent,/beside the river/);
+dialog.close();assert.equal(document.activeElement,seatedTrigger);
+assert.equal(inlay.root.children.length,count);
+console.log('PASS: storytelling choices, coherent three-part recap, undo, restart, seated access and collapsed/remote/closed guards.');

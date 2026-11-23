@@ -4,8 +4,20 @@ const html=fs.readFileSync('dist/index.html','utf8');
 const panel=html.match(/<section id="gatewayReading"[^>]* hidden>([\s\S]*?)<\/section>/)[1];
 const noScript=html.match(/<noscript>([\s\S]*?)<\/noscript>/)[1];
 const links=source=>[...source.matchAll(/href="(\/reports\/[^"]+)"/g)].map(m=>m[1]);
-const paths=links(panel);assert.equal(new Set(paths).size,4);
+const paths=links(panel);assert.equal(new Set(paths).size,6);
+assert(paths.includes("/reports/first-visit.html"));
+assert.match(html,/<a href="\/reports\/first-visit.html" target="_blank" rel="noopener">Plan your first visit/);
 assert(paths.includes("/reports/village-craft-guide.html"));
+assert(paths.includes("/reports/arts-sampler.html"));
+const arts=fs.readFileSync('dist/reports/arts-sampler.html','utf8');
+for (const anchor of ['composition','storyboard']) {
+ assert(arts.includes('href="#'+anchor+'"'));
+ assert(arts.includes('id="'+anchor+'"'));
+}
+assert.match(arts,/Express Yourself School of Arts, credited to @elizabeths14/);
+assert.match(arts,/KROWN Cinema, credited to @laloreto/);
+assert.doesNotMatch(arts,/<script\b|<iframe\b|https?:\/\//i);
+assert.match(fs.readFileSync('dist/reports/first-visit.html','utf8'),/href="arts-sampler.html"/);
 assert.deepEqual(links(noScript),paths);
 assert.match(html,/<script type="module" src="gateway-start.js"><\/script>/);
 for(const path of paths)assert(fs.statSync('dist'+path).size>0);

@@ -3,3 +3,5 @@
 #produceMenu button[hidden]{display:none}
 
 #plotPlanner{margin:12px 0}#plotSummary{cursor:pointer;min-height:44px;align-content:center}#plotBeds{padding-inline-start:2em}#plotPlanner :focus-visible{outline:3px solid white;outline-offset:3px}
+
+#plotCare{margin-block:12px}#plotCareTitle{cursor:pointer;min-height:44px;align-content:center}

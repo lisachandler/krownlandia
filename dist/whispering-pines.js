@@ -48,6 +48,38 @@ export function installWhisperingPines({scene,camera,colliders,pause,canUse=()=>
  const craftMaterials=document.createElement('div');craftMaterials.setAttribute('role','group');craftMaterials.setAttribute('aria-label','Choose an inlay piece');craftMaterials.append(...selectors);
  const craftSlots=document.createElement('div');craftSlots.setAttribute('role','group');craftSlots.setAttribute('aria-label','Place the chosen piece');craftSlots.append(...positions);
  craft.append(craftSummary,craftNote,craftMaterials,craftSlots,reset,craftStatus);renderCraft();
- details.append(summary,note,controls,story);dialog.append(title,intro,details,craft,close);document.body.append(dialog);const css=document.createElement('link');css.rel='stylesheet';css.href='whispering-pines.css';document.head.append(css);render();
- return {root,bounds,point,seats:[seat],get near(){return near()},get isOpen(){return dialog.open},open(launcher){if(!canUse()||!accessible()||dialog.open||document.querySelector('dialog[open]')?.open)return false;returnFocus=launcher||document.querySelector('#interact');pause();details.open=false;craft.open=false;material=0;slots.fill(null);renderCraft();dialog.showModal();close.focus();return true;}};
+ const workshop=document.createElement('details');workshop.id='pinesWorkshop';
+ const workshopTitle=document.createElement('summary');workshopTitle.textContent='Krownlandia Storytelling · Make a short story';
+ const workshopNote=document.createElement('p');workshopNote.textContent='Inspired by Krownlandia Storytelling (Bookstore), @michaelnottoli, page 13. These fictional choices and the glade workshop are new prototype ideas. Nothing is saved or shared.';
+ const stage=document.createElement('p');stage.id='pinesWorkshopStage';stage.setAttribute('role','status');
+ const draft=document.createElement('ol');draft.id='pinesWorkshopDraft';draft.setAttribute('aria-label','Your story so far');draft.setAttribute('aria-live','polite');
+ const pieces=[
+  {prompt:'Choose a beginning',options:[['By the river','A visitor began the morning beside the river.'],['Under the pines','A visitor began the morning under the pines.']]},
+  {prompt:'Choose a discovery',options:[['A paper map','Along the path, they found a paper map folded into a tiny boat.'],['A distant bell','Along the path, they heard a bell ringing softly beyond the trees.']]},
+  {prompt:'Choose an ending',options:[['A neighbor joins','A neighbor joined them, and they walked together to see what was ahead.'],['A story to tell','Back at the glade, the visitor told the story to someone taking a rest.']]}
+ ];
+ const lines=pieces.map(()=>document.createElement('li'));draft.append(...lines);
+ const picked=[];
+ const canWrite=()=>dialog.open&&workshop.open&&canUse()&&accessible();
+ function workshopButton(id,label,action){
+  const b=document.createElement('button');b.id=id;b.type='button';b.textContent=label;
+  b.onclick=()=>{if(canWrite()&&!b.disabled&&!b.hidden)action();};return b;
+ }
+ const picks=[0,1].map(i=>workshopButton('pinesWorkshopChoice'+i,'',()=>{
+  if(picked.length===pieces.length)return;
+  picked.push(i);drawWorkshop();
+  if(picked.length===pieces.length)rewind.focus();
+ }));
+ const rewind=workshopButton('pinesWorkshopUndo','Undo last choice',()=>{picked.pop();drawWorkshop();picks[0].focus();});
+ const restart=workshopButton('pinesWorkshopReset','Start a new story',()=>{picked.length=0;drawWorkshop();picks[0].focus();});
+ function drawWorkshop(){
+  const current=pieces[picked.length];stage.textContent=current?current.prompt+' · '+(picked.length+1)+' of 3':'Your short story is complete.';
+  picks.forEach((b,i)=>{b.hidden=!current;b.textContent=current?.options[i][0]||'';});
+  rewind.disabled=restart.disabled=picked.length===0;
+  draft.hidden=picked.length===0;
+  lines.forEach((line,i)=>{line.hidden=i>=picked.length;line.textContent=pieces[i].options[picked[i]]?.[1]||'';});
+ }
+ workshop.append(workshopTitle,workshopNote,stage,...picks,draft,rewind,restart);drawWorkshop();
+ details.append(summary,note,controls,story);dialog.append(title,intro,details,craft,workshop,close);document.body.append(dialog);const css=document.createElement('link');css.rel='stylesheet';css.href='whispering-pines.css';document.head.append(css);render();
+ return {root,bounds,point,seats:[seat],get near(){return near()},get isOpen(){return dialog.open},open(launcher){if(!canUse()||!accessible()||dialog.open||document.querySelector('dialog[open]')?.open)return false;returnFocus=launcher||document.querySelector('#interact');pause();details.open=false;craft.open=false;workshop.open=false;picked.length=0;drawWorkshop();material=0;slots.fill(null);renderCraft();dialog.showModal();close.focus();return true;}};
 }
