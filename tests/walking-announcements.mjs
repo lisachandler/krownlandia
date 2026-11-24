@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+
+const source=readFileSync(new URL('../dist/world.js',import.meta.url),'utf8');
+const setup=source.match(/^function announcePath\(.*$/m)[0];
+const display=source.slice(source.indexOf('let guidanceText,announcement='),source.indexOf('\n\nif(playing',source.indexOf('let guidanceText,announcement=')));
+const writes=[];
+let status='';
+const guideStatus={get textContent(){return status;},set textContent(text){status=text;writes.push(text);}};
+const guide={textContent:''},rewards={target:null};let hideTrail=0;
+const draw=new Function('guide','guideStatus','rewards','navigation',setup+'\nreturn ({target,p,route,seated=false,riding=false,walking=true,directionsStopped=false})=>{const ms=0,yaw=0;'+display+'};')(guide,guideStatus,rewards,()=>hideTrail++);
+const target={x:4,z:0,name:'Krown Bridge'}, p={x:0,z:0};
+draw({target,p});assert.equal(writes.length,0,'default quest targets stay quiet');
+rewards.target=target;
+draw({target,p,route:{distance:4,next:target}});
+draw({target,p:{x:1,z:0},route:{distance:3,next:target}});
+assert.deepEqual(writes,['Walking directions to Krown Bridge.']);assert.match(guide.textContent,/3 m/);
+draw({target,p,seated:true,walking:false});assert.equal(writes.at(-1),'Stand up to continue to Krown Bridge.');
+draw({target,p,riding:true,walking:false});assert.equal(writes.at(-1),'Walking directions paused for Krown Bridge.');
+draw({target,p,route:{unreachable:true}});assert.match(writes.at(-1),/^No walking route found/);
+draw({target,p,route:{distance:4,next:target}});assert.equal(writes.at(-1),'Walking directions to Krown Bridge.');
+draw({target,p:{x:3,z:0},route:{distance:1,next:target}});assert.equal(writes.at(-1),'Arrived at Krown Bridge.');assert.equal(hideTrail,1);
+draw({target,p:{x:3,z:0},route:{distance:1,next:target}});assert.equal(writes.filter(text=>text.startsWith('Arrived')).length,1);
+assert.match(source,/stopDirections.onclick=.*announcePath\('Walking directions stopped\.'\)/);
+assert.match(source,/guideStatus.setAttribute\('role','status'\)/);
+console.log('PASS: explicit route transitions announce once; distance stays visual; default goals remain quiet.');
+assert.match(source,/navigation\(ms,p,rewards.target,trailVisible,walking\)/);

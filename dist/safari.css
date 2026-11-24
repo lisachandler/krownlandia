@@ -7,3 +7,5 @@
 #safari.ride-finished>.label{display:none}#safari.ride-finished>#safariText{display:block}
 #safariAfterRide{margin-top:10px}#safariAfterRide[hidden]{display:none}#safariAfterRide summary{cursor:pointer;color:#f4d48e;padding:8px 0}#safariAfterRide summary:focus-visible{outline:2px solid #f4d48e;outline-offset:3px}
 #safari{box-sizing:border-box;max-height:32vh;max-height:32dvh;overscroll-behavior:contain;overflow-wrap:anywhere;scroll-padding-block:8px}#safari:focus-visible{outline:2px solid #f4d48e;outline-offset:3px}
+#safariFiction{display:block;margin-block-start:.6rem;padding:.55rem 0;color:#fff1d1;text-decoration:underline}
+#safariFiction:focus-visible{outline:3px solid #dfba69;outline-offset:3px}

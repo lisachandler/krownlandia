@@ -210,6 +210,8 @@ const atmosphere=enrich({scene,camera,stone,trim,grass,leaf,lamps,renderer});
 const batching=batchStatic(scene,new Set([stone,trim,gold,navy,blue,grass,leaf,wood,white,pink,yellow,purple,coffeePink,coffeeBlack,coffeeBlush,coffeeBrown]));
 drops.frustumCulled=false;
 const guide=document.createElement('p');guide.id='guide';guide.setAttribute('aria-live','off');$('#quest').append(guide);
+const guideStatus=document.createElement('p');guideStatus.id='walkingGuideStatus';guideStatus.setAttribute('role','status');guideStatus.setAttribute('aria-atomic','true');document.body.append(guideStatus);
+function announcePath(message){if(guideStatus.textContent!==message)guideStatus.textContent=message;}
 const parkInterface=installInterface({pause:()=>keysReset()});
 const villages=installVillages({scene,camera,colliders,canCraft:()=>playing&&!contextLost&&!journey.active&&!safari.active&&!tram.active&&!seating.active&&!lounges.seated,pause:()=>keysReset(),guideTo:rewards.guideToPoint,getSouvenirs:()=>[...lounges.collection(),...residents.collection(),...builders.collection(),...library.collection(),...eldergrove.collection(),...safari.collection(),...school.collection()],getHosts:()=>residents.people,getTramStops:()=>tram.stops,getRiverbendDestinations:()=>{const lounge=lounges.spots.find(s=>s.id==='riverbend');return [{id:'display',...riverbend.boardPoint},{id:'bench',...riverbend.seats[0].approach,name:riverbend.seats[0].name},{id:'lounge',x:lounge.x,z:lounge.z+1.3,name:lounge.name}];}});
 const residents=installResidents({scene,camera,colliders,villages,pause:()=>keysReset(),guideTo:rewards.guideToPoint,rewards:rewards.state,guideRewards:rewards.guideTo});
@@ -252,9 +254,13 @@ const communityWalk=installCommunityWalk({pause:()=>keysReset(),rewards,getLoung
  {id:'eldergrove-crafts',name:'Eldergrove woodcraft shelter',point:eldergrove.points.find(p=>p.id==='craft'),description:'Open the woodcraft discovery panel, then Woodcraft practice to design a plaque.',credit:'Inspired by Eldergrove’s recorded woodcraft tradition'},
  {id:'stonehearth-crafts',name:'Stonehearth pattern courtyard',point:stonehearth.point,description:'Open the courtyard panel and choose Arrange a stone pattern.',credit:'Inspired by Stonehearth’s recorded masonry tradition'},
  {id:'pines-crafts',name:'Whispering Pines inlay bench',point:whisperingPines.seats[0].approach,description:'Sit at the story bench. Under View options, select Open forest story prompts, then expand Pinewood inlay practice.',credit:'Inspired by the recorded Whispering Pines woodworking and resin crafts'}
+ ]},{id:'photo',name:'Photo Walk',description:'Try three ways to frame a scene in any order. Inspired by Krown Photo Studio (@AlexHM, page 10). Use Activities → Take photo if you want a local PNG, or describe your view aloud. This prototype walk tracks no completion and adds no rewards.',selfGuided:true,stops:[
+ {id:'photo-garden',name:'Community Office Garden',point:officeGarden.boardPoint,description:'Try a wide view: put a path or garden edge in the foreground to lead the eye into the scene.',credit:'Original place idea · @lisachandler'},
+ {id:'photo-terrace',name:'Library of Alexandria reading terrace',point:library.seats.find(s=>s.name==='Alexandria reading terrace bench').approach,description:'Try a detail: pick one shape or texture on the terrace. Move or turn to leave some space around it.',credit:'Original Library idea · @Jauregui9821'},
+ {id:'photo-bridge',name:'Krown Bridge west-bank lookout',point:bridge.boardPoint,description:'Try a layered view: choose something near you, something across the water, and a feature farther back.',credit:'Original bridge idea · @ed033'}
  ]}]});
 let directionsStopped=false;
-const stopDirections=document.createElement('button');stopDirections.id='stopDirections';stopDirections.textContent='Stop directions';stopDirections.onclick=()=>{keysReset();rewards.clearGuide();directionsStopped=true;saveVisit();};$('nav').append(stopDirections);
+const stopDirections=document.createElement('button');stopDirections.id='stopDirections';stopDirections.textContent='Stop directions';stopDirections.onclick=()=>{keysReset();rewards.clearGuide();directionsStopped=true;announcePath('Walking directions stopped.');saveVisit();};$('nav').append(stopDirections);
 const findRest=document.createElement('button');findRest.id='findRest';findRest.textContent='Find a place to rest';findRest.title='Walking directions to nearby seating';
 const canFindRest=()=>playing&&!journey.active&&!safari.active&&!tram.active&&!seating.active&&!lounges.seated;
 findRest.onclick=()=>{if(!canFindRest())return;keysReset();const p=camera.position,candidates=[...seating.seats].sort((a,b)=>Math.hypot(p.x-a.approach.x,p.z-a.approach.z)-Math.hypot(p.x-b.approach.x,p.z-b.approach.z)),seat=candidates.find(s=>!blocked(s.approach.x,s.approach.z)&&navigation.canReach(p,s.approach));if(seat){rewards.guideToPoint({...seat.approach,name:seat.name});findRest.textContent='Find a place to rest';}else findRest.textContent='No seat route found · try after moving';};$('nav').append(findRest);
@@ -299,17 +305,21 @@ if(rewards.target)directionsStopped=false;
 const target=rewards.target||(directionsStopped?null:collected?{x:0,z:-75,name:'Palace approach'}:metPip?{x:18,z:-47,name:'Garden Krown'}:{x:-9,z:-9,name:'Pip'});
 const seated=seating.active||lounges.seated,riding=journey.active||safari.active||tram.active;
 const walking=playing&&!riding&&!seated,trailVisible=walking&&!document.body.classList.contains('clear-view');
-const route=navigation(ms,p,rewards.target,trailVisible);
+const route=navigation(ms,p,rewards.target,trailVisible,walking);
 stopDirections.disabled=!target;
 findRest.disabled=!canFindRest();
-if(target&&seated)guide.textContent='Stand up to continue to '+target.name;
-else if(target&&riding)guide.textContent='Walking directions paused · '+target.name;
-else if(target&&route?.unreachable)guide.textContent='No walking route found to '+target.name+' · move to an open path or choose another destination.';
+let guidanceText,announcement='';
+if(target&&seated){guidanceText='Stand up to continue to '+target.name;announcement=guidanceText+'.';}
+else if(target&&riding){guidanceText='Walking directions paused · '+target.name;announcement='Walking directions paused for '+target.name+'.';}
+else if(target&&route?.unreachable){guidanceText='No walking route found to '+target.name+' · move to an open path or choose another destination.';announcement='No walking route found to '+target.name+'. Move to an open path or choose another destination.';}
 else if(target){const directDistance=Math.hypot(target.x-p.x,target.z-p.z),arrived=walking&&directDistance<2.2&&(route?route.distance<2.4:!rewards.target);
- if(arrived){navigation(ms,p,rewards.target,false);guide.textContent='Arrived · '+target.name;}
+ if(arrived){navigation(ms,p,rewards.target,false);guidanceText='Arrived · '+target.name;announcement='Arrived at '+target.name+'.';}
  else{const direction=route?.next||target;let angle=Math.atan2(direction.x-p.x,-(direction.z-p.z))+yaw;angle=Math.atan2(Math.sin(angle),Math.cos(angle));
- guide.textContent=target.name+' · '+Math.round(route?.distance??directDistance)+' m · '+(route?'follow the gold trail · ':'')+(Math.abs(angle)<.35?'ahead':Math.abs(angle)>2.5?'behind you':angle>0?'to your right':'to your left');}
-}else guide.textContent='Explore freely · choose a destination in the Park map.';
+ guidanceText=target.name+' · '+Math.round(route?.distance??directDistance)+' m · '+(route?'follow the gold trail · ':'')+(Math.abs(angle)<.35?'ahead':Math.abs(angle)>2.5?'behind you':angle>0?'to your right':'to your left');announcement='Walking directions to '+target.name+'.';}
+}else guidanceText='Explore freely · choose a destination in the Park map.';
+if(guide.textContent!==guidanceText)guide.textContent=guidanceText;
+if(rewards.target)announcePath(announcement);
+else if(!directionsStopped)announcePath('');
 
 if(playing&&!modal&&!journey.active&&!safari.active&&!tram.active){if(keys.q)yaw+=dt*1.3;if(keys.r)yaw-=dt*1.3;}
 residents.update(ms);villages.update(nightBlend);atmosphere(ms,nightBlend);

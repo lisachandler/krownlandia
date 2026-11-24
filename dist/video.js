@@ -15,27 +15,34 @@ export function installVideo({renderer,pause=()=>{},getContext=()=>({})}){
  const question=make('p','videoDiscardQuestion','Discard this clip from the page? This cannot be undone. Any file already downloaded is kept.');
  const keep=make('button','videoKeep','Keep clip'),remove=make('button','videoDiscardNow','Discard this clip');confirm.append(question,keep,remove);
  const close=make('button','videoClose','Back to the world');
- const note=make('p','videoNote','Clips stay in this page only. Download before recording a replacement or leaving. Nothing is uploaded or included in progress backups.');
+ const note=make('p','videoNote','Clips stay in this page only. A finished recording replaces the previous clip; if recording fails, the previous one remains. Download before leaving. Nothing is uploaded or included in progress backups.');
  dialog.append(title,intro,status,preview,download,discard,confirm,start,panelStop,close,note);document.body.append(dialog);
  const stop=make('button','videoStop','Stop recording');stop.hidden=true;document.body.append(stop);
  const css=make('link','videoStyle');css.rel='stylesheet';css.href='video.css';document.head.append(css);
  const canvas=renderer.domElement,Recorder=globalThis.MediaRecorder;
- let active=null,clipUrl=null,interval=null,timeout=null,readyNotice=false,issue=false,discardPending=false;
+ const maxClipBytes=24*1024*1024;
+ let active=null,clipUrl=null,clipBytes=0,interval=null,timeout=null,readyNotice=false,issue=false,discardPending=false;
  const supported=typeof Recorder==='function'&&typeof canvas.captureStream==='function';
  const unavailable=()=>renderer.getContext?.()?.isContextLost?.()===true;
- function controls(){panelStop.hidden=!active;panelStop.disabled=!active||!!active.stopping;panelStop.textContent=active?.stopping?'Finishing clip…':'Stop recording';nav.textContent=active?'Recording…':clipUrl?'Video ready · preview':issue?'Recording issue':'Record video';start.disabled=!supported||!!active||unavailable()||discardPending;discard.hidden=!clipUrl||!!active;confirm.hidden=!discardPending;start.textContent=clipUrl?'Record new clip (replace current)':'Start recording';stop.hidden=!active&&!readyNotice;if(!active){stop.disabled=false;stop.textContent=issue?'Recording issue':'Preview clip';}}
+ function controls(){panelStop.hidden=!active;panelStop.disabled=!active||!!active.stopping;panelStop.textContent=active?.stopping?'Finishing clip…':'Stop recording';nav.textContent=active?'Recording…':issue?'Recording issue':clipUrl?'Video ready · preview':'Record video';preview.hidden=download.hidden=!!active||!clipUrl;start.disabled=!supported||!!active||unavailable()||discardPending;discard.hidden=!clipUrl||!!active;confirm.hidden=!discardPending;start.textContent=clipUrl?'Record new clip (replace current)':'Start recording';stop.hidden=!active&&!readyNotice;if(!active){stop.disabled=false;stop.textContent=issue?'Recording issue':'Preview clip';}}
  function cancelDiscard(){discardPending=false;controls();}
- function releaseClip(){preview.pause();preview.removeAttribute('src');preview.load?.();if(clipUrl)URL.revokeObjectURL(clipUrl);clipUrl=null;preview.hidden=true;download.hidden=true;download.removeAttribute('href');download.removeAttribute('download');}
+ function releaseClip(){preview.pause();preview.removeAttribute('src');preview.load?.();if(clipUrl)URL.revokeObjectURL(clipUrl);clipUrl=null;clipBytes=0;preview.hidden=true;download.hidden=true;download.removeAttribute('href');download.removeAttribute('download');}
  discard.onclick=()=>{if(!dialog.open||discard.disabled||!clipUrl||active||discardPending)return;discardPending=true;controls();keep.focus?.();};
  keep.onclick=()=>{if(!dialog.open||keep.disabled||!discardPending)return;cancelDiscard();discard.focus?.();};
  remove.onclick=()=>{if(!dialog.open||remove.disabled||!discardPending||!clipUrl||active)return;releaseClip();discardPending=false;readyNotice=false;issue=false;status.textContent='Clip discarded from this page. Downloaded files and park progress are unchanged.';controls();start.focus?.();};
  function cleanup(session){clearInterval(interval);clearTimeout(timeout);clearTimeout(session.stopTimer);interval=timeout=null;for(const track of session.stream.getTracks())track.stop();}
  function finish(session){
-  if(active!==session)return;cleanup(session);active=null;controls();
-  if(session.failed||!session.chunks.length){session.chunks=[];issue=true;readyNotice=!dialog.open;status.textContent=session.failureMessage||'Recording could not be completed. Try a shorter clip or another browser.';controls();return;}
-  const type=session.recorder.mimeType||session.chunks[0].type||'video/webm';
-  const blob=new Blob(session.chunks,{type});session.chunks=[];if(!blob.size){status.textContent='No video was captured. Please try again.';return;}
-  clipUrl=URL.createObjectURL(blob);preview.src=clipUrl;preview.hidden=false;download.href=clipUrl;download.download=session.filename.replace(/\.png$/,type.includes('mp4')?'.mp4':'.webm');download.hidden=false;
+  if(active!==session)return;cleanup(session);active=null;
+  function fail(message){session.chunks=[];issue=true;readyNotice=!dialog.open;status.textContent=message+(clipUrl?' Your previous clip is still available.':'');controls();}
+  if(session.failed||!session.chunks.length){fail(session.failureMessage||'Recording could not be completed. Try a shorter clip or another browser.');return;}
+  try{
+   const type=session.recorder.mimeType||session.chunks[0].type||'video/webm';
+   const blob=new Blob(session.chunks,{type});session.chunks=[];
+   if(!blob.size){fail('No video was captured. Please try again.');return;}
+   const nextUrl=URL.createObjectURL(blob);
+   releaseClip();
+   clipBytes=blob.size;clipUrl=nextUrl;preview.src=clipUrl;download.href=clipUrl;download.download=session.filename.replace(/\.png$/,type.includes('mp4')?'.mp4':'.webm');
+  }catch{fail('The browser could not prepare the recording. Please try again.');return;}
   issue=false;readyNotice=!dialog.open;status.textContent='Clip ready. Preview and download it before leaving.';controls();
  }
  function end(reason='Recording stopped.'){
@@ -54,10 +61,10 @@ export function installVideo({renderer,pause=()=>{},getContext=()=>({})}){
    const type=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'].find(t=>Recorder.isTypeSupported?.(t));
    const recorder=new Recorder(stream,{...(type?{mimeType:type}:{}),videoBitsPerSecond:4000000});
    const session={stream,recorder,chunks:[],bytes:0,failed:false,filename:photoFilename(getContext()),started:Date.now()};
-   recorder.ondataavailable=e=>{if(active!==session||!e.data?.size)return;session.bytes+=e.data.size;if(session.bytes>24*1024*1024){session.failed=true;session.failureMessage='This recording reached its memory limit and was discarded. Try a shorter clip or Lightweight graphics.';end('Recording reached its memory limit.');return;}session.chunks.push(e.data);};
+   recorder.ondataavailable=e=>{if(active!==session||!e.data?.size)return;session.bytes+=e.data.size;if(session.bytes+clipBytes>maxClipBytes){session.failed=true;session.failureMessage=clipUrl?'The replacement reached the memory limit. Try a shorter clip, or download and discard the previous clip first.':'This recording reached its memory limit and was discarded. Try a shorter clip or Lightweight graphics.';end('Recording reached its memory limit.');return;}session.chunks.push(e.data);};
    recorder.onstop=()=>finish(session);recorder.onerror=()=>{if(active!==session)return;session.failed=true;session.failureMessage='The browser interrupted recording. Try again or use Take photo.';end('Recording was interrupted.');};
    active=session;recorder.start(1000);readyNotice=false;issue=false;
-   releaseClip();
+   preview.pause();
    status.textContent='Recording the 3D scene. Stop anytime; recording ends after 30 seconds.';stop.disabled=false;controls();dialog.close();
    interval=setInterval(()=>{if(active===session)stop.textContent='Stop recording · '+Math.min(30,Math.floor((Date.now()-session.started)/1000))+'/30s';},1000);
    stop.textContent='Stop recording · 0/30s';timeout=setTimeout(()=>end('30-second clip finished.'),30000);

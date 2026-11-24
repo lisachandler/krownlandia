@@ -45,3 +45,22 @@ $('#communityWalkClose').onclick();
 assert(a.camera.position.equals(beforeCraft));
 assert.equal(JSON.stringify(a.getState().rewards),craftProgress);
 console.log('PASS: five connected Village Craft Trail stops with directions, retained selection, no reward tracking, and unchanged position/progress.');
+
+open();$('#communityWalkRoute-photo').onclick();
+assert.equal(a.communityWalk.route,'photo');
+assert($('#communityWalk').children.some(node=>node.textContent?.includes('@AlexHM')));
+const photoStops=a.communityWalk.stops;
+assert.deepEqual(photoStops.map(stop=>stop.id),['photo-garden','photo-terrace','photo-bridge']);
+assert.deepEqual(photoStops.map(stop=>stop.credit.split(' · ')[1]),['@lisachandler','@Jauregui9821','@ed033']);
+for(const id of ['Progress','Next','Rewards','Ready','Filters'])assert($('#communityWalk'+id).hidden,id);
+let previous={x:2,z:28};
+for(const stop of photoStops){
+ assert(!a.blocked(stop.point.x,stop.point.z));
+ assert(planner.route(previous,stop.point).length,'Photo Walk reaches '+stop.name);
+ $('#communityWalkGo-'+stop.id).onclick();assert(!a.communityWalk.isOpen);
+ open();assert.equal(a.communityWalk.route,'photo');previous=stop.point;
+}
+$('#communityWalkRoute-community').onclick();$('#communityWalkClose').onclick();
+assert(a.camera.position.equals(beforeCraft));
+assert.equal(JSON.stringify(a.getState().rewards),craftProgress);
+console.log('PASS: Photo Walk offers three reachable, credited viewpoints with no automatic movement or reward tracking.');

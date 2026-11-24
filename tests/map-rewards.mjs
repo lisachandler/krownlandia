@@ -93,3 +93,22 @@ map.open();$('#mapViewsafari').onclick();assert.equal(drawingWrites,mapWrites+1)
 $('#mapViewcourtyard').onclick();assert.equal(drawingWrites,mapWrites+2);
 assert(!drawing.children.includes(firstMarker));
 console.log('PASS: search and reopening reuse map artwork and markers; hidden markers are inert; changing map view redraws once.');
+
+const orientation=$('#mapOrientation'),orientationInfo=$('#mapOrientationInfo');
+guided=null;walk=null;
+map.open();assert.equal(orientation.open,false);
+const landmark=STATIONS[0];
+map.update({x:landmark.x,z:landmark.z,yaw:0});
+orientation.open=true;orientation.ontoggle();
+assert.match(orientationInfo.textContent,/Facing north/);
+assert(orientationInfo.textContent.includes(landmark.name+' · about 0 m'));
+map.update({x:landmark.x,z:landmark.z,yaw:-Math.PI/2});
+assert.match(orientationInfo.textContent,/Facing east/);
+map.update({x:landmark.x,z:landmark.z,yaw:Math.PI/2});
+assert.match(orientationInfo.textContent,/Facing west/);
+map.update({x:90,z:-30,yaw:0});
+assert.match(orientationInfo.textContent,/Outside the park map/);
+$('#mapViewsafari').onclick();assert(orientation.hidden);assert.equal(orientation.open,false);
+$('#mapViewcourtyard').onclick();assert(!orientation.hidden);assert.equal(orientation.open,false);
+assert.equal(guided,null);assert.equal(walk,null);
+console.log('PASS: optional map text orientation follows heading and nearest landmark without starting directions; hides in Safari.');

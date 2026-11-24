@@ -54,7 +54,9 @@ export function installLibrary({scene,camera,colliders,pause,rewards,getNearbyPl
  prev.onclick=()=>moveShot(-1);next.onclick=()=>moveShot(1);
  cinema.ontoggle=()=>{if(cinema.open){drawShot(0);}else if(dialog.open&&cinemaWasOpen){summary.focus();}cinemaWasOpen=cinema.open;};
  let cinemaWasOpen=false;
- cinema.append(summary,film,label,frameArt,desc,caption,controls,cineNode('small','cinemaCredit','KROWN Cinema idea: @laloreto. Storyboard and drawings created for this park prototype.'));
+ const sampler=cineNode('a','cinemaArtsSampler','Try your own three-shot story (new tab)');
+ sampler.href='reports/arts-sampler.html#storyboard';sampler.target='_blank';sampler.rel='noopener';
+ cinema.append(summary,film,label,frameArt,desc,caption,controls,cineNode('small','cinemaCredit','KROWN Cinema idea: @laloreto. Storyboard and drawings created for this park prototype.'),sampler);
  const seasons=cineNode('details','librarySeasons','');
  const seasonsTitle=cineNode('summary','librarySeasonsTitle','Four Seasons · illustrated exhibit');
  const seasonsCredit=cineNode('p','librarySeasonsCredit','Four Seasons idea: @Jauregui9821, page 15. These four views of an imagined park path are new illustrations for the prototype.');

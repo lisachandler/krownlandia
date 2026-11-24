@@ -9,3 +9,6 @@
 #mapBowling{margin:12px 0;padding:10px 12px;border:1px solid #728b88;border-radius:8px}#mapBowling summary{cursor:pointer;font-weight:600}#mapBowling select{font:inherit;padding:.4em}#mapBowling button{margin:.3em}#mapBowling :focus-visible{outline:3px solid #ffe0a0;outline-offset:2px}
 
 #mapDrawing .map-marker[hidden]{display:none}
+#mapOrientation{order:-1;margin:0 0 12px;padding:8px 12px;border:1px solid #728b88;border-radius:8px}
+#mapOrientation summary{cursor:pointer;padding:.4rem 0}#mapOrientation summary:focus-visible{outline:3px solid #ffe0a0;outline-offset:2px}
+#mapOrientationInfo{margin:.35rem 0}.map-searching #mapOrientation{margin-block-end:8px}

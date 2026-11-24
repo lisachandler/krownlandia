@@ -45,10 +45,30 @@ export function installParkMap({pause,guideTo,rewards,guideToPoint=()=>{},destin
  const tabs=document.createElement('div');tabs.id='mapViews';for(const [id,title] of [['courtyard','Park & villages'],['safari','Safari route']]){const tab=document.createElement('button');tab.id='mapView'+id;tab.textContent=title;tab.onclick=()=>{view=id;render();};tabs.append(tab);}dialog.append(tabs);
 
  const searchBox=document.createElement('div');searchBox.id='mapSearchBox';const searchLabel=document.createElement('label');searchLabel.htmlFor='mapSearch';searchLabel.textContent='Find a destination or activity';const search=document.createElement('input');search.id='mapSearch';search.type='search';search.placeholder='Try coffee, fishing or bowling';search.value='';const clear=document.createElement('button');clear.id='mapSearchClear';clear.textContent='Clear search';const count=document.createElement('p');count.id='mapSearchCount';count.setAttribute('role','status');search.setAttribute('aria-describedby','mapSearchCount');const scenic=document.createElement('button');scenic.id='mapScenicSeats';scenic.textContent='Scenic seats';scenic.onclick=()=>{rewardsOnly=false;search.value='scenic';render();};const crafts=document.createElement('button');crafts.id='mapCraftActivities';crafts.textContent='Craft activities';crafts.onclick=()=>{rewardsOnly=false;search.value='craft activity';render();};const collect=document.createElement('button');collect.id='mapCollectRewards';collect.textContent='Rewards to collect';collect.onclick=()=>{rewardsOnly=!rewardsOnly;search.value='';render();};const shortcuts=document.createElement('div');shortcuts.id='mapShortcuts';shortcuts.append(scenic,crafts,collect);searchBox.append(searchLabel,search,clear,shortcuts,count);dialog.append(searchBox);search.oninput=()=>render();clear.onclick=()=>{search.value='';rewardsOnly=false;render();search.focus();};
+ const orientation=document.createElement('details');orientation.id='mapOrientation';
+ const orientationTitle=document.createElement('summary');orientationTitle.textContent='Where am I on the map?';
+ const orientationInfo=document.createElement('p');orientationInfo.id='mapOrientationInfo';
+ const orientationCredit=document.createElement('small');orientationCredit.textContent='The historical inventory credits Map to @josecarrerag (page 15). This map and its directions are prototype interpretations.';
+ orientation.append(orientationTitle,orientationInfo,orientationCredit);dialog.append(orientation);
+ orientation.ontoggle=()=>{if(orientation.open)updateOrientation();};
+ const headings=['north','northeast','east','southeast','south','southwest','west','northwest'];
+ function updateOrientation(){
+  if(!dialog.open||!orientation.open||view!=='courtyard')return;
+  const {x,z,yaw}=snapshot;
+  let note='Outside the park map. Switch to Safari route for its habitats.';
+  if([x,z,yaw].every(Number.isFinite)&&x>=-63&&x<=55&&z>=-92&&z<=180){
+   const direction=headings[(Math.round(-yaw*4/Math.PI)%8+8)%8];
+   let nearest=null,distance=Infinity;
+   for(const station of STATIONS){const d=Math.hypot(station.x-x,station.z-z);if(d<distance){nearest=station;distance=d;}}
+   note='Facing '+direction+' on the map. Nearest rewards landmark: '+nearest.name+' · about '+Math.round(distance)+' m in a straight line.';
+  }
+  if(orientationInfo.textContent!==note)orientationInfo.textContent=note;
+ }
  const normalize=value=>value.toLowerCase().replace(/\bcrown\b/g,'krown').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/['’]/g,'');
  const position=(node,x,z)=>{node.style.left=((view==='safari'?(x-38)/90:(x+63)/118)*100)+'%';node.style.top=((view==='safari'?(z+88)/85:(z+92)/272)*100)+'%';};
  function render(){
   const query=normalize(search.value.trim()),matches=text=>query.split(/\s+/).every(word=>normalize(text).includes(word));
+  orientation.hidden=view==='safari';if(orientation.hidden)orientation.open=false;
   searchBox.hidden=view==='safari';clear.hidden=!query&&!rewardsOnly;clear.textContent=rewardsOnly?'Clear search and filter':'Clear search';collect.setAttribute('aria-pressed',String(rewardsOnly));scenic.setAttribute('aria-pressed',String(query==='scenic'&&!rewardsOnly));crafts.setAttribute('aria-pressed',String(query==='craft activity'&&!rewardsOnly));dialog.classList.toggle('map-searching',(!!query||rewardsOnly)&&view!=='safari');let resultCount=0;
   const st=rewards();$('#mapSummary').textContent=st.visits+' of '+STATIONS.length+' stations visited · '+st.points+' points';
   const list=$('#mapLocations');list.replaceChildren();
@@ -103,8 +123,8 @@ export function installParkMap({pause,guideTo,rewards,guideToPoint=()=>{},destin
   }
   marker.hidden=false;return marker;
  }
- function open(){bowling.close();pause();view=snapshot.safari?.active?'safari':'courtyard';render();dialog.showModal();}
- function update(state){snapshot=state;const visitor=$('#mapVisitor');visitor.hidden=view==='safari'?(state.x<38||state.x>128||state.z<-88||state.z>-3):(state.x<-63||state.x>55||state.z<-92||state.z>180);position(visitor,state.x,state.z);visitor.style.transform='translate(-50%,-50%) rotate('+(-state.yaw*180/Math.PI)+'deg)';}
+ function open(){bowling.close();orientation.open=false;pause();view=snapshot.safari?.active?'safari':'courtyard';render();dialog.showModal();}
+ function update(state){snapshot=state;const visitor=$('#mapVisitor');visitor.hidden=view==='safari'?(state.x<38||state.x>128||state.z<-88||state.z>-3):(state.x<-63||state.x>55||state.z<-92||state.z>180);position(visitor,state.x,state.z);visitor.style.transform='translate(-50%,-50%) rotate('+(-state.yaw*180/Math.PI)+'deg)';updateOrientation();}
  button.onclick=open;$('#mapClose').onclick=()=>dialog.close();
  return {open,update,get isOpen(){return dialog.open},get selected(){return selected}};
 }

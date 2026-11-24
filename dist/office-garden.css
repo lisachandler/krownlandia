@@ -2,3 +2,6 @@
 #officeProjects button[aria-pressed=true]{background:#e4c378;color:#143b40}#officeProjectVisit{order:1;background:#e4c378;color:#143b40;font-size:16px}#officeProjectVisit[hidden]{display:none}
 
 #officeGardenAbout{margin-top:12px}#officeGardenAbout summary{cursor:pointer;min-height:44px;display:list-item;align-content:center}#officeGardenAbout summary:focus-visible{outline:2px solid #e4c378;outline-offset:3px}#officeGardenAbout p{margin:8px 0}
+#officeGreenCorner{margin-block:8px}#officeGreenCorner summary{cursor:pointer;min-height:44px;align-content:center}
+#officeGreenCorner label{display:block}#greenCornerPlan{margin-block:6px;max-width:100%;min-height:44px;font:inherit;color:#143b40;background:#fff4da;border:1px solid #e4c378;border-radius:6px;padding:6px}
+#officeGreenCorner :focus-visible{outline:2px solid #e4c378;outline-offset:3px}#greenCornerFeedback{margin:6px 0}

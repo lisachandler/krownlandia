@@ -10,14 +10,23 @@ assert.match(html,/<a href="\/reports\/first-visit.html" target="_blank" rel="no
 assert(paths.includes("/reports/village-craft-guide.html"));
 assert(paths.includes("/reports/arts-sampler.html"));
 const arts=fs.readFileSync('dist/reports/arts-sampler.html','utf8');
-for (const anchor of ['composition','storyboard']) {
+for (const anchor of ['composition','storyboard','sketchpad']) {
  assert(arts.includes('href="#'+anchor+'"'));
  assert(arts.includes('id="'+anchor+'"'));
 }
 assert.match(arts,/Express Yourself School of Arts, credited to @elizabeths14/);
 assert.match(arts,/KROWN Cinema, credited to @laloreto/);
-assert.doesNotMatch(arts,/<script\b|<iframe\b|https?:\/\//i);
+assert.match(arts,/@michaelnottoli in the historical inventory \(page 13\)/);
+assert.match(arts,/<details id="artsSketchpad" hidden>/);
+assert.deepEqual([...arts.matchAll(/<script[^>]*src="([^"]+)"/g)].map(m=>m[1]),['arts-sketchpad.js']);
+assert.doesNotMatch(arts,/<iframe\b|https?:\/\//i);
 assert.match(fs.readFileSync('dist/reports/first-visit.html','utf8'),/href="arts-sampler.html"/);
+assert.match(arts,/href="art-gallery.html"/);
+const gallery=fs.readFileSync('dist/reports/art-gallery.html','utf8');
+assert.match(gallery,/Krownlandia Art Galleries to @AlexHM/);
+assert.equal([...gallery.matchAll(/<figure>[\s\S]*?<figcaption>[^<]+<\/figcaption>[\s\S]*?<\/figure>/g)].length,3);
+assert.equal([...gallery.matchAll(/<svg[^>]*aria-hidden="true" focusable="false"/g)].length,3);
+assert.doesNotMatch(gallery,/<script\b|<iframe\b|https?:\/\//i);
 assert.deepEqual(links(noScript),paths);
 assert.match(html,/<script type="module" src="gateway-start.js"><\/script>/);
 for(const path of paths)assert(fs.statSync('dist'+path).size>0);
