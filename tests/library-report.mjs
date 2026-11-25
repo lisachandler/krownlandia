@@ -7,4 +7,4 @@ assert.equal(report.open,false);assert.equal(link.href,'reports/krownlandia-buil
 report.open=true;assert.equal(JSON.stringify(a.getState().rewards),before);$('#libraryClose').onclick();assert(a.library.open());assert.equal(report.open,false);
 console.log('PASS: optional dated report uses a same-site PDF link, announces its new tab, resets collapsed and adds no reward action.');
 
-for(const [id,file]of [['libraryOpenSource','open-source-resources.html'],['libraryRoadmap','yet-to-build.html']]){const link=$('#'+id);assert.equal(link.href,'reports/'+file);assert.equal(link.target,'_blank');assert.equal(link.rel,'noopener');assert(link.textContent.includes('new tab'));}
+for(const [id,file]of [['libraryOpenSource','open-source-resources.html'],['libraryRoadmap','yet-to-build.html'],['libraryReadingShelf','reading-shelf.html']]){const link=$('#'+id);assert.equal(link.href,'reports/'+file);assert.equal(link.target,'_blank');assert.equal(link.rel,'noopener');assert(link.textContent.includes('new tab'));}

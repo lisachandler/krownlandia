@@ -1,0 +1,26 @@
+import {frame} from './school-seating.mjs';
+import assert from 'node:assert/strict';
+
+const a=window.krownlandia, $=id=>document.querySelector('#'+id);
+const trail=a.scene.getObjectByName('Walking guidance trail');
+const direction=$('textDirections');
+const toolbar=$('menuGroup-explore');
+assert(toolbar.children.some(group=>group.children.includes(direction)));
+const {boardPoint,stagePoint}=a.townSquare;
+const at=p=>a.camera.position.set(p.x,1.75,p.z);
+at(boardPoint);frame();assert(a.townSquare.open());
+$('squareStage').onclick();frame();
+assert(trail.visible);
+assert.match($('guide').textContent,/follow the gold trail/);
+const points=a.getState().rewards.points;
+direction.onclick();frame();
+assert(!trail.visible);
+assert.match($('guide').textContent,/Town Square stage · \d+ m · (ahead|behind you|to your (left|right))/);
+assert.doesNotMatch($('guide').textContent,/gold trail/);
+at(stagePoint);frame(1601);
+assert.equal($('walkingGuideStatus').textContent,'Arrived at Town Square stage.');
+assert(!trail.visible);
+at(boardPoint);frame(1601);direction.onclick();frame();
+assert(trail.visible);
+assert.equal(a.getState().rewards.points,points);
+console.log('PASS: Explore toggle hides and restores markers, keeps next direction and arrival, and leaves points unchanged.');

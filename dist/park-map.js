@@ -86,7 +86,7 @@ export function installParkMap({pause,guideTo,rewards,guideToPoint=()=>{},destin
    const ride=snapshot.safari,seen=ride?.active?Math.min(6,Math.max(0,ride.stop+(ride.phase==='stop'?1:0))):st.done.includes('safari-complete')?6:0;
    $('#mapSummary').textContent=(ride?.active?'This safari: ':'Safari progress: ')+seen+' / 6 habitats reached';
    habitats.forEach(([name,animal,x,z],i)=>{const marker=mapMarker(i,'span',x,z);marker.className='map-marker'+(i<seen?' visited':'');const row=document.createElement('div');row.className='map-location habitat-row';const title=document.createElement('strong');title.textContent=(i+1)+'. '+name;const info=document.createElement('span');info.textContent=animal+' · '+(i<seen?'Reached':'Ahead on the route');row.append(title,info);list.append(row);});
-   if(!ride?.active){const go=document.createElement('button');go.id='mapSafariEntrance';go.textContent='Guide me to the safari entrance';go.onclick=()=>{guideTo('safari');dialog.close();};list.append(go);}update(snapshot);return;
+   if(!ride?.active){const go=document.createElement('button');go.id='mapSafariEntrance';go.textContent='Guide me to the safari entrance';go.onclick=()=>{guideTo('safari');dialog.close();};list.append(go);}drawVisitor();return;
   }
   const distance=p=>Math.hypot(p.x-snapshot.x,p.z-snapshot.z),distanceLabel=p=>'About '+Math.round(distance(p))+' m away';
   const stations=STATIONS.map((s,i)=>({s,i}));if(rewardsOnly)stations.sort((a,b)=>distance(a.s)-distance(b.s)||a.i-b.i);
@@ -110,7 +110,7 @@ export function installParkMap({pause,guideTo,rewards,guideToPoint=()=>{},destin
    play.append(title,hint);play.onclick=()=>bowling.open();list.append(play);
   }
   count.textContent=rewardsOnly?(resultCount?resultCount+' station'+(resultCount===1?'':'s')+' with arrival points or completed-task points to collect. Nearest first; distances are direct estimates, and walking routes may be longer.':query?'No rewards match this search. Clear search to see all stations.':'No rewards ready to collect. Complete more activities to unlock task points.'):query?(tabletop?(resultCount?resultCount+' walking destination'+(resultCount===1?'':'s')+' and ':'')+'1 activity to play in the map.':resultCount?resultCount+' matching destination'+(resultCount===1?'':'s'):'No destinations found. Try a place name, home, lounge or picnic, or clear the search.'):'Search destinations, find Craft activities or Scenic seats, or choose Rewards to collect.';
-  update(snapshot);
+  drawVisitor();
  }
  const bowling=installBowling(dialog);
  let drawnView=null;
@@ -124,7 +124,17 @@ export function installParkMap({pause,guideTo,rewards,guideToPoint=()=>{},destin
   marker.hidden=false;return marker;
  }
  function open(){bowling.close();orientation.open=false;pause();view=snapshot.safari?.active?'safari':'courtyard';render();dialog.showModal();}
- function update(state){snapshot=state;const visitor=$('#mapVisitor');visitor.hidden=view==='safari'?(state.x<38||state.x>128||state.z<-88||state.z>-3):(state.x<-63||state.x>55||state.z<-92||state.z>180);position(visitor,state.x,state.z);visitor.style.transform='translate(-50%,-50%) rotate('+(-state.yaw*180/Math.PI)+'deg)';updateOrientation();}
+ let lastArrow=null;
+ function drawVisitor(){
+  const {x,z,yaw}=snapshot,visitor=$('#mapVisitor');
+  if(!lastArrow||lastArrow.node!==visitor||lastArrow.view!==view||lastArrow.x!==x||lastArrow.z!==z||lastArrow.yaw!==yaw){
+   visitor.hidden=view==='safari'?(x<38||x>128||z<-88||z>-3):(x<-63||x>55||z<-92||z>180);
+   position(visitor,x,z);visitor.style.transform='translate(-50%,-50%) rotate('+(-yaw*180/Math.PI)+'deg)';
+   lastArrow={node:visitor,view,x,z,yaw};
+  }
+  updateOrientation();
+ }
+ function update(state){snapshot=state;if(dialog.open)drawVisitor();}
  button.onclick=open;$('#mapClose').onclick=()=>dialog.close();
  return {open,update,get isOpen(){return dialog.open},get selected(){return selected}};
 }

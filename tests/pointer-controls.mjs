@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const source=fs.readFileSync(new URL('../dist/world.js',import.meta.url),'utf8').split('\n');
-const handlers={},canvas={setPointerCapture(){}},pad={firstElementChild:{style:{}},getBoundingClientRect:()=>({left:0,top:0}),setPointerCapture(){},hasPointerCapture:()=>true};
+let padRect={left:0,top:0,width:100,height:100};const handlers={},canvas={setPointerCapture(){}},pad={firstElementChild:{style:{}},getBoundingClientRect:()=>padRect,setPointerCapture(){},hasPointerCapture:()=>true};
 const document={hidden:false,addEventListener:(k,f)=>handlers[k]=f};let saves=0;
 const code=[source.find(l=>l.startsWith('function keysReset()')),source.find(l=>l.startsWith('const canvas=')),source.find(l=>l.startsWith('const pad=')),source.find(l=>l.startsWith("addEventListener('pagehide'"))].join('\n');
-const api=new Function('renderer','$','document','addEventListener','saveVisit',`let playing=true,journey={active:false},tram={active:false},safari={active:false},drag=null,padPointer=null,yaw=0,pitch=0;const keys={w:true},joy={x:0,y:0},velocity={x:2,z:3};${code};return {reset:keysReset,keys,joy,velocity,state:()=>({drag,padPointer,yaw,pitch})};`)({domElement:canvas},()=>pad,document,(k,f)=>handlers[k]=f,()=>saves++);
+const api=new Function('renderer','$','document','addEventListener','saveVisit',`const rewards={stopFountain(){}};let playing=true,visibilityResumed=false,contextLost=false,journey={active:false},tram={active:false},safari={active:false},drag=null,padPointer=null,yaw=0,pitch=0;const keys={w:true},joy={x:0,y:0},velocity={x:2,z:3};${code};return {reset:keysReset,loseContext:()=>{contextLost=true;keysReset();},restoreContext:()=>{contextLost=false;},keys,joy,velocity,state:()=>({drag,padPointer,yaw,pitch})};`)({domElement:canvas},()=>pad,document,(k,f)=>handlers[k]=f,()=>saves++);
 const event=(pointerId,clientX=75,clientY=50)=>({pointerId,clientX,clientY});
 pad.onpointerdown(event(1));assert.equal(api.joy.x,25/35);assert(pad.firstElementChild.style.transform);
 pad.onpointerdown(event(2,10));pad.onpointermove(event(2,10));pad.onpointerup(event(2));assert.equal(api.joy.x,25/35,'unrelated touches cannot move or stop the joystick');
@@ -13,5 +13,20 @@ pad.onpointerdown(event(3));canvas.onpointerdown(event(4));canvas.onpointerdown(
 canvas.onpointermove(event(4,100));assert.equal(api.state().yaw,-.1);canvas.onlostpointercapture(event(4));assert.equal(api.state().drag,null);canvas.onpointermove(event(4,120));assert.equal(api.state().yaw,-.1);
 handlers.blur();assert.equal(api.keys.w,false);assert.deepEqual(api.velocity,{x:0,z:0});assert.deepEqual(api.joy,{x:0,y:0});assert.equal(pad.firstElementChild.style.transform,'');pad.onpointermove(event(3));assert.equal(api.joy.x,0,'old capture cannot restart a reset gesture');
 pad.onpointerdown(event(6));handlers.visibilitychange();assert.notEqual(api.joy.x,0,'visible event leaves gesture intact');document.hidden=true;handlers.visibilitychange();assert.equal(saves,1);assert.equal(api.joy.x,0);assert.equal(api.state().padPointer,null);
-pad.onpointerdown(event(7));pad.onpointercancel(event(7));assert.equal(api.joy.x,0);canvas.onpointerdown(event(8));canvas.onpointercancel(event(8));assert.equal(api.state().drag,null);
+document.hidden=false;pad.onpointerdown(event(7));pad.onpointercancel(event(7));assert.equal(api.joy.x,0);canvas.onpointerdown(event(8));canvas.onpointercancel(event(8));assert.equal(api.state().drag,null);
 console.log('PASS: pointer ownership, independent camera/joystick gestures, cancellation, lost capture, blur, hidden-page reset, indicator reset and fresh gesture recovery.');
+
+padRect={left:20,top:25,width:80,height:80};
+pad.onpointerdown(event(9,60,65));assert.equal(api.joy.x,0);assert.equal(api.joy.y,0);
+pad.onpointermove(event(9,74,65));assert.equal(api.joy.x,.5);
+padRect={left:20,top:25,width:0,height:0};
+pad.onpointermove(event(9,74,65));assert.equal(api.joy.x,0);assert.equal(pad.firstElementChild.style.transform,'');
+pad.onpointerup(event(9));
+const captureError=()=>{throw Error('pointer was released');};
+pad.setPointerCapture=canvas.setPointerCapture=captureError;
+pad.onpointerdown(event(10));canvas.onpointerdown(event(11));assert.equal(api.state().drag,null);assert.equal(api.state().padPointer,null);
+pad.setPointerCapture=canvas.setPointerCapture=()=>{};
+api.loseContext();pad.onpointerdown(event(12));canvas.onpointerdown(event(13));assert.equal(api.state().drag,null);assert.equal(api.state().padPointer,null);
+api.restoreContext();padRect={left:0,top:0,width:100,height:100};
+pad.onpointerdown(event(14));canvas.onpointerdown(event(15));assert.equal(api.state().padPointer,14);assert.equal(api.state().drag.id,15);
+console.log('PASS: measured touch center and range, hidden pad neutralization, rejected capture, graphics-loss guard and fresh recovery.');

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Krownlandia · Airtime Puzzle</title>
+<style>
+:root{background:#f5f0e4;color:#25362c;font:100%/1.6 system-ui,sans-serif}
+body{margin:0}main{max-width:42rem;margin:auto;padding:2rem 1.2rem 3rem}h1,h2{line-height:1.2}
+section{border-top:1px solid #a7a394;padding-top:.5rem;margin-top:1.4rem}summary{cursor:pointer;padding:.4rem 0}
+fieldset{margin:.6rem 0;border:1px solid #a7a394}label{display:block;margin:.4rem 0}select,button{font:inherit;min-height:2.75rem}a{color:#055576}a:focus-visible,summary:focus-visible,button:focus-visible,select:focus-visible{outline:3px solid #945312;outline-offset:3px}p[role=status]{min-height:1.65em}
+</style>
+</head>
+<body><main>
+<h1>Krownlandia Airtime Puzzle</h1>
+<p>Arrange three imaginary segments so the schedule fits every clue. Take your time. You can solve each puzzle aloud, on paper, or using the optional controls.</p>
+<p>The historical inventory names Krownlandia airtime puzzle shop, credited to @tytomiwa (page 11). These radio puzzles are new prototype interpretations. There is no live broadcast, shop, or reward.</p>
+<section aria-labelledby="morning"><h2 id="morning">Morning mix</h2>
+<p>Segments: Weather, Song, Interview.</p><ul><li>The interview is last.</li><li>The song follows the weather.</li></ul>
+<form data-puzzle="morning" hidden>
+<fieldset><legend>Set the running order</legend>
+<label>First <select data-slot required><option value="">Choose a segment</option><option value="weather">Weather</option><option value="song">Song</option><option value="interview">Interview</option></select></label>
+<label>Second <select data-slot required><option value="">Choose a segment</option><option value="weather">Weather</option><option value="song">Song</option><option value="interview">Interview</option></select></label>
+<label>Third <select data-slot required><option value="">Choose a segment</option><option value="weather">Weather</option><option value="song">Song</option><option value="interview">Interview</option></select></label>
+</fieldset>
+<button type="submit">Check the order</button> <button type="reset">Start again</button>
+<p role="status" aria-atomic="true"></p>
+</form>
+<details><summary>Read the solution</summary><p>Weather → Song → Interview. Once the interview is last, the weather must go first for the song to follow it.</p></details>
+</section>
+<section aria-labelledby="evening"><h2 id="evening">Evening mix</h2>
+<p>Segments: Story, News, Instrumental.</p><ul><li>The news is neither first nor last.</li><li>The instrumental is before the story.</li></ul>
+<form data-puzzle="evening" hidden>
+<fieldset><legend>Set the running order</legend>
+<label>First <select data-slot required><option value="">Choose a segment</option><option value="story">Story</option><option value="news">News</option><option value="instrumental">Instrumental</option></select></label>
+<label>Second <select data-slot required><option value="">Choose a segment</option><option value="story">Story</option><option value="news">News</option><option value="instrumental">Instrumental</option></select></label>
+<label>Third <select data-slot required><option value="">Choose a segment</option><option value="story">Story</option><option value="news">News</option><option value="instrumental">Instrumental</option></select></label>
+</fieldset>
+<button type="submit">Check the order</button> <button type="reset">Start again</button>
+<p role="status" aria-atomic="true"></p>
+</form>
+<details><summary>Read the solution</summary><p>Instrumental → News → Story. The news must be in the middle, so the instrumental goes first and the story last.</p></details>
+</section>
+<footer><p><a href="reading-shelf.html">Return to the Reading Shelf</a> · <a href="rhythm-sampler.html">Return to the Rhythm Sampler</a> · <a href="../">Krownlandia Gateway</a></p></footer>
+</main><script type="module" src="airtime-puzzle.js"></script></body></html>

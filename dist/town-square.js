@@ -63,9 +63,15 @@ export function installTownSquare({scene,camera,colliders,pause,rewards,getCurre
  const guide=p=>{if(!canRead()||!dialog.open)return;pause();rewards.guideToPoint(p);dialog.close();};button('squareStage','Walk to the stage',()=>guide(stagePoint));button('squareOffice','Visit Community Office Garden',()=>guide({x:14.7,z:-13.7,name:'Community Office Garden project board'}));button('squareHistory','Visit the history garden',()=>guide({x:-26,z:30,name:'Making of Krownlandia exhibit'}));button('squareTram','Walk to the village tram',()=>guide({x:2.2,z:36,name:'Park entrance tram stop'}));button('squareRewards','Find Town Square rewards',()=>{if(!canRead()||!dialog.open)return;pause();rewards.guideTo('square');dialog.close();});
  const stageBench=seats[0];const rest=button('squareRest','Walk to a stage-view bench',()=>{if(rest.disabled)return;guide({...stageBench.approach,name:stageBench.name});});
  for(const p of portals.places)button('square-'+p.id,'Walk to '+p.name,()=>guide(p));
- const close=document.createElement('button');close.id='townSquareClose';close.textContent='Return to the square';close.onclick=()=>{pause();dialog.close();};dialog.append(title,intro,story,status,actions,directions,close);document.body.append(dialog);const css=document.createElement('link');css.rel='stylesheet';css.href='town-square.css';document.head.append(css);
+ const bulletin=document.createElement('details');bulletin.id='squareBulletin';
+ const bulletinTitle=document.createElement('summary');bulletinTitle.textContent='Community Bulletin';
+ const bulletinLink=document.createElement('a');bulletinLink.id='squareBulletinLink';
+ bulletinLink.href='reports/community-bulletin.html';bulletinLink.target='_blank';bulletinLink.rel='noopener';
+ bulletinLink.textContent='Read park updates (opens in a new tab)';
+ bulletin.append(bulletinTitle,bulletinLink);
+ const close=document.createElement('button');close.id='townSquareClose';close.textContent='Return to the square';close.onclick=()=>{pause();dialog.close();};dialog.append(title,intro,story,status,actions,directions,bulletin,close);document.body.append(dialog);const css=document.createElement('link');css.rel='stylesheet';css.href='town-square.css';document.head.append(css);
  function updateStatus(){const s=rewards.state();status.textContent=s.claims.includes('square:task')?'Welcome reward collected. Enjoy the square.':s.done.includes('square-welcome')?'Welcome explored · 20 task points are ready at the Town Square rewards station.':'Read the community welcome to unlock 20 task points.';if(!s.saved)status.textContent+=' Progress is available for this visit; browser storage is unavailable.';}
- function open(){if(portals.near)return portals.open();if(!canRead()||dialog.open)return false;pause();directions.open=false;setStoryVisible(false);updateStatus();dialog.showModal();return true;}
+ function open(){if(portals.near)return portals.open();if(!canRead()||dialog.open)return false;pause();directions.open=false;bulletin.open=false;setStoryVisible(false);updateStatus();dialog.showModal();return true;}
  return {open,seats,boardPoint,stagePoint,portalPlaces:portals.places,update:calendar.update,get interactLabel(){return portals.near?.name||'Town Square community board'},get near(){return near()||!!portals.near},get isOpen(){return dialog.open||calendar.isOpen||portals.isOpen},get lightsOn(){return lit}};
 }
 
@@ -73,7 +79,7 @@ export function installTownSquare({scene,camera,colliders,pause,rewards,getCurre
 export function installCommunityPortals({scene,camera,colliders,pause,rewards}){
  const places=[
   {id:'living-sim',name:'Living Sim Portal',x:-20,z:46,kind:'Community portal',keywords:'maxigram living simulation external',detail:'Place manager: @maxigram · Opens an external site',url:'https://xeroemoji.grok.me/',action:'Visit Living Sim',description:'A doorway to the Living Sim. Choose the link below to visit its separate website in a new tab.',color:'#77cfc0'},
-  {id:'emoji-house',name:'Emoji House',x:-20,z:56,kind:'Community pavilion',keywords:'maxigram emoji sticker signal art pack',detail:'Place manager: @maxigram · Preferred sticker collection',url:'https://signal.art/addstickers/#pack_id=36a2965e47352588ba3a683119dec0d0&pack_key=4e1a9fe28a3e055d8a7035fecfb76c581ab1b967ae3beff262dafbf7bddc1a68',action:'View the Signal sticker pack',description:'Home of Krownlandia’s preferred emoji and sticker collection. View or add the pack through Signal. Individual artwork is not yet displayed in Krownlandia.',color:'#e7b4d9'}
+  {id:'emoji-house',name:'Emoji House',x:-20,z:56,kind:'Community pavilion',keywords:'maxigram emoji sticker signal art pack',detail:'Place manager: @maxigram · Preferred sticker collection',url:null,action:'View the Signal sticker pack',description:'Home of Krownlandia’s preferred emoji and sticker collection. View or add the pack through Signal. Individual artwork is not yet displayed in Krownlandia.',color:'#e7b4d9'}
  ];
  const root=new T.Group();root.name='Community portals · @maxigram';scene.add(root);
  for(const p of places){
@@ -87,12 +93,15 @@ export function installCommunityPortals({scene,camera,colliders,pause,rewards}){
  }
  const near=()=>places.find(p=>Math.hypot(camera.position.x-p.x,camera.position.z-p.z)<1.8);
  const dialog=document.createElement('dialog');dialog.id='communityPortal';dialog.setAttribute('aria-labelledby','communityPortalTitle');
- const title=document.createElement('h2');title.id='communityPortalTitle';const manager=document.createElement('p');manager.textContent='Place manager: @maxigram';const description=document.createElement('p');const link=document.createElement('a');link.id='communityPortalLink';link.target='_blank';link.rel='noopener noreferrer';const notice=document.createElement('p');notice.textContent='Opens outside Krownlandia in a new tab. Progress and accounts are separate.';
+ const title=document.createElement('h2');title.id='communityPortalTitle';const manager=document.createElement('p');manager.textContent='Place manager: @maxigram';const description=document.createElement('p');const link=document.createElement('a');link.id='communityPortalLink';link.hidden=true;link.target='_blank';link.rel='noopener noreferrer';const notice=document.createElement('p');notice.id='communityPortalNotice';
  const nearby=document.createElement('details');nearby.id='communityPortalNearby';const nearbyTitle=document.createElement('summary');nearbyTitle.textContent='Explore nearby';const nearbyList=document.createElement('div');nearby.append(nearbyTitle,nearbyList);
  let selected=null,revision=0;
  function refreshNearby(p){const version=++revision;nearby.open=false;nearbyList.replaceChildren();const targets=[...places.filter(other=>other!==p),{id:'square',name:'Town Square community board',x:8,z:47}];for(const point of targets){const button=document.createElement('button');button.id='communityPortalWalk-'+point.id;button.textContent='Walk to '+point.name;button.onclick=()=>{if(button.disabled||version!==revision||!dialog.open||near()!==p||selected!==p)return;pause();rewards.guideToPoint({x:point.x,z:point.z,name:point.name});dialog.close();};nearbyList.append(button);}}
 
- link.onclick=e=>{if(!dialog.open||near()!==selected)e.preventDefault();};
+ link.onclick=e=>{if(!dialog.open||near()!==selected||!selected?.url)e.preventDefault();};
  const close=document.createElement('button');close.id='communityPortalClose';close.textContent='Back to Krownlandia';close.onclick=()=>{pause();dialog.close();};dialog.append(title,manager,description,link,notice,nearby,close);document.body.append(dialog);
- return {places,get near(){return near()},get isOpen(){return dialog.open},open(){const p=near();if(!p||dialog.open)return false;selected=p;refreshNearby(p);title.textContent=p.name;description.textContent=p.description;link.textContent=p.action+' ↗';link.href=p.url;pause();dialog.showModal();return true;}};
+ return {places,get near(){return near()},get isOpen(){return dialog.open},open(){const p=near();if(!p||dialog.open)return false;selected=p;refreshNearby(p);title.textContent=p.name;description.textContent=p.description;link.hidden=!p.url;
+  if(p.url){link.textContent=p.action+' ↗';link.href=p.url;notice.textContent='Opens '+(p.id==='emoji-house'?'Signal':'Living Sim')+' in a new tab. Progress and accounts are separate.';}
+  else{link.textContent='';link.removeAttribute('href');notice.textContent='This copy of the park does not include an external destination for '+p.name+'.';}
+  pause();dialog.showModal();return true;}};
 }

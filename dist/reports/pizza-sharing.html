@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Krownlandia · Share a Pizza</title>
+<style>
+:root{color-scheme:light;background:#f5f0e4;color:#25362c;font:100%/1.6 system-ui,sans-serif}
+body{margin:0}main{max-width:42rem;margin:auto;padding:2rem 1.2rem 3rem}h1,h2{line-height:1.2}
+section{border-top:1px solid #a7a394;margin-top:1.25rem;padding-top:.5rem}summary{cursor:pointer;padding:.4rem 0}
+.slice-buttons{display:grid;grid-template-columns:repeat(auto-fit,minmax(8.5rem,1fr));gap:.5rem;margin-block:.6rem}
+button{min-height:44px;padding:.35rem .6rem;background:#fffdf7;color:#25362c;border:1px solid #42564a;border-radius:.35rem;font:inherit}
+button[aria-pressed="true"]{background:#25362c;color:white;text-decoration:underline}a{color:#055576}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid #945312;outline-offset:3px}
+</style>
+</head>
+<body><main>
+<h1>Share a pizza</h1>
+<p>Inspired by Loreto’s Pizzeria, credited to @laloreto in the historical inventory (page 9). This sharing puzzle is new for the prototype. There is no pizzeria building, ordering, or purchase.</p>
+<section aria-labelledby="rules"><h2 id="rules">Split the slices</h2>
+<p>Choose four slices for one plate; the other four go on the second plate. Put two mushroom and two pepper slices on each plate. Split each of these opposite pairs between the plates:</p>
+<ul><li>1 (Mushroom) and 5 (Pepper)</li>
+<li>2 (Pepper) and 6 (Mushroom)</li>
+<li>3 (Mushroom) and 7 (Pepper)</li>
+<li>4 (Pepper) and 8 (Mushroom)</li></ul>
+<p>More than one arrangement works. Try it on paper, aloud, or with the optional controls.</p>
+<details id="pizzaPuzzle" hidden>
+<summary>Try the slice controls</summary>
+<p>Choose a slice again to return it to the second plate.</p>
+<div class="slice-buttons" role="group" aria-label="Slices for the first plate"><button type="button" data-slice="1" aria-pressed="false">1 · Mushroom</button>
+<button type="button" data-slice="2" aria-pressed="false">2 · Pepper</button>
+<button type="button" data-slice="3" aria-pressed="false">3 · Mushroom</button>
+<button type="button" data-slice="4" aria-pressed="false">4 · Pepper</button>
+<button type="button" data-slice="5" aria-pressed="false">5 · Pepper</button>
+<button type="button" data-slice="6" aria-pressed="false">6 · Mushroom</button>
+<button type="button" data-slice="7" aria-pressed="false">7 · Pepper</button>
+<button type="button" data-slice="8" aria-pressed="false">8 · Mushroom</button></div>
+<p id="pizzaStatus" role="status" aria-atomic="true"></p>
+<button type="button" id="pizzaCheck">Check the split</button>
+<button type="button" id="pizzaReset">Start again</button>
+</details>
+<details><summary>Read one solution</summary>
+<p>Put slices 1, 2, 3, and 4 on the first plate. That gives it two mushroom and two pepper slices, and leaves the opposite member of every pair for the second plate. Try swapping both slices 1 and 2 with their opposite slices; the plates still balance.</p>
+</details></section>
+<footer><p><a href="reading-shelf.html">Return to the Reading Shelf</a> · <a href="../">Krownlandia Gateway</a></p></footer>
+</main><script type="module" src="pizza-sharing.js"></script></body></html>

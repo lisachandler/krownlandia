@@ -41,9 +41,10 @@ import {installVideo} from './video.js';
 import {installRoasted} from './roasted.js';
 import {installNavigation} from './navigation.js';
 import {installGraphics} from './graphics.js';
-const $=s=>document.querySelector(s), scene=new T.Scene(), camera=new T.PerspectiveCamera(65,innerWidth/innerHeight,.1,350);
+let viewportWidth=Number.isFinite(innerWidth)&&innerWidth>0?innerWidth:1,viewportHeight=Number.isFinite(innerHeight)&&innerHeight>0?innerHeight:1;
+const $=s=>document.querySelector(s), scene=new T.Scene(), camera=new T.PerspectiveCamera(65,viewportWidth/viewportHeight,.1,350);
 const renderer=new T.WebGLRenderer({antialias:true});
-renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;$('#world').append(renderer.domElement);
+renderer.setSize(viewportWidth,viewportHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;$('#world').append(renderer.domElement);
 scene.background=new T.Color('#9fcfe5');scene.fog=new T.Fog('#9fcfe5',85,240);camera.position.set(0,1.75,30);camera.rotation.order='YXZ';
 const hemi=new T.HemisphereLight(0xcdeeff,0x748253,2.1);scene.add(hemi);
 const sun=new T.DirectionalLight(0xffe4b2,3.3);sun.position.set(-30,65,25);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-65,right:65,top:65,bottom:-80,far:200});sun.shadow.bias=-.0003;scene.add(sun);
@@ -259,7 +260,9 @@ const communityWalk=installCommunityWalk({pause:()=>keysReset(),rewards,getLoung
  {id:'photo-terrace',name:'Library of Alexandria reading terrace',point:library.seats.find(s=>s.name==='Alexandria reading terrace bench').approach,description:'Try a detail: pick one shape or texture on the terrace. Move or turn to leave some space around it.',credit:'Original Library idea · @Jauregui9821'},
  {id:'photo-bridge',name:'Krown Bridge west-bank lookout',point:bridge.boardPoint,description:'Try a layered view: choose something near you, something across the water, and a feature farther back.',credit:'Original bridge idea · @ed033'}
  ]}]});
-let directionsStopped=false;
+let directionsStopped=false,textOnlyDirections=false;
+const textDirections=document.createElement('button');textDirections.id='textDirections';textDirections.textContent='Text-only directions';textDirections.setAttribute('aria-pressed','false');
+textDirections.onclick=()=>{textOnlyDirections=!textOnlyDirections;textDirections.setAttribute('aria-pressed',String(textOnlyDirections));keysReset();};$('nav').append(textDirections);
 const stopDirections=document.createElement('button');stopDirections.id='stopDirections';stopDirections.textContent='Stop directions';stopDirections.onclick=()=>{keysReset();rewards.clearGuide();directionsStopped=true;announcePath('Walking directions stopped.');saveVisit();};$('nav').append(stopDirections);
 const findRest=document.createElement('button');findRest.id='findRest';findRest.textContent='Find a place to rest';findRest.title='Walking directions to nearby seating';
 const canFindRest=()=>playing&&!journey.active&&!safari.active&&!tram.active&&!seating.active&&!lounges.seated;
@@ -291,9 +294,17 @@ $('#reference').onclick=()=>{$('#art').showModal();keysReset();};$('#closeArt').
 function interact(){if(contextLost||!playing||seating.active||$('#talk').open||$('#art').open||rewards.isOpen||parkMap.isOpen||graphics.isOpen||lounges.isOpen||villages.isOpen||tram.isOpen||residents.isOpen||journal.isOpen||parkInterface.isOpen||backup.isOpen||help.isOpen||builders.isOpen||officeGarden.isOpen||townSquare.isOpen||library.isOpen||studio.isOpen||whisperingPines.isOpen||stonehearth.isOpen||eldergrove.isOpen||school.isOpen||bridge.isOpen||riverbend.isOpen||generalStore.isOpen||clubhouse.isOpen||produceGarden.isOpen||circus.isOpen||communityWalk.isOpen||foodGuide.isOpen||video.isOpen||journey.active||safari.active||tram.active)return;if(near==='studio'){studio.open();return;}if(near==='pines'){whisperingPines.open();return;}if(near==='stonehearth'){stonehearth.open();return;}if(near==='craft'){villages.openCraft();return;}if(near==='school'){school.open();return;}if(near==='bridge'){bridge.open();return;}if(near==='riverbend'){riverbend.open();return;}if(near==='generalstore'){generalStore.open();return;}if(near==='clubhouse'){clubhouse.open();return;}if(near==='produce'){produceGarden.open();return;}if(near==='eldergrove'){eldergrove.open();return;}if(near==='library'){library.open();return;}if(near==='square'){townSquare.open();return;}if(near==='office'){officeGarden.open();return;}if(near==='builders'){builders.open();return;}if(near==='resident'){residents.open();return;}if(near==='tram'){tram.open();return;}if(near==='mailbox'){villages.openMailbox();return;}if(near==='home'){villages.open();return;}if(near==='lounge'){lounges.open(lounges.near);return;}if(near==='popcorn'){popcorn.interact();return;}if(near==='circus'){circus.start();return;}if(near==='roasted-menu'||near==='roasted-return'){rewards.open(near);return;}if(near==='safari'){saveVisit();safari.board();return;}if(near==='coffee'){rewards.open('coffee');return;}if(near==='journey'){saveVisit();journey.board();return;}if(near?.startsWith('reward:')){rewards.open(near.slice(7));return;}if(near==='pip'){metPip=true;$('#talk').showModal();keysReset();}if(near==='pin'){collected=true;try{localStorage.setItem('krownPin','1');}catch{persisted=false;$('#quest p').textContent='Collected this visit; browser storage is unavailable.';}refreshPin();}}$('#interact').onclick=interact;
 function keysReset(){for(let k in keys)keys[k]=false;joy.x=joy.y=0;velocity.x=velocity.z=0;drag=null;padPointer=null;const knob=$('#joystick')?.firstElementChild;if(knob)knob.style.transform='';}addEventListener('blur',keysReset);
 addEventListener('keydown',e=>{if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey||e.target?.closest?.('input,textarea,select,dialog,[contenteditable="true"]')||([' ','Enter','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Home','End'].includes(e.key)&&e.target?.closest?.('button,a,summary,#journey,#safari')))return;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='e'&&!e.repeat)interact();});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-const canvas=renderer.domElement;canvas.onpointerdown=e=>{if(!playing||journey.active||drag)return;drag={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);};canvas.onpointermove=e=>{if(!drag||drag.id!==e.pointerId)return;if(tram.active){tram.look(e.clientX-drag.x,e.clientY-drag.y);drag={id:e.pointerId,x:e.clientX,y:e.clientY};return;}if(safari.active){safari.look(e.clientX-drag.x,e.clientY-drag.y);drag={id:e.pointerId,x:e.clientX,y:e.clientY};return;}yaw-=(e.clientX-drag.x)*.004;pitch=Math.max(-1.1,Math.min(1.1,pitch-(e.clientY-drag.y)*.004));drag={id:e.pointerId,x:e.clientX,y:e.clientY};};canvas.onpointerup=canvas.onpointercancel=canvas.onlostpointercapture=e=>{if(drag?.id===e.pointerId)drag=null;};
-const pad=$('#joystick');function padMove(e){const r=pad.getBoundingClientRect(),dx=e.clientX-r.left-50,dy=e.clientY-r.top-50,n=Math.max(35,Math.hypot(dx,dy));joy.x=dx/n;joy.y=dy/n;pad.firstElementChild.style.transform='translate('+joy.x*28+'px,'+joy.y*28+'px)';}pad.onpointerdown=e=>{if(padPointer!==null)return;padPointer=e.pointerId;pad.setPointerCapture(e.pointerId);padMove(e);};pad.onpointermove=e=>{if(padPointer===e.pointerId&&pad.hasPointerCapture(e.pointerId))padMove(e);};pad.onpointerup=pad.onpointercancel=pad.onlostpointercapture=e=>{if(padPointer!==e.pointerId)return;padPointer=null;joy.x=joy.y=0;pad.firstElementChild.style.transform='';};
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+const canvas=renderer.domElement;canvas.onpointerdown=e=>{if(!playing||document.hidden||contextLost||journey.active||drag)return;try{canvas.setPointerCapture(e.pointerId);}catch{return;}drag={id:e.pointerId,x:e.clientX,y:e.clientY};};canvas.onpointermove=e=>{if(!drag||drag.id!==e.pointerId)return;if(tram.active){tram.look(e.clientX-drag.x,e.clientY-drag.y);drag={id:e.pointerId,x:e.clientX,y:e.clientY};return;}if(safari.active){safari.look(e.clientX-drag.x,e.clientY-drag.y);drag={id:e.pointerId,x:e.clientX,y:e.clientY};return;}yaw-=(e.clientX-drag.x)*.004;pitch=Math.max(-1.1,Math.min(1.1,pitch-(e.clientY-drag.y)*.004));drag={id:e.pointerId,x:e.clientX,y:e.clientY};};canvas.onpointerup=canvas.onpointercancel=canvas.onlostpointercapture=e=>{if(drag?.id===e.pointerId)drag=null;};
+const pad=$('#joystick');function padMove(e){const r=pad.getBoundingClientRect();if(r.width<=0||r.height<=0){joy.x=joy.y=0;pad.firstElementChild.style.transform='';return;}const dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,diameter=Math.min(r.width,r.height),n=Math.max(diameter*.35,Math.hypot(dx,dy));joy.x=dx/n;joy.y=dy/n;pad.firstElementChild.style.transform='translate('+joy.x*diameter*.28+'px,'+joy.y*diameter*.28+'px)';}pad.onpointerdown=e=>{if(!playing||document.hidden||contextLost||journey.active||tram.active||safari.active||padPointer!==null)return;try{pad.setPointerCapture(e.pointerId);}catch{return;}padPointer=e.pointerId;padMove(e);};pad.onpointermove=e=>{if(padPointer===e.pointerId&&pad.hasPointerCapture(e.pointerId))padMove(e);};pad.onpointerup=pad.onpointercancel=pad.onlostpointercapture=e=>{if(padPointer!==e.pointerId)return;padPointer=null;joy.x=joy.y=0;pad.firstElementChild.style.transform='';};
+function resizeViewport(){
+ const width=innerWidth,height=innerHeight;
+ if(!Number.isFinite(width)||!Number.isFinite(height)||width<=0||height<=0)return;
+ if(width===viewportWidth&&height===viewportHeight)return;
+ const aspect=width/height;
+ if(aspect!==camera.aspect){camera.aspect=aspect;camera.updateProjectionMatrix();}
+ renderer.setSize(width,height);viewportWidth=width;viewportHeight=height;
+}
+addEventListener('resize',resizeViewport);
 let contextLost=false,contextResumed=false;
 renderer.domElement.addEventListener('webglcontextlost',event=>{event.preventDefault();if(contextLost)return;contextLost=true;rewards.stopFountain();keysReset();saveVisit();$('#interact').hidden=true;$('#error').hidden=false;});
 renderer.domElement.addEventListener('webglcontextrestored',()=>{if(!contextLost)return;contextLost=false;contextResumed=true;keysReset();$('#error').hidden=true;});
@@ -304,7 +315,7 @@ camera.rotation.set(pitch,yaw,0);journey.update(dt,modal||document.hidden);safar
 if(rewards.target)directionsStopped=false;
 const target=rewards.target||(directionsStopped?null:collected?{x:0,z:-75,name:'Palace approach'}:metPip?{x:18,z:-47,name:'Garden Krown'}:{x:-9,z:-9,name:'Pip'});
 const seated=seating.active||lounges.seated,riding=journey.active||safari.active||tram.active;
-const walking=playing&&!riding&&!seated,trailVisible=walking&&!document.body.classList.contains('clear-view');
+const walking=playing&&!riding&&!seated,trailVisible=walking&&!textOnlyDirections&&!document.body.classList.contains('clear-view');
 const route=navigation(ms,p,rewards.target,trailVisible,walking);
 stopDirections.disabled=!target;
 findRest.disabled=!canFindRest();
@@ -315,14 +326,14 @@ else if(target&&route?.unreachable){guidanceText='No walking route found to '+ta
 else if(target){const directDistance=Math.hypot(target.x-p.x,target.z-p.z),arrived=walking&&directDistance<2.2&&(route?route.distance<2.4:!rewards.target);
  if(arrived){navigation(ms,p,rewards.target,false);guidanceText='Arrived · '+target.name;announcement='Arrived at '+target.name+'.';}
  else{const direction=route?.next||target;let angle=Math.atan2(direction.x-p.x,-(direction.z-p.z))+yaw;angle=Math.atan2(Math.sin(angle),Math.cos(angle));
- guidanceText=target.name+' · '+Math.round(route?.distance??directDistance)+' m · '+(route?'follow the gold trail · ':'')+(Math.abs(angle)<.35?'ahead':Math.abs(angle)>2.5?'behind you':angle>0?'to your right':'to your left');announcement='Walking directions to '+target.name+'.';}
+ guidanceText=target.name+' · '+Math.round(route?.distance??directDistance)+' m · '+(route&&trailVisible?'follow the gold trail · ':'')+(Math.abs(angle)<.35?'ahead':Math.abs(angle)>2.5?'behind you':angle>0?'to your right':'to your left');announcement='Walking directions to '+target.name+'.';}
 }else guidanceText='Explore freely · choose a destination in the Park map.';
 if(guide.textContent!==guidanceText)guide.textContent=guidanceText;
 if(rewards.target)announcePath(announcement);
 else if(!directionsStopped)announcePath('');
 
 if(playing&&!modal&&!journey.active&&!safari.active&&!tram.active){if(keys.q)yaw+=dt*1.3;if(keys.r)yaw-=dt*1.3;}
-residents.update(ms);villages.update(nightBlend);atmosphere(ms,nightBlend);
+residents.update(ms);villages.update(nightBlend,ms);atmosphere(ms,nightBlend);
 scenery(ms);
 coffeeScene(ms,rewards.drink,nightBlend);
 roastedScene(rewards.roastedOrder);

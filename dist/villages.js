@@ -114,8 +114,43 @@ export function installVillages({scene,camera,colliders,pause,guideTo,getSouveni
  const palettes={original:null,rose:'#c86d91',ocean:'#397d9c',forest:'#47664b',sunshine:'#c89a3f'},decor={};
  try{const saved=JSON.parse(localStorage.getItem('krownlandia-home-decor-v1')||'{}');for(const h of homes){const p=saved?.[h.id];if(p&&Object.hasOwn(palettes,p.palette))decor[h.id]={palette:p.palette,souvenir:typeof p.souvenir==='string'?p.souvenir:null,porchLight:p.porchLight!==false};}}catch{storageOK=false;}
  function persist(){try{localStorage.setItem('krownlandia-home-decor-v1',JSON.stringify(decor));storageOK=true;}catch{storageOK=false;}}
- let lightingNight=false;
- function update(night=lightingNight){lightingNight=night;const collection=getSouvenirs();for(const h of homes){const d=decor[h.id]||{palette:'original'};const lit=d.porchLight!==false?Number(night):0;h.porchLight.intensity=8*lit;h.porchGlow.emissiveIntensity=1.8*lit;h.interiorLight.intensity=3+9*Number(night);h.interiorGlow.emissiveIntensity=.15+1.25*Number(night);const item=collection.find(s=>s.id===d.souvenir),key=d.palette+':'+(item?.id||'');if(h.display.key===key)continue;h.display.key=key;h.furniture.color.set(palettes[d.palette]||h.defaultColor);h.blooms.material.color.set(palettes[d.palette]||h.defaultBloomColor).lerp(new T.Color('#fff0d4'),.3);const ctx=h.display.canvas.getContext('2d');ctx.fillStyle=item?.color||'#203c35';ctx.fillRect(0,0,768,384);ctx.textAlign='center';ctx.fillStyle='#fff0c7';ctx.font='30px serif';ctx.fillText(item?'MY KROWNLANDIA COLLECTION':'MAKE YOURSELF AT HOME',384,108);ctx.font='bold 38px serif';ctx.fillText(item?.name||'Your souvenir display',384,212);ctx.font='24px sans-serif';ctx.fillText(item?'A memory from your park adventures':'Choose a collected souvenir in Villages & homes',384,296);h.display.texture.needsUpdate=true;}}
+ let lightingNight=0,lastDisplayCheck=-Infinity,hasFramedSouvenir=false,paintedLighting=null;
+ function update(night=lightingNight,now){
+  const explicit=now===undefined;
+  lightingNight=Number(night);
+  if(explicit||lightingNight!==paintedLighting){
+   paintedLighting=lightingNight;
+   for(const h of homes){
+    const lit=decor[h.id]?.porchLight!==false?lightingNight:0;
+    h.porchLight.intensity=8*lit;
+    h.porchGlow.emissiveIntensity=1.8*lit;
+    h.interiorLight.intensity=3+9*lightingNight;
+    h.interiorGlow.emissiveIntensity=.15+1.25*lightingNight;
+   }
+  }
+  // Decor actions paint immediately. Otherwise only framed selections need
+  // periodic checks, including a saved choice unlocked later in this visit.
+  if(explicit||lastDisplayCheck===-Infinity){
+   hasFramedSouvenir=homes.some(h=>Boolean(decor[h.id]?.souvenir));
+  }else if(!hasFramedSouvenir||now-lastDisplayCheck<1000)return;
+  if(!explicit)lastDisplayCheck=now;
+  const collection=hasFramedSouvenir?getSouvenirs():[];
+  for(const h of homes){
+   const d=decor[h.id]||{},palette=d.palette||'original';
+   const item=collection.find(s=>s.id===d.souvenir),key=palette+':'+(item?.id||'');
+   if(h.display.key===key)continue;
+   h.display.key=key;
+   h.furniture.color.set(palettes[palette]||h.defaultColor);
+   h.blooms.material.color.set(palettes[palette]||h.defaultBloomColor).lerp(new T.Color('#fff0d4'),.3);
+   const ctx=h.display.canvas.getContext('2d');
+   ctx.fillStyle=item?.color||'#203c35';ctx.fillRect(0,0,768,384);
+   ctx.textAlign='center';ctx.fillStyle='#fff0c7';
+   ctx.font='30px serif';ctx.fillText(item?'MY KROWNLANDIA COLLECTION':'MAKE YOURSELF AT HOME',384,108);
+   ctx.font='bold 38px serif';ctx.fillText(item?.name||'Your souvenir display',384,212);
+   ctx.font='24px sans-serif';ctx.fillText(item?'A memory from your park adventures':'Choose a collected souvenir in Villages & homes',384,296);
+   h.display.texture.needsUpdate=true;
+  }
+ }
  const $=s=>document.querySelector(s),dialog=document.createElement('dialog');dialog.id='villageMenu';dialog.setAttribute('aria-labelledby','villageTitle');const title=document.createElement('h2');title.id='villageTitle';title.textContent='Villages & homes';const body=document.createElement('div');body.id='villageBody';const close=document.createElement('button');close.id='villageClose';close.textContent='Close';close.onclick=()=>dialog.close();dialog.append(title,body,close);document.body.append(dialog);
  const css=document.createElement('link');css.rel='stylesheet';css.href='villages.css';document.head.append(css);const nav=document.createElement('button');nav.id='villagesButton';nav.textContent='Villages & homes';$('nav').append(nav);
  const homeShortcut=document.createElement('button');homeShortcut.id='takeMeHome';homeShortcut.textContent='Take me home';$('nav').append(homeShortcut);

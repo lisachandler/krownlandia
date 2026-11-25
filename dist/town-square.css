@@ -5,3 +5,5 @@
 #squareDirections{margin-top:12px}#squareDirections summary{cursor:pointer;min-height:44px;padding:10px 0}#squareDirections summary:focus-visible{outline:3px solid #ffe1a0;outline-offset:3px}
 
 #squareBulletin{margin-top:8px}#squareBulletin summary,#squareBulletinLink{display:block;min-height:44px;padding:10px 0}#squareBulletin summary{display:list-item;cursor:pointer}#squareBulletinLink{color:#b8f1e6;text-underline-offset:.2em}#squareBulletin :focus-visible{outline:3px solid #ffe1a0;outline-offset:3px}
+
+#communityPortalLink[hidden]{display:none}

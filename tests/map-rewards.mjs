@@ -112,3 +112,17 @@ $('#mapViewsafari').onclick();assert(orientation.hidden);assert.equal(orientatio
 $('#mapViewcourtyard').onclick();assert(!orientation.hidden);assert.equal(orientation.open,false);
 assert.equal(guided,null);assert.equal(walk,null);
 console.log('PASS: optional map text orientation follows heading and nearest landmark without starting directions; hides in Safari.');
+
+$('#mapClose').onclick();
+const arrow=$('#mapVisitor');let transforms=0,currentTransform=arrow.style.transform;
+Object.defineProperty(arrow.style,'transform',{get:()=>currentTransform,set:value=>{currentTransform=value;transforms++;}});
+map.update({x:4,z:22,yaw:-Math.PI/2});
+map.update({x:7,z:24,yaw:Math.PI/2});
+assert.equal(transforms,0,'closed map does not redraw the arrow');
+map.open();assert.equal(transforms,1);assert.match(arrow.style.transform,/rotate\(-90deg\)/);
+assert.equal(arrow.style.left,((7+63)/118)*100+'%');
+map.update({x:7,z:24,yaw:Math.PI/2});assert.equal(transforms,1,'unchanged heading and position do not repaint');
+$('#mapViewsafari').onclick();assert.equal(transforms,2);assert(arrow.hidden);
+$('#mapViewcourtyard').onclick();assert.equal(transforms,3);assert(!arrow.hidden);
+$('#mapClose').onclick();
+console.log('PASS: closed map retains the latest position without DOM writes; opening and switching map views refresh the arrow.');
