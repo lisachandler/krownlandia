@@ -68,6 +68,7 @@ let ms=0;const frame=()=>next(ms+=16);frame();
 const a=window.krownlandia;document.querySelector('#enter').onclick();const key='krownlandia-school-pattern-v1',button=i=>document.querySelector('#schoolLantern-'+i);
 a.camera.position.set(-57,1.75,137.5);frame();a.school.open();const q=id=>document.querySelector('#'+id),club=q('dragonMathClub'),answer=i=>q('dragonMathChoice'+i).onclick(),msg=q('dragonMathFeedback'),advance=q('dragonMathNext');
 const original=exportBackup(localStorage),data=JSON.parse(original).data;
+const paper=q('dragonMathPaper');assert(club.children.includes(paper));assert.equal(paper.href,'reports/dragon-sharing.html');assert.equal(paper.target,'_blank');assert.equal(paper.rel,'noopener');
 assert(!club.open);answer(1);assert.equal(msg.textContent,'');club.open=true;
 answer(0);assert.match(msg.textContent,/3 stones remain/);answer(2);assert.match(msg.textContent,/3 more stones/);
 for(const n of [4,3,6]){const i=[0,1,2].find(i=>Number(q('dragonMathChoice'+i).value)===n);answer(i);assert.match(msg.textContent,/equal share/);advance.onclick();assert.equal(document.activeElement,q('dragonMathChoice0'));}

@@ -69,7 +69,8 @@ export function installClubhouse({scene,camera,colliders,pause,rewards,getCurren
  short.onclick=()=>addStitch('Short');long.onclick=()=>addStitch('Long');
  unpick.onclick=()=>{if(sewingActive()&&stitched){stitched--;drawSewing('Last stitch removed.');}};
  clear.onclick=()=>{if(sewingActive()&&stitched){stitched=0;drawSewing();short.focus();}};
- sewing.append(sewingTitle,sewingRules,short,long,sewingStatus,unpick,clear,sewingCredit);
+ const paperSampler=document.createElement('a');paperSampler.id='sewingPaperGuide';paperSampler.href='reports/village-craft-guide.html#sewing-club';paperSampler.target='_blank';paperSampler.rel='noopener';paperSampler.textContent='Try the paper or spoken sampler (new tab)';
+ sewing.append(sewingTitle,sewingRules,short,long,sewingStatus,unpick,clear,sewingCredit,paperSampler);
  dialog.replaceChildren(title,intro,actions,story,status,reward,game,sewing,nearby,managed,close);
  let managedRevision=0;
  function refreshManaged(){const revision=++managedRevision;managed.open=false;managedList.replaceChildren();for(const point of getManagedPlaces()){const row=document.createElement('p'),label=document.createElement('span'),button=document.createElement('button');label.textContent=point.name+' · Place manager: '+point.manager;button.id='clubhouseManaged-'+point.id;button.textContent='Walk to '+point.name;button.onclick=()=>{if(button.disabled||revision!==managedRevision||!canRead()||!dialog.open)return;pause();rewards.guideToPoint({x:point.x,z:point.z,name:point.name});dialog.close();};row.append(label,button);managedList.append(row);}managed.hidden=managedList.children.length===0;}

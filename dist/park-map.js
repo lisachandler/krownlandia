@@ -49,20 +49,36 @@ export function installParkMap({pause,guideTo,rewards,guideToPoint=()=>{},destin
  const orientationTitle=document.createElement('summary');orientationTitle.textContent='Where am I on the map?';
  const orientationInfo=document.createElement('p');orientationInfo.id='mapOrientationInfo';
  const orientationCredit=document.createElement('small');orientationCredit.textContent='The historical inventory credits Map to @josecarrerag (page 15). This map and its directions are prototype interpretations.';
- orientation.append(orientationTitle,orientationInfo,orientationCredit);dialog.append(orientation);
- orientation.ontoggle=()=>{if(orientation.open)updateOrientation();};
+ const orientGo=document.createElement('button');orientGo.id='mapOrientationGo';orientGo.hidden=true;
+ orientGo.onclick=()=>{
+  if(!dialog.open||!orientation.open||view!=='courtyard')return;
+  const location=nearestLandmark();
+  if(!location)return;
+  selected=location.station.id;guideTo(selected);dialog.close();
+ };
+ orientation.append(orientationTitle,orientationInfo,orientGo,orientationCredit);dialog.append(orientation);
+ orientation.ontoggle=()=>{if(orientation.open)updateOrientation();else orientGo.hidden=true;};
  const headings=['north','northeast','east','southeast','south','southwest','west','northwest'];
+ function nearestLandmark(){
+  const {x,z,yaw}=snapshot;
+  if(![x,z,yaw].every(Number.isFinite)||x< -63||x>55||z< -92||z>180)return null;
+  let station=null,distance=Infinity;
+  for(const item of STATIONS){
+   const d=Math.hypot(item.x-x,item.z-z);
+   if(d<distance){station=item;distance=d;}
+  }
+  return station?{station,distance}:null;
+ }
  function updateOrientation(){
   if(!dialog.open||!orientation.open||view!=='courtyard')return;
-  const {x,z,yaw}=snapshot;
-  let note='Outside the park map. Switch to Safari route for its habitats.';
-  if([x,z,yaw].every(Number.isFinite)&&x>=-63&&x<=55&&z>=-92&&z<=180){
-   const direction=headings[(Math.round(-yaw*4/Math.PI)%8+8)%8];
-   let nearest=null,distance=Infinity;
-   for(const station of STATIONS){const d=Math.hypot(station.x-x,station.z-z);if(d<distance){nearest=station;distance=d;}}
-   note='Facing '+direction+' on the map. Nearest rewards landmark: '+nearest.name+' · about '+Math.round(distance)+' m in a straight line.';
-  }
+  const location=nearestLandmark();
+  const note=location?'Facing '+headings[(Math.round(-snapshot.yaw*4/Math.PI)%8+8)%8]+' on the map. Nearest rewards landmark: '+location.station.name+' · about '+Math.round(location.distance)+' m in a straight line.':'Outside the park map. Switch to Safari route for its habitats.';
   if(orientationInfo.textContent!==note)orientationInfo.textContent=note;
+  if(orientGo.hidden!==!location)orientGo.hidden=!location;
+  if(location){
+   const label='Walk to '+location.station.name;
+   if(orientGo.textContent!==label)orientGo.textContent=label;
+  }
  }
  const normalize=value=>value.toLowerCase().replace(/\bcrown\b/g,'krown').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/['’]/g,'');
  const position=(node,x,z)=>{node.style.left=((view==='safari'?(x-38)/90:(x+63)/118)*100)+'%';node.style.top=((view==='safari'?(z+88)/85:(z+92)/272)*100)+'%';};
@@ -123,7 +139,7 @@ export function installParkMap({pause,guideTo,rewards,guideToPoint=()=>{},destin
   }
   marker.hidden=false;return marker;
  }
- function open(){bowling.close();orientation.open=false;pause();view=snapshot.safari?.active?'safari':'courtyard';render();dialog.showModal();}
+ function open(){bowling.close();orientation.open=false;orientGo.hidden=true;pause();view=snapshot.safari?.active?'safari':'courtyard';render();dialog.showModal();}
  let lastArrow=null;
  function drawVisitor(){
   const {x,z,yaw}=snapshot,visitor=$('#mapVisitor');

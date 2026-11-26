@@ -9,3 +9,7 @@ body:has(#gatewayNoScript)>:is(header,nav,#welcome,#quest,#world,#crosshair,#joy
 
 #welcome .welcome-guide{display:flex;flex-wrap:wrap;gap:.45rem 1rem;margin:12px 0 0;font-size:.9rem}#welcome .welcome-guide a{color:#ffe2a1;text-underline-offset:.2em}#welcome .welcome-guide a:focus-visible{outline:3px solid #ffd470;outline-offset:3px}
 #walkingGuideStatus{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+
+body.gateway-pending>:is(#world,nav,#quest,#crosshair,#joystick,#place,#interact,#viewControls){display:none}body.gateway-pending #welcome{box-sizing:border-box;width:min(490px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;transform:translate(-50%,-50%)}#gatewayLoading:empty{margin:0}#world:focus{outline:none}
+
+#gatewayBackup{margin-top:.85rem}#gatewayBackup summary{cursor:pointer}#gatewayBackup a{color:#ffe2a1;text-underline-offset:.2em}#gatewayBackup :focus-visible{outline:3px solid #ffd470;outline-offset:3px}#gatewayBackupStatus:empty{margin:0}

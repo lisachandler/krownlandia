@@ -29,6 +29,10 @@ assert(club.open());assert(!panel.open);assert.equal(status.textContent,first);a
 console.log('PASS: Game Club legal and blocked moves, eight-move solution, undo, reset, range, reopen and unchanged rewards.');
 
 const sewing=$('#clubSewing'),stitchStatus=$('#sewingStatus'),short=$('#sewingShort'),long=$('#sewingLong');
+const paper=$('#sewingPaperGuide');
+assert(sewing.children.includes(paper));
+assert.equal(paper.href,'reports/village-craft-guide.html#sewing-club');
+assert.equal(paper.target,'_blank');assert.equal(paper.rel,'noopener');
 assert(!sewing.open);short.onclick();assert.match(stitchStatus.textContent,/Stitch 1 of 6/);
 sewing.open=true;long.onclick();assert.match(stitchStatus.textContent,/does not match.*Stitch 1/);
 a.camera.position.set(0,1.75,0);short.onclick();assert.match(stitchStatus.textContent,/Stitch 1/);

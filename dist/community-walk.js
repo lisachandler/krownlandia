@@ -16,7 +16,20 @@ export function installCommunityWalk({pause,rewards,stops,routes=[],getLounges=(
  let unfinishedOnly=false,readyOnly=false;const filter=button('Unfinished activities','communityWalkUnfinished',()=>{unfinishedOnly=!unfinishedOnly;readyOnly=false;render();});filter.setAttribute('aria-pressed','false');
  const readyFilter=button('Ready rewards','communityWalkReadyFilter',()=>{readyOnly=!readyOnly;unfinishedOnly=false;render();});readyFilter.setAttribute('aria-pressed','false');const filters=document.createElement('div');filters.id='communityWalkFilters';filters.setAttribute('role','group');filters.setAttribute('aria-label','Filter walk stops');filters.append(filter,readyFilter);
  const rest=document.createElement('details');rest.id='communityWalkRest';const restTitle=document.createElement('summary');restTitle.textContent='Rest along this walk';const restList=document.createElement('div');rest.append(restTitle,restList);
- function renderRest(){restList.replaceChildren();const matches=getLounges().filter(s=>stops.some(stop=>stop.id===s.id));rest.hidden=matches.length===0;for(const s of matches){const p=document.createElement('p');p.textContent=s.snack+' · '+s.souvenir;const walk=resultButton('Walk to '+s.name,'communityWalkLounge-'+s.id,()=>{if(!dialog.open||!stops.some(stop=>stop.id===s.id))return;pause();rewards.guideToPoint({x:s.x,z:s.z+1.3,name:s.name});dialog.close();});restList.append(walk,p);}}
+ function renderRest(){
+  restList.replaceChildren();
+  const lounges=getLounges().filter(s=>stops.some(stop=>stop.id===s.id));
+  const benches=selected.restPoints??[];
+  rest.hidden=lounges.length+benches.length===0;
+  for(const s of benches){
+   restList.append(resultButton('Walk to '+s.name,'communityWalkBench-'+s.id,()=>{if(rest.open)guide(s);}));
+  }
+  for(const s of lounges){
+   const p=document.createElement('p');p.textContent=s.snack+' · '+s.souvenir;
+   const walk=resultButton('Walk to '+s.name,'communityWalkLounge-'+s.id,()=>{if(!dialog.open||!stops.some(stop=>stop.id===s.id))return;pause();rewards.guideToPoint({x:s.x,z:s.z+1.3,name:s.name});dialog.close();});
+   restList.append(walk,p);
+  }
+ }
  const close=button('Back to the world','communityWalkClose',()=>{pause();dialog.close();});dialog.append(title,choices,intro,progress,next,rewardSummary,ready,rest,filters,body,close);document.body.append(dialog);
  const style=document.createElement('link');style.rel='stylesheet';style.href='community-walk.css';document.head.append(style);
  function render(){revision++;renderRest();const selfGuided=selected.selfGuided===true;

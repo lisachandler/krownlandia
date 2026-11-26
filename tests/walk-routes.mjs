@@ -64,3 +64,45 @@ $('#communityWalkRoute-community').onclick();$('#communityWalkClose').onclick();
 assert(a.camera.position.equals(beforeCraft));
 assert.equal(JSON.stringify(a.getState().rewards),craftProgress);
 console.log('PASS: Photo Walk offers three reachable, credited viewpoints with no automatic movement or reward tracking.');
+
+open();$('#communityWalkRoute-square-loop').onclick();
+assert.equal(a.communityWalk.route,'square-loop');
+assert($('#communityWalk').children.some(node=>node.textContent?.includes('@elizabeths14')));
+const loop=a.communityWalk.stops;
+assert.deepEqual(loop.map(stop=>stop.id),['pace-stage','pace-terrace','pace-board']);
+for(const id of ['Progress','Next','Rewards','Ready','Filters'])assert($('#communityWalk'+id).hidden,id);
+previous={x:2,z:28};
+for(const stop of [...loop,loop[0]]){
+ assert(!a.blocked(stop.point.x,stop.point.z));
+ assert(planner.route(previous,stop.point).length,'Loop leg to '+stop.name);
+ $('#communityWalkGo-'+stop.id).onclick();assert(!a.communityWalk.isOpen);
+ open();assert.equal(a.communityWalk.route,'square-loop');previous=stop.point;
+}
+$('#communityWalkClose').onclick();
+assert(a.camera.position.equals(beforeCraft));
+assert.equal(JSON.stringify(a.getState().rewards),craftProgress);
+open();
+const rest=$('#communityWalkRest');
+assert(!rest.open&&!rest.hidden);
+const benches=[
+ ['pace-stage',a.townSquare.seats[0]],
+ ['pace-terrace',a.library.seats.find(s=>s.name==='Alexandria reading terrace bench')],
+ ['pace-garden',a.townSquare.seats.find(s=>s.name==='Town Square garden bench')]
+];
+assert.equal(rest.children[1].children.length,3);
+let oldBench;
+for(const [i,[id,seat]] of benches.entries()){
+ assert(planner.route(loop[i].point,seat.approach).length,'bench detour from '+loop[i].name);
+ const button=$('#communityWalkBench-'+id);
+ assert.equal(button.textContent,'Walk to '+seat.name);
+ button.onclick();assert(a.communityWalk.isOpen,'collapsed rest controls stay inactive');
+ rest.open=true;button.onclick();assert(!a.communityWalk.isOpen);
+ open();assert(!rest.open);oldBench=button;
+}
+$('#communityWalkRoute-photo').onclick();assert(rest.hidden);
+oldBench.onclick();assert(a.communityWalk.isOpen,'stale bench cannot redirect another walk');
+$('#communityWalkClose').onclick();
+assert(!a.seating.active);
+assert(a.camera.position.equals(beforeCraft));
+assert.equal(JSON.stringify(a.getState().rewards),craftProgress);
+console.log('PASS: three accessible stops plus the return leg, credited loop, retained directions and unchanged progress and viewpoint.');
