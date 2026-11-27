@@ -227,5 +227,8 @@ export function createMeadowMarket(canUse,visitGarden,onChange=()=>{}){
  const reset=add('marketReset','Arrange another table',()=>{baskets=[];finished=false;render();pick[0].focus();});
  function render(){display.replaceChildren();for(let i=0;i<3;i++){const li=document.createElement('li');li.textContent=baskets[i]||'Empty basket';display.append(li);}status.textContent=finished?'Table ready: '+baskets.join(', ')+'. Enjoy your arrangement or visit the picnic garden.':baskets.length===3?'Three baskets chosen. Set the table or remove the last basket.':'Choose produce for basket '+(baskets.length+1)+' of 3. Repeated choices are welcome.';for(const b of pick)b.disabled=finished||baskets.length===3;undo.disabled=finished||!baskets.length;finish.disabled=finished||baskets.length!==3;visit.disabled=!finished;reset.disabled=!baskets.length;onChange([...baskets],finished);}
  panel.focusActivity=()=>{(finished?visit:baskets.length===3?finish:pick[0]).focus();};
- panel.append(summary,note,display,status,controls);render();return panel;
+ const paperRow=document.createElement('p'),paper=document.createElement('a');paper.id='marketPaper';
+ paper.href='/reports/village-craft-guide.html#meadowbrook-market';paper.target='_blank';paper.rel='noopener';
+ paper.textContent='Arrange a table on paper (new tab)';paperRow.append(paper);
+ panel.append(summary,note,display,status,controls,paperRow);render();return panel;
 }

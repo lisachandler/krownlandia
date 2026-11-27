@@ -16,12 +16,17 @@ assert.match(html,/<a href="\/reports\/first-visit.html" target="_blank" rel="no
 assert(paths.includes("/reports/village-craft-guide.html"));
 assert(paths.includes("/reports/arts-sampler.html"));
 const arts=fs.readFileSync('dist/reports/arts-sampler.html','utf8');
-for (const anchor of ['composition','storyboard','sketchpad']) {
+for (const anchor of ['composition','storyboard','sketchpad','framing']) {
  assert(arts.includes('href="#'+anchor+'"'));
  assert(arts.includes('id="'+anchor+'"'));
 }
 assert.match(arts,/Express Yourself School of Arts, credited to @elizabeths14/);
 assert.match(arts,/KROWN Cinema, credited to @laloreto/);
+const framing=arts.match(/<section aria-labelledby="framing">([\s\S]*?)<\/section>/)[1];
+assert.match(framing,/Krown Photo Studio, credited to @AlexHM in the historical inventory \(page 10\)/);
+assert.deepEqual([...framing.matchAll(/<li><b>([^:]+):/g)].map(x=>x[1]),['Wide','Detail','Layered']);
+assert.doesNotMatch(framing,/<script|<input|<canvas|<img/);
+
 assert.match(arts,/@michaelnottoli in the historical inventory \(page 13\)/);
 assert.match(arts,/<details id="artsSketchpad" hidden>/);
 assert.deepEqual([...arts.matchAll(/<script[^>]*src="([^"]+)"/g)].map(m=>m[1]),['arts-sketchpad.js']);
@@ -41,11 +46,17 @@ const shelf=fs.readFileSync('dist/reports/reading-shelf.html','utf8');
 assert.match(shelf,/@Jauregui9821/);
 assert.doesNotMatch(shelf,/<script\b|<iframe\b|https?:\/\//i);
 const shelfFiles=[...shelf.matchAll(/href="([\w-]+\.html)"/g)].map(m=>m[1]);
-assert.deepEqual(shelfFiles,['village-craft-guide.html','arts-sampler.html','rhythm-sampler.html','bench-for-the-story.html','art-gallery.html','make-believe-field-notes.html','pizza-sharing.html','airtime-puzzle.html','dragon-sharing.html','community-choice.html','first-visit.html','community-bulletin.html']);
+assert.deepEqual(shelfFiles,['village-craft-guide.html','arts-sampler.html','rhythm-sampler.html','house-museum-labels.html','bench-for-the-story.html','art-gallery.html','make-believe-field-notes.html','pizza-sharing.html','airtime-puzzle.html','bowling-practice.html','rainbow-patterns.html','dragon-sharing.html','community-choice.html','first-visit.html','community-bulletin.html']);
 for(const name of shelfFiles){
  const page=fs.readFileSync('dist/reports/'+name,'utf8');
  assert.match(page,/<a href="reading-shelf\.html">(?:Return to the )?Reading Shelf<\/a>/,name+' should link back to the shelf even when opened directly');
 }
+const museum=fs.readFileSync('dist/reports/house-museum-labels.html','utf8');
+assert.match(museum,/Blee Old House Museum is credited to @ajayblee in the historical inventory \(page 13\)/);
+assert.match(museum,/objects below are fictional/);
+assert.equal([...museum.matchAll(/<details><summary>Read one possible label/g)].length,3);
+assert.doesNotMatch(museum,/<script\b|<form\b|https?:\/\//i);
+assert.match(fs.readFileSync('dist/reports/yet-to-build.html','utf8'),/Blee Old House Museum @ajayblee<\/td><td>13<\/td><td>Inspired <a href="house-museum-labels.html"/);
 const crafts=fs.readFileSync('dist/reports/village-craft-guide.html','utf8');
 const sewing=crafts.match(/<section id="sewing-club">([\s\S]*?)<\/section>/)[1];
 const pattern=fs.readFileSync('dist/clubhouse.js','utf8').match(/const pattern=\[([^\]]+)\]/)[1].replaceAll("'",'').split(',').join(', ');
@@ -61,6 +72,17 @@ for(const [stones,dragons] of rounds){
  assert(math.includes('<p>'+(stones/dragons)+' stones each.'));
 }
 assert.match(math,/<details><summary>Check the bonus<\/summary><p>3 stones each, with 2 left over/);
+const rainbow=fs.readFileSync('dist/reports/rainbow-patterns.html','utf8');
+assert.match(rainbow,/@Katielyl in the historical inventory \(page 10\)/);
+assert.doesNotMatch(rainbow,/<script\b|<form\b|https?:\/\//i);
+const panels=[...rainbow.matchAll(/<div class="pattern" aria-hidden="true">([^\n]+)<\/div>\n<p>([^<]+)\. Name the next shape\.<\/p>\n<details><summary>[^<]+<\/summary><p>([A-Z][a-z]+)\./g)];
+assert.equal(panels.length,3);
+for(const [i,[,visual,spoken,answer]] of panels.entries()){
+ const shapes=[...visual.matchAll(/class="shape (circle|square|triangle)"/g)].map(m=>m[1]);
+ assert.deepEqual(shapes,spoken.toLowerCase().split(', '));
+ const period=[2,3,3][i];
+ assert.equal(answer.toLowerCase(),shapes[shapes.length%period]);
+}
 assert.deepEqual(links(noScript),paths);
 assert.match(html,/<script type="module" src="gateway-start.js"><\/script>/);
 for(const path of paths)assert(fs.statSync('dist'+path).size>0);

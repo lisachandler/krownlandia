@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {STATIONS} from '../dist/rewards-core.js';
 import {installParkMap} from '../dist/park-map.js';
 
@@ -56,6 +57,16 @@ console.log('PASS: retained query/filter and empty search, explicit clear/focus,
 map.open();$('#mapCraftActivities').onclick();assert.equal(search.value,'craft activity');assert.equal($('#mapCraftActivities').attributes['aria-pressed'],'true');assert.equal($('#mapCollectRewards').attributes['aria-pressed'],'false');assert.equal(rows().length,0);$('#mapScenicSeats').onclick();assert.equal($('#mapCraftActivities').attributes['aria-pressed'],'false');$('#mapCraftActivities').onclick();$('#mapSearchClear').onclick();assert.equal(search.value,'');assert.equal($('#mapCraftActivities').attributes['aria-pressed'],'false');assert.equal(document.activeElement,search);console.log('PASS craft shortcut query, pressed state, no-result state, switching shortcuts and clear focus.');
 
 const card=$('#mapBowling'),aim=$('#bowlingAim'),roll=$('#bowlingRoll'),restart=$('#bowlingRestart'),status=$('#bowlingStatus');
+const paperLink=$('#bowlingPaper');
+assert.equal(paperLink.parentElement,card,'paper link stays inside the optional card');
+assert.equal(paperLink.target,'_blank');assert.equal(paperLink.rel,'noopener');
+assert.equal(paperLink.href,'/reports/bowling-practice.html');
+const paper=readFileSync(new URL('../dist'+paperLink.href,import.meta.url),'utf8');
+const rowsOnPaper=[...paper.matchAll(/<th scope="row">(Left|Center|Right)<\/th><td>([\d, ]+)<\/td>/g)];
+assert.deepEqual(rowsOnPaper.map(([,name,pins])=>name+' · '+pins),aim.children.map(o=>o.textContent));
+assert.match(paper,/@mariromero22 in the historical inventory \(page 10\)/);
+assert.equal([...paper.matchAll(/<details><summary>/g)].length,3);
+assert.doesNotMatch(paper,/<script\b|<form\b/);
 const saved=JSON.stringify(state),priorGuidance=guided;
 card.open=true;roll.onclick();aim.value='Left';roll.onclick();
 assert.match(status.textContent,/Rolls: 2 of 2. Standing pins: 6, 9, 10\./);
@@ -63,6 +74,13 @@ assert.equal(document.activeElement,restart);assert(roll.disabled);
 const end=status.textContent;roll.onclick();assert.equal(status.textContent,end);
 restart.onclick();assert.equal(document.activeElement,aim);roll.onclick();roll.onclick();
 assert.match(status.textContent,/No more pins fell.*Standing pins: 4, 6, 7, 8, 9, 10/);
+assert.match(paper,/Pins 4, 6, 7, 8, 9, 10 are still standing/);
+for(const [first,second] of [['Left','Right'],['Right','Left'],['Center','Right'],['Center','Left']]){
+ restart.onclick();aim.value=first;roll.onclick();aim.value=second;roll.onclick();
+ assert(status.textContent.includes(first==='Center'?(second==='Right'?'Standing pins: 4, 7, 8.':'Standing pins: 6, 9, 10.'):'Standing pins: 1, 5.'));
+}
+assert.match(paper,/Left and Right leave only 1 and 5/);
+assert.match(paper,/Eight pins/);
 card.open=false;card.ontoggle();card.open=true;aim.value='Right';roll.onclick();
 assert.match(status.textContent,/Rolls: 1 of 2. Standing pins: 1, 2, 4, 5, 7, 8/);
 $('#mapClose').onclick();map.open();assert.equal(card.open,false);

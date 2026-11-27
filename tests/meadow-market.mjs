@@ -1,8 +1,21 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {createMeadowMarket} from '../dist/villages.js';
 let nodes,focus;globalThis.document={createElement(){return {children:[],set id(v){nodes.set(v,this)},setAttribute(){},append(...x){this.children.push(...x)},replaceChildren(...x){this.children=x},focus(){focus=this}}}};
 for(const pattern of [['apples','carrots','greens'],['apples','apples','apples'],['greens','carrots','greens']]){
  nodes=new Map();let active=true,visits=0;const p=createMeadowMarket(()=>active,()=>visits++),b=id=>nodes.get(id),click=id=>b(id).onclick();
+ const link=b('marketPaper');
+ assert(p.children.some(n=>n.children.includes(link)),'the guide link stays inside the market disclosure');
+ assert(!p.open);assert.equal(link.target,'_blank');assert.equal(link.rel,'noopener');
+ const [path,id]=link.href.split('#'),guide=readFileSync(new URL('../dist'+path,import.meta.url),'utf8');
+ assert(guide.includes('href="#'+id+'"'));
+ const section=guide.split('<section id="'+id+'">')[1].split('</section>')[0];
+ assert.match(section,/produce markets \(page 2\)/);
+ assert.match(section,/first, second, and third/);
+ for(const item of ['apples','carrots','greens']){
+  const name=b('market-'+item).textContent.replace(/^Add /,'');
+  assert(section.toLowerCase().includes('<b>'+name+'</b>'));
+ }
  click('market-apples');assert.equal(b('marketUndo').disabled,true);p.open=true;click('marketVisit');assert.equal(visits,0);
  for(const item of pattern)click('market-'+item);assert.equal(focus,b('marketFinish'));assert.equal(b('market-apples').disabled,true);click('market-apples');assert.equal(b('marketBaskets').children.length,3);
  click('marketUndo');assert.equal(b('marketFinish').disabled,true);click('market-'+pattern[2]);click('marketFinish');assert.equal(focus,b('marketVisit'));assert.match(b('marketStatus').textContent,/Table ready/);assert.equal(b('marketUndo').disabled,true);

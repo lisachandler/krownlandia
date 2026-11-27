@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Krownlandia · What comes next?</title>
+<style>
+:root{color-scheme:light;background:#f5f0e4;color:#25362c;font:100%/1.6 system-ui,sans-serif}
+body{margin:0}main{max-width:42rem;margin:auto;padding:2rem 1.2rem 3rem}h1,h2{line-height:1.2}
+section{border-top:1px solid #a7a394;margin-top:1rem;padding-top:.6rem}
+a{color:#055576;text-underline-offset:.2em}summary{font-weight:700;cursor:pointer}
+a:focus-visible,summary:focus-visible{outline:3px solid #945312;outline-offset:3px}
+.pattern{display:flex;gap:clamp(.3rem,2vw,.8rem);flex-wrap:wrap;align-items:center;margin-block:.75rem}
+.shape{display:block;width:1.9rem;height:1.9rem;flex:0 0 auto}
+.circle{background:#a03959;border-radius:50%}.square{background:#1f6861}.triangle{background:#805421;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.missing{box-sizing:border-box;border:2px dashed currentColor;text-align:center;font-weight:700}
+@media print{:root{background:white;color:black}main{padding:0}footer,.pattern{display:none}section{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<h1>What comes next?</h1>
+<p>Say the shape names, draw them on paper, or point to the pictures. Find the group that repeats, then predict what comes next. You can use the shape names alone; the colors are optional.</p>
+<p>Inspired by Rainbow Kindergarten, credited to @Katielyl in the historical inventory (page 10). The activities are new for the prototype. They have no timer and save no progress.</p>
+<section aria-labelledby="pair"><h2 id="pair">1. Switch back and forth</h2>
+<div class="pattern" aria-hidden="true"><span class="shape circle"></span><span class="shape square"></span><span class="shape circle"></span><span class="shape square"></span><span class="shape missing">?</span></div>
+<p>Circle, square, circle, square. Name the next shape.</p>
+<details><summary>Check pattern 1</summary><p>Circle. The repeating group is circle, square.</p></details>
+</section>
+<section aria-labelledby="double"><h2 id="double">2. Two of one shape</h2>
+<div class="pattern" aria-hidden="true"><span class="shape triangle"></span><span class="shape triangle"></span><span class="shape circle"></span><span class="shape triangle"></span><span class="shape triangle"></span><span class="shape missing">?</span></div>
+<p>Triangle, triangle, circle, triangle, triangle. Name the next shape.</p>
+<details><summary>Check pattern 2</summary><p>Circle. The repeating group is triangle, triangle, circle.</p></details>
+</section>
+<section aria-labelledby="trio"><h2 id="trio">3. Three different shapes</h2>
+<div class="pattern" aria-hidden="true"><span class="shape square"></span><span class="shape circle"></span><span class="shape triangle"></span><span class="shape square"></span><span class="shape circle"></span><span class="shape missing">?</span></div>
+<p>Square, circle, triangle, square, circle. Name the next shape.</p>
+<details><summary>Check pattern 3</summary><p>Triangle. The repeating group is square, circle, triangle.</p></details>
+</section>
+<section aria-labelledby="make"><h2 id="make">Make one to share aloud</h2>
+<p>Choose a group of two or three shapes. Repeat it twice, then say it one more time with the last shape missing. Ask someone to finish it, or come back later and solve your own pattern.</p>
+</section>
+<footer><p><a href="reading-shelf.html">Return to the Reading Shelf</a></p></footer>
+</main></body>
+</html>

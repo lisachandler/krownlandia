@@ -48,6 +48,11 @@ console.log('PASS: five connected Village Craft Trail stops with directions, ret
 
 open();$('#communityWalkRoute-photo').onclick();
 assert.equal(a.communityWalk.route,'photo');
+const framing=$('#communityWalkFraming'),framingLink=$('#communityWalkFramingLink');
+assert(!framing.hidden&&!framing.open);
+assert.equal(framingLink.href,'/reports/arts-sampler.html#framing');
+assert.equal(framingLink.target,'_blank');assert.equal(framingLink.rel,'noopener');
+framing.open=true;
 assert($('#communityWalk').children.some(node=>node.textContent?.includes('@AlexHM')));
 const photoStops=a.communityWalk.stops;
 assert.deepEqual(photoStops.map(stop=>stop.id),['photo-garden','photo-terrace','photo-bridge']);
@@ -58,9 +63,9 @@ for(const stop of photoStops){
  assert(!a.blocked(stop.point.x,stop.point.z));
  assert(planner.route(previous,stop.point).length,'Photo Walk reaches '+stop.name);
  $('#communityWalkGo-'+stop.id).onclick();assert(!a.communityWalk.isOpen);
- open();assert.equal(a.communityWalk.route,'photo');previous=stop.point;
+ open();assert.equal(a.communityWalk.route,'photo');assert(!framing.open);previous=stop.point;
 }
-$('#communityWalkRoute-community').onclick();$('#communityWalkClose').onclick();
+$('#communityWalkRoute-community').onclick();assert(framing.hidden);$('#communityWalkClose').onclick();
 assert(a.camera.position.equals(beforeCraft));
 assert.equal(JSON.stringify(a.getState().rewards),craftProgress);
 console.log('PASS: Photo Walk offers three reachable, credited viewpoints with no automatic movement or reward tracking.');
@@ -89,7 +94,14 @@ const benches=[
  ['pace-terrace',a.library.seats.find(s=>s.name==='Alexandria reading terrace bench')],
  ['pace-garden',a.townSquare.seats.find(s=>s.name==='Town Square garden bench')]
 ];
-assert.equal(rest.children[1].children.length,3);
+assert.equal(rest.children[1].children.length,4);
+assert.match(rest.children[1].children[3].textContent,/Hydration Station.*@cocovinny \(page 11\)/);
+const sign=a.scene.getObjectByName('Hydration Station sign'),garden=benches[2][1];
+assert(sign);assert.equal(sign.position.z,garden.z);
+assert(sign.position.x>garden.x&&sign.position.x<garden.x+.45);
+assert(sign.geometry.parameters.width<3&&sign.geometry.parameters.height<.8);
+assert(!a.blocked(garden.approach.x,garden.approach.z));
+
 let oldBench;
 for(const [i,[id,seat]] of benches.entries()){
  assert(planner.route(loop[i].point,seat.approach).length,'bench detour from '+loop[i].name);

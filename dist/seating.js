@@ -1,4 +1,4 @@
-export function installSeating({camera,blocked,lounges,extraSeats=[],onSit,onStand,watchCircus,openStudio=()=>false,openWhisperingStory=()=>false,openEldergroveStory=()=>false,openRiverbendStory=()=>false,openBuildersStory=()=>false,openBridgeStory=()=>false,openOfficeBoard=()=>false,openSquareBoard=()=>false,openGardenNotes=()=>false,openClubhouseBoard=()=>false,openLibraryReading=()=>false,openSchoolLesson=()=>false,watchRiverFestival=()=>false,riverFestivalActive=()=>false,takePhoto=()=>false,onFace=()=>{},onLookUp=()=>{}}){
+export function installSeating({camera,blocked,lounges,extraSeats=[],keyboardAvailable=()=>true,onSit,onStand,watchCircus,openStudio=()=>false,openWhisperingStory=()=>false,openEldergroveStory=()=>false,openRiverbendStory=()=>false,openBuildersStory=()=>false,openBridgeStory=()=>false,openOfficeBoard=()=>false,openSquareBoard=()=>false,openGardenNotes=()=>false,openClubhouseBoard=()=>false,openLibraryReading=()=>false,openSchoolLesson=()=>false,watchRiverFestival=()=>false,riverFestivalActive=()=>false,takePhoto=()=>false,onFace=()=>{},onLookUp=()=>{}}){
  const seats=[];
  function add(name,x,z,y=1.4,yaw=Math.PI,dx=0,dz=1.5,kind='bench'){seats.push({name,x,z,y,yaw,approach:{x:x+dx,z:z+dz},kind});}
  for(const side of [-1,1])for(let z=22;z>-78;z-=15)if(z%2===0)add('Garden bench',side*12,z,1.5);
@@ -20,8 +20,8 @@ export function installSeating({camera,blocked,lounges,extraSeats=[],onSit,onSta
  const style=document.createElement('link');style.rel='stylesheet';style.href='seating.css';document.head.append(style);
  let current=null,nearest=null,exit=null,enabled=false;
  function clearLine(a,b){const n=Math.ceil(Math.hypot(a.x-b.x,a.z-b.z)/.2);for(let i=0;i<=n;i++){const t=n?i/n:0;if(blocked(a.x+(b.x-a.x)*t,a.z+(b.z-a.z)*t))return false;}return true;}
- function sit(){if(!enabled||current||!nearest)return false;const s=nearest;if(blocked(camera.position.x,camera.position.z)||!clearLine(camera.position,s.approach))return false;exit={x:camera.position.x,z:camera.position.z};onSit(s);current=s;viewOptions.open=false;button.hidden=true;dock.hidden=false;label.textContent=(s.kind==='bed'?'Resting · ':'Seated · ')+s.name;show.hidden=s.kind!=='circus';festival.hidden=s.kind!=='riverbend';schoolLesson.hidden=s.kind!=='school';return true;}
- function stand(){if(!current)return;const destination=exit&&!blocked(exit.x,exit.z)?exit:current.approach;current=null;viewOptions.open=false;dock.hidden=true;onStand(destination);}
+ function sit(){if(!enabled||current||!nearest)return false;const s=nearest;if(blocked(camera.position.x,camera.position.z)||!clearLine(camera.position,s.approach))return false;exit={x:camera.position.x,z:camera.position.z};onSit(s);current=s;viewOptions.open=false;button.hidden=true;dock.hidden=false;label.textContent=(s.kind==='bed'?'Resting · ':'Seated · ')+s.name;syncSeatActions();syncFestival();return true;}
+ function stand(){if(!current)return;const destination=exit&&!blocked(exit.x,exit.z)?exit:current.approach;current=null;viewOptions.open=false;dock.hidden=true;syncSeatActions();onStand(destination);}
  button.onclick=sit;leave.onclick=stand;
  const board=document.createElement('button');board.id='seatClubhouseBoard';board.textContent='Open Place Managers board';board.hidden=true;board.onclick=()=>{if(!enabled||current?.kind!=='clubhouse')return false;const opened=openClubhouseBoard();if(opened)viewOptions.open=false;return opened;};viewActions.append(board);
  const garden=document.createElement('button');garden.id='seatGardenNotes';garden.textContent='Open garden notes';garden.hidden=true;garden.onclick=()=>{if(!enabled||current?.kind!=='produce')return false;const opened=openGardenNotes();if(opened)viewOptions.open=false;return opened;};viewActions.append(garden);
@@ -33,7 +33,27 @@ export function installSeating({camera,blocked,lounges,extraSeats=[],onSit,onSta
  const elderStory=document.createElement('button');elderStory.id='seatEldergroveStory';elderStory.textContent='Read Eldergrove story';elderStory.hidden=true;elderStory.onclick=()=>{if(!enabled||current?.kind!=='eldergrove')return false;const opened=openEldergroveStory();if(opened)viewOptions.open=false;return opened;};viewActions.append(elderStory);
  const pinesStory=document.createElement('button');pinesStory.id='seatPinesStory';pinesStory.textContent='Open forest story prompts';pinesStory.hidden=true;pinesStory.onclick=()=>{if(!enabled||current?.kind!=='whispering-pines')return false;const opened=openWhisperingStory(viewTitle);if(opened)viewOptions.open=false;return opened;};viewActions.append(pinesStory);
  const studioArt=document.createElement('button');studioArt.id='seatStudioArt';studioArt.textContent='Arrange a composition';studioArt.hidden=true;studioArt.onclick=()=>{if(!enabled||current?.kind!=='composition-studio')return false;const opened=openStudio(viewTitle);if(opened)viewOptions.open=false;return opened;};viewActions.append(studioArt);
- const syncReading=()=>{studioArt.hidden=current?.kind!=='composition-studio';pinesStory.hidden=current?.kind!=='whispering-pines';elderStory.hidden=current?.kind!=='eldergrove';riverStory.hidden=current?.kind!=='riverbend';buildersStory.hidden=current?.kind!=='builders';bridgeStory.hidden=current?.kind!=='bridge';office.hidden=current?.kind!=='office';square.hidden=current?.kind!=='square';garden.hidden=current?.kind!=='produce';reading.hidden=current?.kind!=='library';board.hidden=current?.kind!=='clubhouse';};
- addEventListener('keydown',e=>{if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey||e.target?.closest?.('input,textarea,select,dialog,[contenteditable="true"]'))return;if(e.key.toLowerCase()==='f'&&!e.repeat&&enabled){if(current)stand();else sit();}});
- return {sit,stand,seats,get currentSeat(){return current},get active(){return !!current},get selected(){return nearest},update(available){enabled=available;syncReading();schoolLesson.hidden=current?.kind!=='school';festival.hidden=current?.kind!=='riverbend';festival.disabled=riverFestivalActive();festival.textContent=festival.disabled?'Lantern boats playing':'Start lantern boats';if(!available)viewOptions.open=false;nearest=null;let best=2; if(available&&!current)for(const s of seats){const d=Math.hypot(camera.position.x-s.approach.x,camera.position.z-s.approach.z);if(d<best&&clearLine(camera.position,s.approach)){best=d;nearest=s;}}button.hidden=!nearest||!!current;button.textContent=nearest?'F · '+(nearest.kind==='bed'?'Rest':'Sit')+' · '+nearest.name:'';dock.hidden=!current||!available;}};
+ const seatActions={circus:show,riverbend:festival,school:schoolLesson,library:reading,clubhouse:board,produce:garden,square,office,bridge:bridgeStory,builders:buildersStory,eldergrove:elderStory,'whispering-pines':pinesStory,'composition-studio':studioArt};
+ // Riverbend has two actions; both are available at the same seat.
+ const actionEntries=[...Object.entries(seatActions),['riverbend',riverStory]];
+ function hide(node,hidden){if(node.hidden!==hidden)node.hidden=hidden;}
+ function syncSeatActions(){for(const [kind,action] of actionEntries)hide(action,current?.kind!==kind);}
+ function syncFestival(){
+  if(current?.kind!=='riverbend')return;
+  const playing=riverFestivalActive();
+  if(festival.disabled!==playing)festival.disabled=playing;
+  const text=playing?'Lantern boats playing':'Start lantern boats';
+  if(festival.textContent!==text)festival.textContent=text;
+ }
+ syncSeatActions();
+ addEventListener('keydown',e=>{if(!keyboardAvailable()||e.defaultPrevented||e.isComposing||e.ctrlKey||e.metaKey||e.altKey||e.target?.closest?.('input,textarea,select,dialog,[contenteditable="true"],#error,#gatewayReading'))return;if(e.key.toLowerCase()==='f'&&!e.repeat&&enabled){if(current)stand();else sit();}});
+ return {sit,stand,seats,get currentSeat(){return current},get active(){return !!current},get selected(){return nearest},update(available){
+  enabled=available;syncFestival();
+  if(!available&&viewOptions.open)viewOptions.open=false;
+  nearest=null;let best=2;
+  if(available&&!current)for(const s of seats){const d=Math.hypot(camera.position.x-s.approach.x,camera.position.z-s.approach.z);if(d<best&&clearLine(camera.position,s.approach)){best=d;nearest=s;}}
+  hide(button,!nearest||!!current);
+  if(nearest){const text='F · '+(nearest.kind==='bed'?'Rest':'Sit')+' · '+nearest.name;if(button.textContent!==text)button.textContent=text;}
+  hide(dock,!current||!available);
+ }};
 }

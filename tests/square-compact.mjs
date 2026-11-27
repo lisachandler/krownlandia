@@ -10,10 +10,17 @@ console.log('PASS: three primary actions, eight grouped shortcuts, compact reope
 
 assert(square.open());
 const bulletin=$('#squareBulletin'),link=$('#squareBulletinLink');
+const matches=$('#townSquareMenu').children.filter(section=>section.children.some(node=>node.href==='reports/community-bulletin.html'));
+assert.deepEqual(matches,[bulletin],'the full world contains one bulletin disclosure');
+
 assert(!bulletin.open);
 assert(bulletin.children.includes(link));assert.equal(link.href,'reports/community-bulletin.html');
 assert.equal(link.target,'_blank');assert.equal(link.rel,'noopener');assert.match(link.textContent,/new tab/i);
 assert(!$('#eventCalendar').open);
 assert.equal(JSON.stringify(a.getState().rewards),before);
+bulletin.open=true;
+assert.equal(square.open(),false);assert(bulletin.open,'duplicate open keeps the current reading');
+$('#townSquareClose').onclick();
+assert(square.open());assert(!bulletin.open,'reopening collapses the bulletin');
 $('#townSquareClose').onclick();
 console.log('PASS: optional Town Square bulletin links to a separate same-site news page without opening the calendar or changing rewards.');

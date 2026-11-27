@@ -67,3 +67,26 @@ new Function('T','enrich','finishGardens','batchStatic','installRewards','instal
 let ms=0;const frame=()=>next(ms+=16);frame();
 const a=window.krownlandia;document.querySelector('#enter').onclick();const r=a.riverbend;assert.equal(r.start(),false);assert(document.querySelector('#riverFestival').hidden);a.camera.position.set(-41,1.75,133.5);frame();a.interact();const rewardBefore=JSON.stringify(a.getState().rewards);document.querySelector('#riverFestivalStart').onclick();assert(!r.isOpen);assert(r.state().active);const boats=[1,2,3].map(i=>a.scene.getObjectByName('Riverbend lantern boat '+i));assert(boats.every(Boolean));const original=boats[0].position.clone();for(let i=0;i<30;i++)r.update(.1,false,0);assert(!boats[0].position.equals(original));const time=r.state().elapsed;document.querySelector('#riverFestivalPause').onclick();r.update(.1,false,0);assert.equal(r.state().elapsed,time);document.querySelector('#riverFestivalPause').onclick();r.update(.1,true,0);assert.equal(r.state().elapsed,time);assert(document.querySelector('#riverFestival').hidden);r.update(.1,false,1);assert(!document.querySelector('#riverFestival').hidden);assert(boats[0].children[2].material.emissiveIntensity>1);const p=a.camera.position.clone();r.update(.1,false,1);assert(a.camera.position.equals(p));
 const seat=r.seats[0];a.camera.position.set(seat.approach.x,1.75,seat.approach.z);frame();assert(a.seating.sit());frame();assert(a.seating.active&&r.state().active);for(let i=0;i<400;i++){r.update(.1,false,1);for(const b of boats){assert(b.position.x>-51&&b.position.x<-47);assert(b.position.z>=137&&b.position.z<=169);assert(Math.abs(b.position.y+b.children[3].position.y-.205)<1e-8);}}assert(r.state().finished&&!r.state().active);assert(a.seating.active);assert.equal(JSON.stringify(a.getState().rewards),rewardBefore);document.querySelector('#riverFestivalStop').onclick();assert(document.querySelector('#riverFestival').hidden);a.seating.stand();a.camera.position.set(-41,1.75,133.5);assert(r.start());r.update(.1,false,0);document.querySelector('#riverFestivalStop').onclick();assert(!r.state().finished&&!r.state().active);assert.equal(r.state().elapsed,0);assert(r.start());a.camera.position.set(0,1.75,30);r.update(.1,false,0);assert(!r.state().active&&document.querySelector('#riverFestival').hidden);assert.equal(JSON.stringify(a.getState().rewards),rewardBefore);console.log('PASS: guarded start, motion within river, fixed reflection height, manual/modal pause, night glow, seated watching, 36-second finish, dismissal, replay, early stop, departure cleanup and unchanged rewards');
+
+// Track real boat pose writes and status updates in the actual world module.
+const boat=boats[0],status=document.querySelector('#riverFestivalStatus');
+let poseWrites=0,statusWrites=0,currentStatus=status.textContent;
+const setPosition=boat.position.set.bind(boat.position);
+boat.position.set=(...args)=>{poseWrites++;return setPosition(...args)};
+Object.defineProperty(status,'textContent',{get(){return currentStatus},set(value){currentStatus=value;statusWrites++}});
+for(let i=0;i<20;i++)r.update(.016,false,0);
+assert.equal(poseWrites,0,'parked boats need no per-frame transforms');assert.equal(statusWrites,0);
+const dayGlow=boat.children[2].material.emissiveIntensity;
+r.update(.016,false,1);assert.equal(poseWrites,0,'a lighting change does not move a boat');assert(boat.children[2].material.emissiveIntensity>dayGlow);
+a.camera.position.set(-41,1.75,133.5);assert(r.start());
+const startedPose=poseWrites,startedStatus=statusWrites;
+for(let i=0;i<10;i++)r.update(.016,false,1);
+assert.equal(poseWrites,startedPose+10);assert.equal(statusWrites,startedStatus,'unchanged countdown text is not rewritten');
+document.querySelector('#riverFestivalPause').onclick();r.update(.016,false,1);assert.match(currentStatus,/^Paused/);
+const pausedPose=poseWrites,pausedStatus=statusWrites;
+for(let i=0;i<20;i++)r.update(.016,false,1);
+assert.equal(poseWrites,pausedPose);assert.equal(statusWrites,pausedStatus);
+document.querySelector('#riverFestivalPause').onclick();r.update(.016,false,1);assert.equal(poseWrites,pausedPose+1);assert.match(currentStatus,/^Lantern boats/);
+document.querySelector('#riverFestivalStop').onclick();
+assert.equal(JSON.stringify(a.getState().rewards),rewardBefore);
+console.log('PASS: idle and paused frames skip redundant transforms and status writes; lighting and motion still respond.');

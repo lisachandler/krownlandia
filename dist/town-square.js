@@ -40,12 +40,16 @@ export function installTownSquare({scene,camera,colliders,pause,rewards,getCurre
  for(const x of [-2.5,2.5])box(x,.19,50,.15,.08,20,navy);
  box(-8,.18,50,6,.25,5,wood);box(-11,1.9,50,.18,3.5,5,navy,true);box(-8,3.7,50,6.3,.18,5.4,navy);
  for(const z of [47.5,52.5]){box(-5.2,1.9,z,.14,3.7,.14,gold,true);box(-10.8,1.9,z,.14,3.7,.14,gold,true);}
- function sign(lines,x,y,z,w,h,rotation=0){const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=384;const c=canvas.getContext('2d');c.fillStyle='#254668';c.fillRect(0,0,1024,384);c.fillStyle='#fff0c7';c.textAlign='center';lines.forEach((line,i)=>{c.font=(i===0?'bold 48px':'32px')+' Georgia';c.fillText(line,512,95+i*100);});const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;const o=add(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map:texture,side:T.DoubleSide}),x,y,z);o.rotation.y=rotation;}
+ function sign(lines,x,y,z,w,h,rotation=0){const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=384;const c=canvas.getContext('2d');c.fillStyle='#254668';c.fillRect(0,0,1024,384);c.fillStyle='#fff0c7';c.textAlign='center';lines.forEach((line,i)=>{c.font=(i===0?'bold 48px':'32px')+' Georgia';c.fillText(line,512,95+i*100);});const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;const o=add(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map:texture,side:T.DoubleSide}),x,y,z);o.rotation.y=rotation;return o;}
  sign(['KROWNLANDIA TOWN SQUARE','A place to gather and imagine','Community idea: @lisachandler'],-10.87,2.5,50,4.7,1.75,Math.PI/2);
  box(-9.7,.7,50,.5,1.2,.8,wood,true);box(-9.6,1.4,50,.65,.13,1,stone); // Stage lectern.
  const glow=new T.MeshStandardMaterial({color:'#ffe1a0',emissive:'#ffc575',emissiveIntensity:.15});for(let i=0;i<5;i++)add(new T.SphereGeometry(.12,10,7),glow,-5.05,3.5,48+i);const light=new T.PointLight('#ffe0a0',0,13,1.5);light.position.set(-7,3.3,50);root.add(light);let lit=false;
  const seats=[];function bench(name,x,z,side){box(x,.62,z,side?.9:3,.2,side?3:.9,wood,true);box(x+(side?.4:0),1.08,z+(side?0:.4),side?.12:3,.8,side?3:.12,navy);seats.push({name,x,z,y:1.45,yaw:side?Math.PI/2:0,approach:{x:x+(side?-1.25:0),z:z+(side?0:-1.25)},kind:'square'});}
  bench('Town Square stage bench',-3.8,46.5,true);bench('Town Square stage bench',-3.8,54,true);bench('Town Square garden bench',8,52,true);bench('Town Square arrival bench',5,59,false);
+ // Fasten the marker inside the garden bench backrest footprint.
+ const hydrationSign=sign(['HYDRATION STATION','A place to pause','Community idea: @cocovinny'],8.333,1.08,52,2.3,.68,-Math.PI/2);
+ hydrationSign.name='Hydration Station sign';hydrationSign.castShadow=false;
+
  for(const [x,z] of [[-10,42],[10,42],[-10,59],[10,59]]){box(x,.35,z,1.1,.65,1.1,navy,true);add(new T.CylinderGeometry(.1,.14,2.5,10),wood,x,1.6,z);add(new T.SphereGeometry(.85,12,8),leaf,x,3,z);for(let i=0;i<5;i++)add(new T.SphereGeometry(.13,7,5),pink,x+Math.sin(i)*.38,.85,z+Math.cos(i)*.38);}
  box(8,1.5,45,.13,2.8,.13,gold,true);box(8,2.1,45,3.4,1.8,.16,navy,true);sign(['COMMUNITY BOARD','Welcome · Discover · Gather','Read the Town Square story'],8,2.1,45.12,3.2,1.4);
  const boardPoint={x:8,z:47,name:'Town Square community board'},stagePoint={x:-7.5,z:50,name:'Town Square stage'};

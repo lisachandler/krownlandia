@@ -187,13 +187,6 @@ const stonehearth=installStonehearth({scene,camera,colliders,pause:()=>keysReset
 const eldergrove=installEldergrove({scene,camera,colliders,getCurrentSeat:()=>seating.currentSeat,pause:()=>keysReset(),rewards});
 const library=installLibrary({scene,camera,colliders,pause:()=>keysReset(),rewards,getCurrentSeat:()=>seating.currentSeat,getNearbyPlaces:()=>{const lounge=lounges.spots.find(s=>s.id==='library'),stop=tram.stops.find(s=>s.id==='park');return [{id:'lounge',x:lounge.x,z:lounge.z+1.3,name:lounge.name},{id:'square',...townSquare.boardPoint},{id:'tram',x:stop.x+2.2,z:stop.z,name:stop.name+' tram stop'}];}});
 const townSquare=installTownSquare({scene,camera,colliders,pause:()=>keysReset(),rewards,getCurrentSeat:()=>seating.currentSeat});
-const squareMenu=$('#townSquareMenu'),squareClose=$('#townSquareClose');
-const squareBulletin=document.createElement('details');squareBulletin.id='squareBulletin';
-const squareBulletinTitle=document.createElement('summary');squareBulletinTitle.textContent='Community bulletin';
-const squareBulletinLink=document.createElement('a');squareBulletinLink.id='squareBulletinLink';squareBulletinLink.href='reports/community-bulletin.html';squareBulletinLink.target='_blank';squareBulletinLink.rel='noopener';squareBulletinLink.textContent='Read recent park news (new tab)';
-squareBulletin.append(squareBulletinTitle,squareBulletinLink);
-squareMenu.replaceChildren(...Array.from(squareMenu.children).filter(child=>child!==squareClose),squareBulletin,squareClose);
-squareMenu.addEventListener('close',()=>{squareBulletin.open=false;});
 const officeGarden=installOfficeGarden({scene,camera,colliders,pause:()=>keysReset(),rewards,getCurrentSeat:()=>seating.currentSeat});
 const builders=installBuilders({scene,camera,colliders,getCurrentSeat:()=>seating.currentSeat,pause:()=>keysReset(),rewards});
 const coffeeScene=installCoffeeScene({scene,camera,nameSign:coffeeNameSign,slogan:coffeeSlogan});
@@ -210,6 +203,29 @@ const rideStyle=document.createElement('link');rideStyle.rel='stylesheet';rideSt
 const atmosphere=enrich({scene,camera,stone,trim,grass,leaf,lamps,renderer});
 const batching=batchStatic(scene,new Set([stone,trim,gold,navy,blue,grass,leaf,wood,white,pink,yellow,purple,coffeePink,coffeeBlack,coffeeBlush,coffeeBrown]));
 drops.frustumCulled=false;
+// Drop directions and choreography shapes are constant across frames.
+const sprayShapes=Array.from({length:drops.count},(_,i)=>{
+ const angle=i*2.399,x=Math.cos(angle),z=Math.sin(angle);
+ return {offset:i/drops.count,x,z,pair:.55+2.25*x**4,crown:.6+2.6*Math.cos(2*angle)**6};
+});
+function updateFountainSpray(ms,showTime){
+ const show=showTime>=0,phase=Math.floor(showTime/4000);
+ const u=Math.min(1,(showTime%4000)/600),v=showTime>11400?(showTime-11400)/600:0;
+ const clock=ms*.0005;
+ for(let i=0;i<sprayShapes.length;i++){
+  const {offset,x,z,pair,crown}=sprayShapes[i],t=(clock+offset)%1,arc=Math.sin(t*Math.PI),radius=1+t*4.2;
+  let height=2.3;
+  if(show){
+   const target=phase===0?.65:phase===1?pair:crown,previous=phase===0?2.3:phase===1?.65:pair;
+   height=previous+(target-previous)*u*u*(3-2*u);
+   if(v>0)height+=(2.3-height)*v*v*(3-2*v);
+  }
+  dummy.position.set(x*radius,3.8+arc*height-t*3.1,z*radius-35);
+  dummy.scale.setScalar(.65+arc*.7);dummy.updateMatrix();drops.setMatrixAt(i,dummy.matrix);
+ }
+ drops.instanceMatrix.needsUpdate=true;
+}
+
 const guide=document.createElement('p');guide.id='guide';guide.setAttribute('aria-live','off');$('#quest').append(guide);
 const guideStatus=document.createElement('p');guideStatus.id='walkingGuideStatus';guideStatus.setAttribute('role','status');guideStatus.setAttribute('aria-atomic','true');document.body.append(guideStatus);
 function announcePath(message){if(guideStatus.textContent!==message)guideStatus.textContent=message;}
@@ -226,7 +242,7 @@ atmosphere.clearPlanting({x:-30,z:151,w:20,d:23});atmosphere.clearPlanting({x:-1
 atmosphere.clearPlanting({x:38,z:-13,w:12,d:16});const storePatio=lounges.spots.find(s=>s.id==='generalstore');if(storePatio)atmosphere.clearPlanting({...storePatio,w:5.5,d:5.5});
 atmosphere.clearPlanting({x:-46,z:153,w:14,d:46});atmosphere.clearPlanting({x:-33,z:130,w:25,d:4});atmosphere.clearPlanting({x:-36,z:165,w:17,d:4});
 atmosphere.clearPlanting({x:-16,z:170,w:41,d:16});atmosphere.clearPlanting({x:14,z:170,w:12,d:13});
-const seating=installSeating({camera,blocked,lounges,takePhoto,onLookUp:lookUpFromSeat,onFace:s=>{keysReset();yaw=s.yaw;pitch=0;camera.rotation.set(pitch,yaw,0);},extraSeats:[...studio.seats,...whisperingPines.seats,...fireflyBenches.seats,...villages.seats,...builders.seats,...officeGarden.seats,...townSquare.seats,...library.seats,...eldergrove.seats,...produceGarden.seats,...clubhouse.seats,...riverbend.seats,...bridge.seats,...school.seats],onSit:s=>{saveVisit();keysReset();camera.position.set(s.x,s.y,s.z);yaw=s.yaw;pitch=0;},onStand:p=>{keysReset();camera.position.set(p.x,1.75,p.z);},openStudio:launcher=>studio.open(launcher),openWhisperingStory:launcher=>whisperingPines.open(launcher),openEldergroveStory:()=>eldergrove.open(),openRiverbendStory:()=>riverbend.open(),openBuildersStory:()=>builders.open(),openBridgeStory:()=>bridge.open(),openOfficeBoard:()=>officeGarden.open(),openSquareBoard:()=>townSquare.open(),openGardenNotes:()=>produceGarden.open(),openClubhouseBoard:()=>clubhouse.open(),openLibraryReading:()=>library.open(),openSchoolLesson:()=>school.open(),watchCircus:()=>circus.start(),watchRiverFestival:()=>riverbend.start(),riverFestivalActive:()=>riverbend.state().active});
+const seating=installSeating({camera,blocked,lounges,takePhoto,keyboardAvailable:worldInputAvailable,onLookUp:lookUpFromSeat,onFace:s=>{keysReset();yaw=s.yaw;pitch=0;camera.rotation.set(pitch,yaw,0);},extraSeats:[...studio.seats,...whisperingPines.seats,...fireflyBenches.seats,...villages.seats,...builders.seats,...officeGarden.seats,...townSquare.seats,...library.seats,...eldergrove.seats,...produceGarden.seats,...clubhouse.seats,...riverbend.seats,...bridge.seats,...school.seats],onSit:s=>{saveVisit();keysReset();camera.position.set(s.x,s.y,s.z);yaw=s.yaw;pitch=0;},onStand:p=>{keysReset();camera.position.set(p.x,1.75,p.z);},openStudio:launcher=>studio.open(launcher),openWhisperingStory:launcher=>whisperingPines.open(launcher),openEldergroveStory:()=>eldergrove.open(),openRiverbendStory:()=>riverbend.open(),openBuildersStory:()=>builders.open(),openBridgeStory:()=>bridge.open(),openOfficeBoard:()=>officeGarden.open(),openSquareBoard:()=>townSquare.open(),openGardenNotes:()=>produceGarden.open(),openClubhouseBoard:()=>clubhouse.open(),openLibraryReading:()=>library.open(),openSchoolLesson:()=>school.open(),watchCircus:()=>circus.start(),watchRiverFestival:()=>riverbend.start(),riverFestivalActive:()=>riverbend.state().active});
 const tram=installTram({scene,camera,pause:()=>keysReset(),guideTo:rewards.guideToPoint,canBoard:()=>playing&&!journey.active&&!safari.active&&!seating.active&&!lounges.seated,beforeBoard:()=>{saveVisit();keysReset();},onExit:p=>{keysReset();camera.position.set(p.x,1.75,p.z);yaw=0;pitch=0;}});
 const journal=installJournal({pause:()=>keysReset(),rewards,lounges,residents,villages,builders,library,eldergrove,school,founder:()=>collected});
 const navigation=installNavigation({scene,blocked});
@@ -255,14 +271,14 @@ const communityWalk=installCommunityWalk({pause:()=>keysReset(),rewards,getLoung
  {id:'eldergrove-crafts',name:'Eldergrove woodcraft shelter',point:eldergrove.points.find(p=>p.id==='craft'),description:'Open the woodcraft discovery panel, then Woodcraft practice to design a plaque.',credit:'Inspired by Eldergrove’s recorded woodcraft tradition'},
  {id:'stonehearth-crafts',name:'Stonehearth pattern courtyard',point:stonehearth.point,description:'Open the courtyard panel and choose Arrange a stone pattern.',credit:'Inspired by Stonehearth’s recorded masonry tradition'},
  {id:'pines-crafts',name:'Whispering Pines inlay bench',point:whisperingPines.seats[0].approach,description:'Sit at the story bench. Under View options, select Open forest story prompts, then expand Pinewood inlay practice.',credit:'Inspired by the recorded Whispering Pines woodworking and resin crafts'}
- ]},{id:'photo',name:'Photo Walk',description:'Try three ways to frame a scene in any order. Inspired by Krown Photo Studio (@AlexHM, page 10). Use Activities → Take photo if you want a local PNG, or describe your view aloud. This prototype walk tracks no completion and adds no rewards.',selfGuided:true,stops:[
+ ]},{id:'photo',name:'Photo Walk',description:'Try three ways to frame a scene in any order. Inspired by Krown Photo Studio (@AlexHM, page 10). Use Activities → Take photo if you want a local PNG, or describe your view aloud. This prototype walk tracks no completion and adds no rewards.',selfGuided:true,framingGuide:'/reports/arts-sampler.html#framing',stops:[
  {id:'photo-garden',name:'Community Office Garden',point:officeGarden.boardPoint,description:'Try a wide view: put a path or garden edge in the foreground to lead the eye into the scene.',credit:'Original place idea · @lisachandler'},
  {id:'photo-terrace',name:'Library of Alexandria reading terrace',point:library.seats.find(s=>s.name==='Alexandria reading terrace bench').approach,description:'Try a detail: pick one shape or texture on the terrace. Move or turn to leave some space around it.',credit:'Original Library idea · @Jauregui9821'},
  {id:'photo-bridge',name:'Krown Bridge west-bank lookout',point:bridge.boardPoint,description:'Try a layered view: choose something near you, something across the water, and a feature farther back.',credit:'Original bridge idea · @ed033'}
  ]},{id:'square-loop',name:'Town Square at your pace',description:'Follow an untimed loop from the stage to the reading terrace and community board, then back to the stage. Inspired by Krownlandia Olympic Stadium (@elizabeths14, page 10). Choose each leg yourself, skip any stop or rest along the way. This prototype route records no time, lap or reward.',selfGuided:true,restPoints:[
  {id:'pace-stage',name:'Town Square stage bench',point:townSquare.seats[0].approach},
  {id:'pace-terrace',name:'Alexandria reading terrace bench',point:library.seats.find(s=>s.name==='Alexandria reading terrace bench').approach},
- {id:'pace-garden',name:'Town Square garden bench',point:townSquare.seats.find(s=>s.name==='Town Square garden bench').approach}
+ {id:'pace-garden',name:'Town Square garden bench',point:townSquare.seats.find(s=>s.name==='Town Square garden bench').approach,detail:'Look for the Hydration Station sign. It marks a spot to pause, inspired by the idea credited to @cocovinny (page 11).'}
  ],stops:[
  {id:'pace-stage',name:'Town Square stage',point:townSquare.stagePoint,description:'Start here, or choose this stop again to finish the loop. Take a moment to set a comfortable pace. The stage-view benches are nearby.',credit:'Original Town Square idea · @lisachandler'},
  {id:'pace-terrace',name:'Library of Alexandria reading terrace',point:library.seats.find(s=>s.name==='Alexandria reading terrace bench').approach,description:'Pause by the terrace bench if you like. Notice one detail along the path that would help you recognize the way back.',credit:'Original Library idea · @Jauregui9821'},
@@ -288,7 +304,7 @@ refreshResume();
 gateStart.onclick=()=>{if(pendingVisit){night=pendingVisit.night;applyLighting(true);}reset();$('#enter').onclick();};
 function saveVisit(){if(restoringProgress||!playing)return;const v=tram.active||safari.active||journey.active||lounges.seated||seating.active?visit.read():{x:camera.position.x,z:camera.position.z,yaw:Math.atan2(Math.sin(yaw),Math.cos(yaw)),pitch,night};if(v)visit.save({...v,night,destination:rewards.target||null,directionsStopped:rewards.target?false:directionsStopped});}
 let visibilityResumed=false;
-addEventListener('pagehide',saveVisit);document.addEventListener('visibilitychange',()=>{visibilityResumed=true;if(document.hidden){rewards.stopFountain();keysReset();saveVisit();}});
+addEventListener('pagehide',saveVisit);document.addEventListener('visibilitychange',()=>{visibilityResumed=true;if(document.hidden){rewards.stopFountain();keysReset();saveVisit();}else queueFrame();});
 function reset(){tram.cancel();seating.stand();lounges.stand();circus.stop();if(safari.active)safari.exit();if(journey.active)journey.exit();camera.position.set(0,1.75,30);yaw=0;pitch=0;velocity.x=velocity.z=0;pendingVisit=null;resumeInfo.hidden=gateStart.hidden=true;rewards.clearGuide();directionsStopped=false;$('#enter').textContent='Enter the park';visit.save({x:0,z:30,yaw:0,pitch:0,night});}$('#home').onclick=reset;
 $('#enter').onclick=()=>{if(pendingVisit){camera.position.set(pendingVisit.x,1.75,pendingVisit.z);yaw=pendingVisit.yaw;pitch=pendingVisit.pitch;night=pendingVisit.night;if(pendingVisit.destination)rewards.guideToPoint(pendingVisit.destination);directionsStopped=pendingVisit.directionsStopped===true&&!pendingVisit.destination;applyLighting(true);pendingVisit=null;}playing=true;$('#welcome').hidden=true;saveVisit();};
 let nightBlend=0;
@@ -301,7 +317,9 @@ $('#night').onclick=()=>{night=!night;applyLighting();if(pendingVisit){pendingVi
 $('#reference').onclick=()=>{$('#art').showModal();keysReset();};$('#closeArt').onclick=()=>$('#art').close();$('#closeTalk').onclick=()=>$('#talk').close();$('#hint').onclick=()=>$('#speech').textContent='Pollinators help flowering plants reproduce. Our first pin is east of the Krown Fountain, on the near edge of the Discovery Garden pond.';
 function interact(){if(contextLost||!playing||seating.active||$('#talk').open||$('#art').open||rewards.isOpen||parkMap.isOpen||graphics.isOpen||lounges.isOpen||villages.isOpen||tram.isOpen||residents.isOpen||journal.isOpen||parkInterface.isOpen||backup.isOpen||help.isOpen||builders.isOpen||officeGarden.isOpen||townSquare.isOpen||library.isOpen||studio.isOpen||whisperingPines.isOpen||stonehearth.isOpen||eldergrove.isOpen||school.isOpen||bridge.isOpen||riverbend.isOpen||generalStore.isOpen||clubhouse.isOpen||produceGarden.isOpen||circus.isOpen||communityWalk.isOpen||foodGuide.isOpen||video.isOpen||journey.active||safari.active||tram.active)return;if(near==='studio'){studio.open();return;}if(near==='pines'){whisperingPines.open();return;}if(near==='stonehearth'){stonehearth.open();return;}if(near==='craft'){villages.openCraft();return;}if(near==='school'){school.open();return;}if(near==='bridge'){bridge.open();return;}if(near==='riverbend'){riverbend.open();return;}if(near==='generalstore'){generalStore.open();return;}if(near==='clubhouse'){clubhouse.open();return;}if(near==='produce'){produceGarden.open();return;}if(near==='eldergrove'){eldergrove.open();return;}if(near==='library'){library.open();return;}if(near==='square'){townSquare.open();return;}if(near==='office'){officeGarden.open();return;}if(near==='builders'){builders.open();return;}if(near==='resident'){residents.open();return;}if(near==='tram'){tram.open();return;}if(near==='mailbox'){villages.openMailbox();return;}if(near==='home'){villages.open();return;}if(near==='lounge'){lounges.open(lounges.near);return;}if(near==='popcorn'){popcorn.interact();return;}if(near==='circus'){circus.start();return;}if(near==='roasted-menu'||near==='roasted-return'){rewards.open(near);return;}if(near==='safari'){saveVisit();safari.board();return;}if(near==='coffee'){rewards.open('coffee');return;}if(near==='journey'){saveVisit();journey.board();return;}if(near?.startsWith('reward:')){rewards.open(near.slice(7));return;}if(near==='pip'){metPip=true;$('#talk').showModal();keysReset();}if(near==='pin'){collected=true;try{localStorage.setItem('krownPin','1');}catch{persisted=false;$('#quest p').textContent='Collected this visit; browser storage is unavailable.';}refreshPin();}}$('#interact').onclick=interact;
 function keysReset(){for(let k in keys)keys[k]=false;joy.x=joy.y=0;velocity.x=velocity.z=0;drag=null;padPointer=null;const knob=$('#joystick')?.firstElementChild;if(knob)knob.style.transform='';}addEventListener('blur',keysReset);
-addEventListener('keydown',e=>{if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey||e.target?.closest?.('input,textarea,select,dialog,[contenteditable="true"]')||([' ','Enter','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Home','End'].includes(e.key)&&e.target?.closest?.('button,a,summary,#journey,#safari')))return;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='e'&&!e.repeat)interact();});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+function worldInputAvailable(){return playing&&!document.hidden&&!contextLost;}
+const movementKeys=new Set(['w','a','s','d','q','r','arrowup','arrowdown','arrowleft','arrowright','shift']);
+addEventListener('keydown',e=>{if(!worldInputAvailable()||e.defaultPrevented||e.isComposing||e.ctrlKey||e.metaKey||e.altKey||e.target?.closest?.('input,textarea,select,dialog,[contenteditable="true"],#error,#gatewayReading'))return;const key=e.key.toLowerCase();if(key==='e'){if(!e.repeat)interact();return;}if(!movementKeys.has(key))return;if(key.startsWith('arrow')){if(e.target?.closest?.('button,a,summary,#journey,#safari'))return;e.preventDefault();}keys[key]=true;});addEventListener('keyup',e=>{const key=e.key.toLowerCase();if(movementKeys.has(key))keys[key]=false;});
 const canvas=renderer.domElement;canvas.onpointerdown=e=>{if(!playing||document.hidden||contextLost||journey.active||drag)return;try{canvas.setPointerCapture(e.pointerId);}catch{return;}drag={id:e.pointerId,x:e.clientX,y:e.clientY};};canvas.onpointermove=e=>{if(!drag||drag.id!==e.pointerId)return;if(tram.active){tram.look(e.clientX-drag.x,e.clientY-drag.y);drag={id:e.pointerId,x:e.clientX,y:e.clientY};return;}if(safari.active){safari.look(e.clientX-drag.x,e.clientY-drag.y);drag={id:e.pointerId,x:e.clientX,y:e.clientY};return;}yaw-=(e.clientX-drag.x)*.004;pitch=Math.max(-1.1,Math.min(1.1,pitch-(e.clientY-drag.y)*.004));drag={id:e.pointerId,x:e.clientX,y:e.clientY};};canvas.onpointerup=canvas.onpointercancel=canvas.onlostpointercapture=e=>{if(drag?.id===e.pointerId)drag=null;};
 const pad=$('#joystick');function padMove(e){const r=pad.getBoundingClientRect();if(r.width<=0||r.height<=0){joy.x=joy.y=0;pad.firstElementChild.style.transform='';return;}const dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,diameter=Math.min(r.width,r.height),n=Math.max(diameter*.35,Math.hypot(dx,dy));joy.x=dx/n;joy.y=dy/n;pad.firstElementChild.style.transform='translate('+joy.x*diameter*.28+'px,'+joy.y*diameter*.28+'px)';}pad.onpointerdown=e=>{if(!playing||document.hidden||contextLost||journey.active||tram.active||safari.active||padPointer!==null)return;try{pad.setPointerCapture(e.pointerId);}catch{return;}padPointer=e.pointerId;padMove(e);};pad.onpointermove=e=>{if(padPointer===e.pointerId&&pad.hasPointerCapture(e.pointerId))padMove(e);};pad.onpointerup=pad.onpointercancel=pad.onlostpointercapture=e=>{if(padPointer!==e.pointerId)return;padPointer=null;joy.x=joy.y=0;pad.firstElementChild.style.transform='';};
 function resizeViewport(){
@@ -315,7 +333,7 @@ function resizeViewport(){
 addEventListener('resize',resizeViewport);
 let contextLost=false,contextResumed=false,frameQueued=false;
 function queueFrame(){
- if(frameQueued||contextLost)return;
+ if(frameQueued||contextLost||document.hidden)return;
  frameQueued=true;requestAnimationFrame(frame);
 }
 renderer.domElement.addEventListener('webglcontextlost',event=>{event.preventDefault();if(contextLost)return;contextLost=true;rewards.stopFountain();keysReset();saveVisit();$('#interact').hidden=true;$('#error').hidden=false;});
@@ -354,11 +372,6 @@ parkMap.update({x:p.x,z:p.z,yaw:camera.rotation.y,safari:safari.state()});
 pipGroup.rotation.y=Math.atan2(p.x+9,p.z+9);pin.rotation.y=ms*.001;pin.position.y=1.3+Math.sin(ms*.002)*.12;
 const showTime=rewards.fountainTime(ms);
 drops.visible=!graphics.stillWater;
-if(drops.visible){for(let i=0;i<240;i++){let t=(ms*.0005+i/240)%1,a=i*2.399;const arc=Math.sin(t*Math.PI);let height=2.3;
-if(showTime>=0){const phase=Math.floor(showTime/4000),within=showTime%4000;
- const pair=.55+2.25*Math.cos(a)**4,crown=.6+2.6*Math.cos(2*a)**6;
- const target=phase===0?.65:phase===1?pair:crown,previous=phase===0?2.3:phase===1?.65:pair;
- const u=Math.min(1,within/600);height=previous+(target-previous)*u*u*(3-2*u);
- if(showTime>11400){const v=(showTime-11400)/600;height+=(2.3-height)*v*v*(3-2*v);}}
-dummy.position.set(Math.cos(a)*(1+t*4.2),3.8+arc*height-t*3.1,Math.sin(a)*(1+t*4.2)-35);dummy.scale.setScalar(.65+Math.sin(t*Math.PI)*.7);dummy.updateMatrix();drops.setMatrixAt(i,dummy.matrix);}drops.instanceMatrix.needsUpdate=true;}renderer.render(scene,camera);queueFrame();}queueFrame();
+if(drops.visible)updateFountainSpray(ms,showTime);
+renderer.render(scene,camera);queueFrame();}queueFrame();
 window.krownlandia={studio,whisperingPines,stonehearth,fireflyBenches,foodGuide,communityWalk,camera,scene,blocked,interact,reset,lounges,seating,villages,tram,residents,journal,builders,officeGarden,townSquare,library,eldergrove,produceGarden,clubhouse,generalStore,riverbend,bridge,school,getState:()=>({collected,near,playing,night,position:camera.position.toArray(),batching,safari:safari.state(),journey:journey.state(),rewards:rewards.state()})};

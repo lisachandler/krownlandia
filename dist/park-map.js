@@ -28,7 +28,9 @@ function installBowling(map) {
  };
  restart.onclick=()=>{if(map.open&&card.open){reset();aim.focus();}};
  card.ontoggle=()=>{if(!card.open)reset();};
- card.append(opener,intro,label,aim,roll,restart,status,credit);map.append(card);close();
+ const paper=make('a','bowlingPaper','Try bowling on paper (new tab)');
+ paper.href='/reports/bowling-practice.html';paper.target='_blank';paper.rel='noopener';
+ card.append(opener,intro,label,aim,roll,restart,status,credit,paper);map.append(card);close();
  return {close,open(){if(map.open){card.open=true;opener.focus();}}};
 }
 
