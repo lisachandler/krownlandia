@@ -21,10 +21,10 @@ export function enrich({scene,camera,stone,trim,grass,leaf,lamps,renderer}) {
   blades.name='Ground planting';blades.receiveShadow=true;blades.computeBoundingSphere();scene.add(blades);
   const ripples=[];
   for(const [x,y,z,r] of [[0,.752,-35,5.8],[24,.322,-51,4.6]]){
-    for(let i=0;i<5;i++){const ring=new T.Mesh(new T.RingGeometry(.97,1,80),new T.MeshBasicMaterial({color:'#b8e5f0',transparent:true,opacity:.18,side:T.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.set(x,y+i*.001,z);scene.add(ring);ripples.push({ring,r,phase:i/5});}
+    for(let i=0;i<5;i++){const ring=new T.Mesh(new T.RingGeometry(.97,1,80),new T.MeshBasicMaterial({color:'#b8e5f0',transparent:true,opacity:.18,side:T.DoubleSide,depthWrite:false}));ring.name='Pond ripple';ring.rotation.x=-Math.PI/2;ring.position.set(x,y+i*.001,z);scene.add(ring);ripples.push({ring,r,phase:i/5});}
   }
   const lightSources=lamps.filter((_,i)=>i%3===0).map(b=>{const l=new T.PointLight('#ffc572',0,11,2);l.position.copy(b.position);scene.add(l);return l;});
-  const gardenLights=new T.InstancedMesh(new T.SphereGeometry(.04,5,4),new T.MeshBasicMaterial({color:'#fff4a2',transparent:true,opacity:0,depthWrite:false}),55);gardenLights.frustumCulled=false;scene.add(gardenLights);
+  const gardenLights=new T.InstancedMesh(new T.SphereGeometry(.04,5,4),new T.MeshBasicMaterial({color:'#fff4a2',transparent:true,opacity:0,depthWrite:false}),55);gardenLights.name='Garden fireflies';gardenLights.frustumCulled=false;scene.add(gardenLights);
   const fireflies=Array.from({length:55},()=>({x:14+random()*19,z:-40-random()*23,y:.8+random()*2.3,phase:random()*6.28}));
 
   // Small woodland groups remain outside home interiors and animate only nearby at night.
@@ -46,8 +46,11 @@ export function enrich({scene,camera,stone,trim,grass,leaf,lamps,renderer}) {
 
   const sound=document.createElement('button');sound.id='sound';sound.textContent='Sound off';sound.setAttribute('aria-pressed','false');document.querySelector('nav').append(sound);
   let ac=null,source=null,master=null,panner=null,audioOn=false,audioBusy=false,audioFailed=false;
+  let graphicsPaused=false,blocked=document.hidden,visibilityEpoch=0;
+  const mute=()=>master.gain.setTargetAtTime(0,ac.currentTime,.15);
+  const stopAudio=()=>ac.suspend().catch(()=>{});
   async function toggleSound(){
-    if(audioBusy||audioFailed)return;audioBusy=true;sound.disabled=true;
+    if(audioBusy||audioFailed)return;audioBusy=true;sound.disabled=true;visibilityEpoch++;
     try {
       if(!ac){const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)throw Error('Audio unavailable');ac=new Audio();
         const buffer=ac.createBuffer(1,ac.sampleRate*3,ac.sampleRate),samples=buffer.getChannelData(0);let previous=0;
@@ -57,20 +60,37 @@ export function enrich({scene,camera,stone,trim,grass,leaf,lamps,renderer}) {
         panner=ac.createPanner();panner.panningModel='HRTF';panner.distanceModel='inverse';panner.refDistance=6;panner.rolloffFactor=1.5;panner.setPosition(0,1,-35);
         master=ac.createGain();master.gain.value=0;source.connect(filter).connect(panner).connect(master).connect(ac.destination);source.start();
       }
-      if(!audioOn)await ac.resume();audioOn=!audioOn;master.gain.setTargetAtTime(audioOn&&!document.hidden?.32:0,ac.currentTime,.15);sound.textContent=audioOn?'Sound on':'Sound off';sound.setAttribute('aria-pressed',String(audioOn));if(document.hidden||!audioOn)await ac.suspend().catch(()=>{});
-    }catch{audioFailed=true;sound.textContent='Sound unavailable';}
+      if(!audioOn)await ac.resume();audioOn=!audioOn;master.gain.setTargetAtTime(audioOn&&!blocked?.32:0,ac.currentTime,.15);sound.textContent=audioOn?'Sound on':'Sound off';sound.setAttribute('aria-pressed',String(audioOn));if(blocked||!audioOn)await stopAudio();
+    }catch{audioFailed=true;audioOn=false;sound.textContent='Sound unavailable';sound.setAttribute('aria-pressed','false');if(master){mute();void stopAudio();}}
     finally{audioBusy=false;sound.disabled=audioFailed;}
   }
   sound.onclick=toggleSound;
-  document.addEventListener('visibilitychange',()=>{if(!ac)return;if(document.hidden){master.gain.setTargetAtTime(0,ac.currentTime,.15);ac.suspend().catch(()=>{});}else if(audioOn)ac.resume().then(()=>{if(document.hidden||!audioOn)return ac.suspend().catch(()=>{});master.gain.setTargetAtTime(.32,ac.currentTime,.15);}).catch(()=>{});});
+  function syncSoundAvailability(){
+    const nextBlocked=document.hidden||graphicsPaused;
+    if(nextBlocked===blocked)return;
+    blocked=nextBlocked;
+    const epoch=++visibilityEpoch;
+    if(!master)return;
+    if(blocked){mute();void stopAudio();}
+    else if(audioOn)ac.resume().then(()=>{
+      if(epoch===visibilityEpoch&&!blocked&&audioOn)master.gain.setTargetAtTime(.32,ac.currentTime,.15);
+    }).catch(()=>{});
+  }
+  document.addEventListener('visibilitychange',syncSoundAvailability);
+  const setGraphicsPaused=paused=>{graphicsPaused=paused;syncSoundAvailability();};
   const direction=new T.Vector3();
-  const animate=(ms,night)=>{
+  let stillRipples=false,stillGarden=false;
+  const stillWoods=new Set();
+  const animate=(ms,night,still=false)=>{
+    if(still)ms=0;
+    else{stillRipples=false;stillGarden=false;stillWoods.clear();}
     const mix=Number(night);stars.visible=mix>0;stars.material.opacity=.9*mix*mix;stars.position.copy(camera.position);lightSources.forEach(l=>l.intensity=12*mix);scene.environmentIntensity=.55-.43*mix;gardenLights.visible=mix>0;gardenLights.material.opacity=mix;
-    for(const {ring,r,phase} of ripples){const t=(ms*.00013+phase)%1;ring.scale.setScalar(.1+t*r);ring.material.opacity=(1-t)*.22;}
-    if(night){fireflies.forEach((f,i)=>{d.position.set(f.x+Math.sin(ms*.0006+f.phase),f.y+Math.sin(ms*.001+f.phase)*.35,f.z+Math.cos(ms*.0007+f.phase));d.scale.setScalar(.6+.4*Math.sin(ms*.002+f.phase));d.rotation.set(0,0,0);d.updateMatrix();gardenLights.setMatrixAt(i,d.matrix);});gardenLights.instanceMatrix.needsUpdate=true;}
+    if(!stillRipples){for(const {ring,r,phase} of ripples){const t=(ms*.00013+phase)%1;ring.scale.setScalar(.1+t*r);ring.material.opacity=(1-t)*.22;}stillRipples=still;}
+    if(night&&!stillGarden){stillGarden=still;fireflies.forEach((f,i)=>{d.position.set(f.x+Math.sin(ms*.0006+f.phase),f.y+Math.sin(ms*.001+f.phase)*.35,f.z+Math.cos(ms*.0007+f.phase));d.scale.setScalar(.6+.4*Math.sin(ms*.002+f.phase));d.rotation.set(0,0,0);d.updateMatrix();gardenLights.setMatrixAt(i,d.matrix);});gardenLights.instanceMatrix.needsUpdate=true;}
     for(const {mesh,flies} of woodlandFireflies){
       mesh.material.opacity=.8*mix;mesh.visible=mix>0&&Math.hypot(camera.position.x-mesh.position.x,camera.position.z-mesh.position.z)<65;
-      if(!mesh.visible)continue;
+      if(!mesh.visible||stillWoods.has(mesh))continue;
+      if(still)stillWoods.add(mesh);
       flies.forEach((f,i)=>{const t=ms*f.speed+f.phase;d.position.set(f.x+Math.sin(t)*.7,f.y+Math.sin(t*.7)*.22,f.z+Math.cos(t*.8)*.65);d.rotation.set(0,0,0);d.scale.setScalar(.7+.18*Math.sin(t*1.4));d.updateMatrix();mesh.setMatrixAt(i,d.matrix);});mesh.instanceMatrix.needsUpdate=true;
     }
     if(ac&&audioOn&&ac.state==='running'){
@@ -78,5 +98,6 @@ export function enrich({scene,camera,stone,trim,grass,leaf,lamps,renderer}) {
     }
   };
   animate.clearPlanting=({x,z,w,d})=>{const matrix=new T.Matrix4(),position=new T.Vector3();for(let i=0;i<blades.count;i++){blades.getMatrixAt(i,matrix);position.setFromMatrixPosition(matrix);if(Math.abs(position.x-x)<=w/2&&Math.abs(position.z-z)<=d/2){matrix.scale(new T.Vector3(0,0,0));blades.setMatrixAt(i,matrix);}}blades.instanceMatrix.needsUpdate=true;blades.computeBoundingSphere();};
+  animate.setGraphicsPaused=setGraphicsPaused;
   return animate;
 }

@@ -154,6 +154,9 @@ function createCastingPractice(canRead){
   if(!panel.open||!canRead()||cast===null)return;
   const last=cast;cast=null;show(last==='bank'?'The float lifts out, leaving a ring by the bank. Your line is ready again.':'The float trails a curved wake back to shore. Your line is ready again.');(last==='bank'?near:far).focus();
  };
- panel.append(summary,note,near,far,reel,status);panel.ontoggle=()=>{if(!panel.open)reset();};
+ const guide=make('a','Guide','Try the float exercise without 3D (new tab)');
+ guide.href='/reports/village-craft-guide.html#riverbend-casting';guide.target='_blank';guide.rel='noopener';
+ const guideRow=document.createElement('p');guideRow.append(guide);
+ panel.append(summary,note,near,far,reel,status,guideRow);panel.ontoggle=()=>{if(!panel.open)reset();};
  reset();return {panel,close(){panel.open=false;reset();}};
 }

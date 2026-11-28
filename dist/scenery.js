@@ -25,9 +25,13 @@ export function finishGardens({scene,stone,trim,gold,navy,glass,leaf,blue,collid
     colliders.push({x:side*5,z:-80.5,w:2.7,d:1.7});
   }
   const waterfallMaterial=new T.MeshStandardMaterial({color:'#a9e2ef',roughness:.18,metalness:.15,transparent:true,opacity:.62,emissive:'#215365',emissiveIntensity:.2});
-  const falling=new T.InstancedMesh(new T.CylinderGeometry(.035,.08,.9,5),waterfallMaterial,160);falling.frustumCulled=false;scene.add(falling);
+  const falling=new T.InstancedMesh(new T.CylinderGeometry(.035,.08,.9,5),waterfallMaterial,160);falling.name='Palace waterfalls';falling.frustumCulled=false;scene.add(falling);
   const obj=new T.Object3D();
-  return ms=>{
+  let stillPose=false;
+  return (ms,still=false)=>{
+    if(still&&stillPose)return;
+    stillPose=still;
+    if(still)ms=0;
     for(let i=0;i<160;i++){const side=i%2?1:-1,t=(ms*.00027+i*.137)%1;obj.position.set(side*5+Math.sin(i*2.4)*1.45,1+(1-t)*8,-81.2+Math.cos(i*1.7)*.22+t*.6);obj.scale.set(1,.6+(i%5)*.2,1);obj.updateMatrix();falling.setMatrixAt(i,obj.matrix);}
     falling.instanceMatrix.needsUpdate=true;
   };

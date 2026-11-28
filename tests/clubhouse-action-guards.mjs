@@ -1,5 +1,6 @@
 import {frame} from './school-seating.mjs';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 const a=window.krownlandia,$=s=>document.querySelector(s),club=a.clubhouse,p=club.boardPoint;
 const guide=()=>$('#guide').textContent;
 a.camera.position.set(p.x,1.75,p.z);frame();const progress=JSON.stringify(a.getState().rewards);
@@ -21,7 +22,18 @@ a.camera.position.set(0,1.75,0);move(1);assert.equal(status.textContent,first);a
 move(1);move(0);assert.match(status.textContent,/No moves left/);
 $('#crossingUndo').onclick();assert.match(status.textContent,/Move undone/);
 $('#crossingReset').onclick();assert.equal(status.textContent,first);
-for(const i of [1,3,4,2,0,1,3,2])move(i);
+const puzzleLink=$('#crossingPaperGuide');
+assert(panel.children.some(row=>row.children.includes(puzzleLink)));
+assert.equal(puzzleLink.href,'/reports/crossing-stones.html');assert.equal(puzzleLink.target,'_blank');assert.equal(puzzleLink.rel,'noopener');
+const puzzle=readFileSync(new URL('../dist'+puzzleLink.href,import.meta.url),'utf8');
+assert.match(puzzle,/@laloreto in the historical inventory \(page 10\)/);assert.doesNotMatch(puzzle,/<script\b/);
+const solution=puzzle.match(/id="crossing-solution">([0-9, ]+)</)[1].split(', ').map(Number);
+assert.equal(solution.length,8);
+for(const mirror of [false,true]){
+ for(const space of solution)move((mirror?6-space:space)-1);
+ assert.match(status.textContent,/Crossing complete.*8 moves/);
+ if(!mirror)$('#crossingReset').onclick();
+}
 assert.match(status.textContent,/Crossing complete.*8 moves/);
 assert.deepEqual([0,1,2,3,4].map(i=>$('#crossingCell'+i).dataset.kind),['M','M','.','S','S']);
 $('#clubhouseClose').onclick();$('#crossingReset').onclick();assert.match(status.textContent,/Crossing complete/);

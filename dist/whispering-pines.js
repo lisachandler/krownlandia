@@ -79,7 +79,10 @@ export function installWhisperingPines({scene,camera,colliders,pause,canUse=()=>
   draft.hidden=picked.length===0;
   lines.forEach((line,i)=>{line.hidden=i>=picked.length;line.textContent=pieces[i].options[picked[i]]?.[1]||'';});
  }
- workshop.append(workshopTitle,workshopNote,stage,...picks,draft,rewind,restart);drawWorkshop();
+ const paper=document.createElement('a');paper.id='pinesWorkshopPaper';
+ paper.href='/reports/pines-story-workshop.html';paper.target='_blank';paper.rel='noopener';paper.textContent='Make a story without 3D (new tab)';
+ const paperRow=document.createElement('p');paperRow.append(paper);
+ workshop.append(workshopTitle,workshopNote,stage,...picks,draft,rewind,restart,paperRow);drawWorkshop();
  details.append(summary,note,controls,story);dialog.append(title,intro,details,craft,workshop,close);document.body.append(dialog);const css=document.createElement('link');css.rel='stylesheet';css.href='whispering-pines.css';document.head.append(css);render();
  return {root,bounds,point,seats:[seat],get near(){return near()},get isOpen(){return dialog.open},open(launcher){if(!canUse()||!accessible()||dialog.open||document.querySelector('dialog[open]')?.open)return false;returnFocus=launcher||document.querySelector('#interact');pause();details.open=false;craft.open=false;workshop.open=false;picked.length=0;drawWorkshop();material=0;slots.fill(null);renderCraft();dialog.showModal();close.focus();return true;}};
 }

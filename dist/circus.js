@@ -41,7 +41,7 @@ export function installCircus({scene,camera,colliders,guideTo,rewardClaimed,rewa
  const time=document.createElement('small');time.id='circusTime';
  const progress=document.createElement('progress');progress.id='circusProgress';progress.max=36;progress.value=0;progress.setAttribute('aria-label','Circus show progress');
  panel.append(toggle,replay,reward,time,progress);
- let active=false,elapsed=0,completed=false,act=-1,manualPause=false,finished=false;
+ let active=false,elapsed=0,completed=false,act=-1,manualPause=false,finished=false,posedTime;
  function controls(){toggle.hidden=!active;replay.hidden=!finished;reward.hidden=!finished||rewardClaimed();time.hidden=!active;progress.hidden=!active;stop.textContent=finished?'Close':'Leave show';toggle.textContent=manualPause?'Resume':'Pause';toggle.setAttribute('aria-pressed',String(manualPause));}
  function leave(){active=false;finished=false;manualPause=false;elapsed=0;panel.hidden=true;controls();}
  function start(){if(!inside()||active)return false;active=true;finished=false;manualPause=false;elapsed=0;act=-1;panel.hidden=false;controls();return true;}
@@ -72,7 +72,9 @@ export function installCircus({scene,camera,colliders,guideTo,rewardClaimed,rewa
    if(active&&!paused&&!manualPause){elapsed+=dt;if(elapsed>=36){elapsed=36;completed=true;active=false;finished=true;title.textContent=rewardClaimed()?'Bravo! Circus reward already collected.':'Bravo! Your 30-point reward is ready at the circus station.';controls();}}
    const next=Math.min(2,Math.floor(elapsed/12));if(active&&act!==next){act=next;title.textContent=['Krown Circus · Golden juggling','Krown Circus · Aerial hoop','Krown Circus · Grand finale'][act];}
    const t=active||finished?elapsed:0;
-   if(active){progress.value=t;const label=(manualPause||paused?'Paused · ':'')+'Act '+(next+1)+' / 3 · '+Math.ceil(36-t)+'s left';if(time.textContent!==label)time.textContent=label;}
+   if(active){if(progress.value!==t)progress.value=t;const label=(manualPause||paused?'Paused · ':'')+'Act '+(next+1)+' / 3 · '+Math.ceil(36-t)+'s left';if(time.textContent!==label)time.textContent=label;}
+   if(t===posedTime)return;
+   posedTime=t;
    // Each solo has its own clock; both performers join the finale, then hold a bow.
    const juggling=Math.min(t,12)+Math.max(0,Math.min(t,32)-24),flying=Math.max(0,Math.min(t,32)-12);
    const bow=Math.min(1,Math.max(0,(t-32)/2));performer.rotation.x=bow*.38;

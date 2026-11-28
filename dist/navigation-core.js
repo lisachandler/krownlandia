@@ -1,9 +1,23 @@
 // A bounded walking grid. Segment checks prevent routes cutting through corners.
-export function createNavigator(blocked){
+const directions=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+export function createNavigator(blocked,{staticEdges=false}={}){
  const width=113,height=269,minX=-60,minZ=-91,walk=new Uint8Array(width*height);
+ // Directed edge masks are safe only when collision geometry stays fixed.
+ // The visitor’s off-grid approach is always checked live.
+ const checked=staticEdges?new Uint8Array(walk.length):null;
+ const clearEdges=staticEdges?new Uint8Array(walk.length):null;
  const point=i=>({x:minX+i%width,z:minZ+Math.floor(i/width)});
  for(let i=0;i<walk.length;i++){const p=point(i);walk[i]=!blocked(p.x,p.z);}
  function clear(a,b){const n=Math.ceil(Math.hypot(b.x-a.x,b.z-a.z)*5);for(let j=0;j<=n;j++){const t=n?j/n:0;if(blocked(a.x+(b.x-a.x)*t,a.z+(b.z-a.z)*t))return false;}return true;}
+ function clearEdge(i,d,p,q){
+  if(!checked)return clear(p,q);
+  const flag=1<<d;
+  if(!(checked[i]&flag)){
+   if(clear(p,q))clearEdges[i]|=flag;
+   checked[i]|=flag;
+  }
+  return (clearEdges[i]&flag)!==0;
+ }
  // Enumerate only nearby cells, in the same row-major order as the full grid.
  // Keep the strict distance checks and segment tests, including existing tie-breaking.
  function nearby(center,radius,visit){
@@ -25,7 +39,7 @@ export function createNavigator(blocked){
   costs[first]=0;push(first,0);
   while(heap.length){const i=pop();if(closed[i])continue;closed[i]=1;if(goals.has(i)){const path=[];for(let j=i;j!==-1;j=parents[j])path.push(point(j));return [start,...path.reverse()];}
    const p=point(i),ix=i%width,iz=Math.floor(i/width);
-   for(const [dx,dz]of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]){const x=ix+dx,z=iz+dz;if(x<0||x>=width||z<0||z>=height)continue;const j=z*width+x;if(!walk[j]||closed[j])continue;const q=point(j);if(!clear(p,q))continue;const g=costs[i]+Math.hypot(dx,dz);if(g>=costs[j])continue;costs[j]=g;parents[j]=i;push(j,g+Math.max(0,Math.hypot(q.x-target.x,q.z-target.z)-1.8));}
+   for(let d=0;d<directions.length;d++){const [dx,dz]=directions[d],x=ix+dx,z=iz+dz;if(x<0||x>=width||z<0||z>=height)continue;const j=z*width+x;if(!walk[j]||closed[j])continue;const q=point(j);if(!clearEdge(i,d,p,q))continue;const g=costs[i]+Math.hypot(dx,dz);if(g>=costs[j])continue;costs[j]=g;parents[j]=i;push(j,g+Math.max(0,Math.hypot(q.x-target.x,q.z-target.z)-1.8));}
   }return [];
  }
  return {route,clear};

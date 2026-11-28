@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import * as T from '../dist/vendor/three.module.js';
 import {installWhisperingPines} from '../dist/whispering-pines.js';
 const nodes=new Map();let dialog,other=false,current=null,allowed=false,pauses=0;
@@ -52,3 +53,24 @@ workshop.open=true;pick(0);assert.match(draft.children[0].textContent,/beside th
 dialog.close();assert.equal(document.activeElement,seatedTrigger);
 assert.equal(inlay.root.children.length,count);
 console.log('PASS: storytelling choices, coherent three-part recap, undo, restart, seated access and collapsed/remote/closed guards.');
+
+const link=n('pinesWorkshopPaper');
+assert(workshop.children.some(row=>row.children.includes(link)));
+assert.equal(link.href,'/reports/pines-story-workshop.html');assert.equal(link.rel,'noopener');assert.equal(link.target,'_blank');
+const page=readFileSync(new URL('../dist'+link.href,import.meta.url),'utf8');
+assert.match(page,/@michaelnottoli in the historical inventory \(page 13\)/);
+assert.doesNotMatch(page,/<script\b|<form\b/);
+const paper=[...page.matchAll(/<h2 id="(?:beginning|discovery|ending)">[^<]+<\/h2><ul>([\s\S]*?)<\/ul>/g)]
+ .map(([,section])=>[...section.matchAll(/<li><b>([^<]+):<\/b> ([^<]+)<\/li>/g)].map(m=>m.slice(1)));
+assert.deepEqual(paper.map(group=>group.length),[2,2,2]);
+assert(inlay.open(seatedTrigger));assert(!workshop.open);
+workshop.open=true;
+for(const beginning of [0,1])for(const middle of [0,1])for(const end of [0,1]){
+ const choices=[beginning,middle,end];
+ for(const [i,choice] of choices.entries()){
+  assert.equal(n('pinesWorkshopChoice'+choice).textContent,paper[i][choice][0]);pick(choice);
+ }
+ assert.deepEqual(visible().map(el=>el.textContent),choices.map((choice,i)=>paper[i][choice][1]));
+ n('pinesWorkshopReset').onclick();
+}
+console.log('PASS: both formats use the same six lines and support all eight story combinations.');

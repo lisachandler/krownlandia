@@ -13,3 +13,5 @@ body:has(#gatewayNoScript)>:is(header,nav,#welcome,#quest,#world,#crosshair,#joy
 body.gateway-pending>:is(#world,nav,#quest,#crosshair,#joystick,#place,#interact,#viewControls){display:none}body.gateway-pending #welcome{box-sizing:border-box;width:min(490px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;transform:translate(-50%,-50%)}#gatewayLoading:empty{margin:0}#world:focus{outline:none}
 
 #gatewayBackup{margin-top:.85rem}#gatewayBackup summary{cursor:pointer}#gatewayBackup a{color:#ffe2a1;text-underline-offset:.2em}#gatewayBackup :focus-visible{outline:3px solid #ffd470;outline-offset:3px}#gatewayBackupStatus:empty{margin:0}
+
+#gatewayBackupFile{max-width:100%;font:inherit}#gatewayBackupInspect{margin-top:.6rem}#gatewayBackupInspection:empty{margin:0}

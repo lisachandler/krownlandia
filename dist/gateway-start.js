@@ -2,13 +2,37 @@ import {createVisit} from './visit-core.js';
 
 function installGatewayBackup(){
  const panel=document.querySelector('#gatewayBackup'),prepare=document.querySelector('#gatewayBackupPrepare'),download=document.querySelector('#gatewayBackupDownload'),status=document.querySelector('#gatewayBackupStatus');
- let url=null,revision=0;
+ const inspect=document.querySelector('#gatewayBackupInspect'),file=document.querySelector('#gatewayBackupFile'),inspection=document.querySelector('#gatewayBackupInspection');
+ let url=null,revision=0,inspectionRevision=0;
+ function resetInspection(){inspectionRevision++;file.value='';inspection.textContent='';}
+ inspect.hidden=false;
+ inspect.ontoggle=()=>{if(!inspect.open)resetInspection();};
+ file.onchange=async()=>{
+  if(!panel.open||!inspect.open)return;
+  const request=++inspectionRevision,selected=file.files?.[0];
+  const active=()=>request===inspectionRevision&&panel.open&&inspect.open;
+  inspection.textContent=selected?'Checking your backup…':'';
+  if(!selected)return;
+  try{
+   if(selected.size>100000)throw Error('Backup is too large.');
+   const {parseBackup}=await import('./backup-core.js');
+   if(!active())return;
+   const text=await selected.text();
+   if(!active())return;
+   const {summary,createdAt}=parseBackup(text);
+   const date=createdAt?'Created '+new Date(createdAt).toLocaleString()+' (your local time). ':'Creation time unavailable. ';
+   const keepsakes=summary.keepsakes===1?'keepsake':'keepsakes';
+   inspection.textContent=date+summary.points+' points · '+summary.keepsakes+' '+keepsakes+' · Home: '+summary.home+'. No progress was changed.';
+  }catch{
+   if(active())inspection.textContent='This file could not be read as a Krownlandia backup. No progress was changed.';
+  }
+ };
  function clearDownload(){
   download.hidden=true;download.removeAttribute('href');download.removeAttribute('download');
   if(url){URL.revokeObjectURL(url);url=null;}
  }
  function reset(){
-  revision++;clearDownload();status.textContent='';prepare.disabled=false;
+  revision++;clearDownload();status.textContent='';prepare.disabled=false;inspect.open=false;resetInspection();
  }
  panel.ontoggle=()=>{if(!panel.open)reset();};
  prepare.onclick=async()=>{

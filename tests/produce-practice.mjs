@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import * as T from '../dist/vendor/three.module.js';
 const nodes=new Map();
 function element(tag){return {tag,children:[],attrs:{},set id(id){nodes.set(id,this)},append(...xs){this.children.push(...xs)},setAttribute(k,v){this.attrs[k]=v},replaceChildren(...xs){this.children=xs},showModal(){this.open=true},close(){this.open=false},focus(){document.activeElement=this},getContext(){return {fillRect(){},fillText(){},measureText(){return {width:100}}}}};}
@@ -51,3 +52,19 @@ choose(2);assert.match(feedback.textContent,/needs no action/);assert.equal(wate
 node('produceClose').onclick();next.onclick();assert.match(prompt.textContent,/3 of 3/);
 assert(garden.open());assert(!care.open&&!planner.open);assert.match(prompt.textContent,/1 of 3/);assert.equal(feedback.textContent,'');
 console.log('PASS: three practice care choices, retry, seated access, focus, remote/closed guards and no watering writes.');
+
+const guideLink=node('plotPaperGuide');
+assert(planner.children.some(row=>row.children.includes(guideLink)));
+assert.equal(guideLink.href,'/reports/garden-practice.html');assert.equal(guideLink.target,'_blank');assert.equal(guideLink.rel,'noopener');
+const paper=readFileSync(new URL('../dist'+guideLink.href,import.meta.url),'utf8');
+assert.match(paper,/@lisachandler, historical inventory page 15/);
+assert.match(paper,/@josefan12, page 16/);assert.doesNotMatch(paper,/<script\b/);
+const cues=[...paper.matchAll(/<li><p>([^<]+)<\/p><details>/g)].map(m=>m[1]);
+assert.equal(cues.length,3);
+planner.open=true;care.open=true;
+press('Rotate');press('Rotate');assert.equal(layout(),'Tomatoes/Leafy greens/Carrots');
+press('Right');assert.equal(layout(),'Tomatoes/Carrots/Leafy greens');
+assert(paper.includes('Tomatoes, Carrots, Leafy greens'));
+for(const [i,cue] of cues.entries()){assert(prompt.textContent.endsWith(cue));choose(i);assert(!next.hidden);next.onclick();}
+assert.equal(waterCalls,1,'paper-equivalent practice adds no watering');
+console.log('PASS: the no-3D guide matches the practice layout, three care clues and recorded credits.');

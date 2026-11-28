@@ -45,8 +45,16 @@ assert.match(firstVisit,/href="reading-shelf.html"/);
 const shelf=fs.readFileSync('dist/reports/reading-shelf.html','utf8');
 assert.match(shelf,/@Jauregui9821/);
 assert.doesNotMatch(shelf,/<script\b|<iframe\b|https?:\/\//i);
+const shelfNav=shelf.match(/<nav aria-label="Browse the Reading Shelf">([\s\S]*?)<\/nav>/)[1];
+const targets=[...shelfNav.matchAll(/href="#([a-z]+)">([^<]+)<\/a>/g)].map(([,id,label])=>[id,label]);
+assert.deepEqual(targets.map(([id])=>id),['make','imagine','puzzles','visit']);
+const groupSizes=[5,6,7,2];
+for(const [i,[id,label]] of targets.entries()){
+ const group=shelf.split('<section aria-labelledby="'+id+'"><h2 id="'+id+'">'+label+'</h2>')[1].split('</section>')[0];
+ assert.equal([...group.matchAll(/href="[\w-]+\.html"/g)].length,groupSizes[i]);
+}
 const shelfFiles=[...shelf.matchAll(/href="([\w-]+\.html)"/g)].map(m=>m[1]);
-assert.deepEqual(shelfFiles,['village-craft-guide.html','arts-sampler.html','rhythm-sampler.html','house-museum-labels.html','bench-for-the-story.html','art-gallery.html','make-believe-field-notes.html','pizza-sharing.html','airtime-puzzle.html','bowling-practice.html','rainbow-patterns.html','dragon-sharing.html','community-choice.html','first-visit.html','community-bulletin.html']);
+assert.deepEqual(shelfFiles,['green-corner.html','garden-practice.html','village-craft-guide.html','arts-sampler.html','rhythm-sampler.html','house-museum-labels.html','pines-story-workshop.html','bench-for-the-story.html','four-seasons.html','art-gallery.html','make-believe-field-notes.html','pizza-sharing.html','airtime-puzzle.html','crossing-stones.html','bowling-practice.html','rainbow-patterns.html','dragon-sharing.html','community-choice.html','first-visit.html','community-bulletin.html']);
 for(const name of shelfFiles){
  const page=fs.readFileSync('dist/reports/'+name,'utf8');
  assert.match(page,/<a href="reading-shelf\.html">(?:Return to the )?Reading Shelf<\/a>/,name+' should link back to the shelf even when opened directly');
@@ -58,6 +66,10 @@ assert.equal([...museum.matchAll(/<details><summary>Read one possible label/g)].
 assert.doesNotMatch(museum,/<script\b|<form\b|https?:\/\//i);
 assert.match(fs.readFileSync('dist/reports/yet-to-build.html','utf8'),/Blee Old House Museum @ajayblee<\/td><td>13<\/td><td>Inspired <a href="house-museum-labels.html"/);
 const crafts=fs.readFileSync('dist/reports/village-craft-guide.html','utf8');
+const float=crafts.match(/<section id="riverbend-casting">([\s\S]*?)<\/section>/)[1];
+assert.match(float,/fishing \(page 3\)/);
+assert.match(float,/ring it leaves/);assert.match(float,/curved wake/);
+assert.match(crafts,/href="#riverbend-casting"/);
 const sewing=crafts.match(/<section id="sewing-club">([\s\S]*?)<\/section>/)[1];
 const pattern=fs.readFileSync('dist/clubhouse.js','utf8').match(/const pattern=\[([^\]]+)\]/)[1].replaceAll("'",'').split(',').join(', ');
 assert(sewing.includes('<b>Practice pattern:</b> '+pattern+'.'));
@@ -106,6 +118,23 @@ try{
   backupPanel.open=true;await prepare.onclick();
   assert(!download.hidden);assert.match(download.download,/^krownlandia-progress-.*\.json$/);
   const payload=JSON.parse(await blob.text());assert.equal(payload.version,1);assert.equal(payload.data.krownPin,'1');assert.equal(payload.data['krownlandia-home-v1'],'riverbend-1');assert(!Object.hasOwn(payload.data,'unrelated'));
+  const inspector=get('gatewayBackupInspect'),file=get('gatewayBackupFile'),review=get('gatewayBackupInspection');
+  assert(!inspector.hidden);
+  const backupBytes=JSON.stringify(payload),pick=async(value,size=value.length)=>{file.files=[{size,text:async()=>value}];await file.onchange();};
+  const readsBefore=reads;
+  await pick(backupBytes);assert(!review.textContent,'closed inspector does not read files');
+  inspector.open=true;await pick(backupBytes);
+  assert.match(review.textContent,/0 points · 1 keepsake · Home: riverbend-1/);
+  assert.match(review.textContent,/your local time/);
+  assert.equal(reads,readsBefore);assert.equal(canvasAttempts,0);
+  await pick('{broken');assert.match(review.textContent,/could not be read/);
+  await pick(backupBytes,100001);assert.match(review.textContent,/could not be read/);
+  let resolveOlder,started;
+  const reading=new Promise(resolve=>{started=resolve;});
+  file.files=[{size:1,text:()=>new Promise(resolve=>{resolveOlder=resolve;started();})}];
+  const older=file.onchange();await reading;
+  await pick(backupBytes);resolveOlder('{broken');await older;assert.match(review.textContent,/riverbend-1/);
+  inspector.open=false;inspector.ontoggle();assert.equal(file.value,'');assert.equal(review.textContent,'');
   backupPanel.open=false;backupPanel.ontoggle();assert(download.hidden);assert.equal(download.href,undefined);assert.deepEqual(revoked,['blob:test-backup']);
   backupPanel.open=true;globalThis.localStorage={getItem(){return null}};await prepare.onclick();assert(download.hidden);assert.match(status.textContent,/No saved/);
   globalThis.localStorage={getItem(){throw Error('unavailable')}};await prepare.onclick();assert(download.hidden);assert.match(status.textContent,/Could not prepare/);
@@ -120,6 +149,8 @@ try{
   assert(!backupPanel.open);assert(download.hidden);
   assert.deepEqual(revoked,['blob:test-backup','blob:test-backup']);
   backupPanel.open=true;await prepare.onclick();assert(!download.hidden,'moved backup controls still work');
+  inspector.open=true;await pick(backupBytes);assert.match(review.textContent,/riverbend-1/);
+
   backupPanel.open=false;backupPanel.ontoggle();
  }finally{URL.createObjectURL=create;URL.revokeObjectURL=revoke;delete globalThis.localStorage;}
  const park=['#world','#welcome','#quest','#crosshair','#joystick','#place','#interact','nav'];

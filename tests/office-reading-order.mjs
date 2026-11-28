@@ -1,5 +1,6 @@
 import './school-seating.mjs';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import * as T from '../dist/vendor/three.module.js';
 import {installOfficeGarden} from '../dist/office-garden.js';
 const create=document.createElement.bind(document);document.createElement=(...args)=>{const el=create(...args);el.attributes={};el.setAttribute=(key,value)=>el.attributes[key]=value;return el;};
@@ -15,9 +16,18 @@ assert(office.open());
 const green=$('#officeGreenCorner'),plan=$('#greenCornerPlan'),feedback=$('#greenCornerFeedback');
 assert.equal(green.open,false);const initial=feedback.textContent;
 plan.value='direct';plan.onchange();assert.equal(feedback.textContent,initial);
+const link=$('#greenCornerGuide');
+assert(green.children.some(row=>row.children.includes(link)));
+assert.equal(link.href,'/reports/green-corner.html');assert.equal(link.target,'_blank');assert.equal(link.rel,'noopener');
+const page=readFileSync(new URL('../dist'+link.href,import.meta.url),'utf8');
+assert.match(page,/@gorayii in the historical inventory \(page 15\)/);
+const options=[...page.matchAll(/<article><h3>([^<]+)<\/h3><p>([^<]+)<\/p><\/article>/g)];
+assert.equal(options.length,3);
 green.open=true;
 for(const [key,message] of [['direct','straight path'],['loop','more path space'],['edge','larger planted area']]){
  plan.value=key;plan.onchange();assert(feedback.textContent.includes(message));
+ const option=plan.children.find(item=>item.value===key);
+ assert(options.some(([,label,description])=>label===option.textContent&&description===feedback.textContent));
 }
 assert.deepEqual(done,[]);assert.equal(guided,null);
 $('#officeGardenClose').onclick();assert(office.open());assert(!green.open);assert.equal(plan.value,'');assert.equal(feedback.textContent,initial);

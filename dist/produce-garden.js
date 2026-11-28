@@ -69,6 +69,8 @@ function createPracticePlot(canRead){
  const next=el('button','CareNext','Next practice bed');next.type='button';
  next.onclick=()=>{if(!careActive()||!answered||next.hidden)return;situation=(situation+1)%situations.length;showCare();answers[0].focus();};
  care.append(careTitle,credit,prompt,...answers,feedback,next);showCare();
- panel.append(summary,note,list,left,right,rotate,reset,status,care);
+ const guide=el('a','PaperGuide','Try the practice plot without 3D (new tab)');guide.href='/reports/garden-practice.html';guide.target='_blank';guide.rel='noopener';
+ const guideRow=document.createElement('p');guideRow.append(guide);
+ panel.append(summary,note,list,left,right,rotate,reset,status,care,guideRow);
  return {panel,close(){panel.open=false;care.open=false;situation=0;showCare();order=[...names];draw('');}};
 }

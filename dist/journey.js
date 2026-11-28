@@ -18,7 +18,7 @@ export function installJourney({scene,camera,colliders,pause,onExit,guideTo=()=>
   const g=new T.Group();g.position.copy(pos);group.add(g);exhibits.push(g);
   part(new T.CylinderGeometry(2.1,2.3,.4,24),stone,0,.2,0,g);colliders.push({x:pos.x,z:pos.z,r:2.3});
   const mat=new T.MeshStandardMaterial({color:CHAPTERS[i].color,emissive:CHAPTERS[i].color,emissiveIntensity:.04,metalness:.15,roughness:.4});
-  const display=new T.Group();g.add(display);g.userData.display=display;g.userData.mat=mat;
+  const display=new T.Group();display.name='Great Journey exhibit '+(i+1);g.add(display);g.userData.display=display;g.userData.mat=mat;
   if(i===0){part(new T.CylinderGeometry(.16,.3,1.8,10),gold,0,1.2,0,display);for(let j=0;j<3;j++)part(new T.SphereGeometry(.85,12,10),mat,(j-1)*.6,2+j*.25,0,display);}
   if(i===1){for(let j=0;j<3;j++)part(new T.CylinderGeometry(1.7-j*.5,1.7-j*.5,.18,24),mat,0,.5+j*.8,0,display);part(new T.CylinderGeometry(.12,.2,2.6,12),gold,0,1.5,0,display);}
   if(i===2){for(let j=0;j<3;j++){const b=part(new T.OctahedronGeometry(.65),mat,(j-1)*1.15,1.3+j*.45,0,display);b.scale.set(1.4,.6,.6);}}
@@ -46,7 +46,13 @@ export function installJourney({scene,camera,colliders,pause,onExit,guideTo=()=>
   if(s.active){const returning=s.phase==='return',index=returning?6:s.stop,t=s.phase==='stop'?1:s.progress,smooth=t*t*(3-2*t);camera.position.copy(curve.getPoint((index+smooth)/7));camera.position.y=1.8;
    const focus=returning?points[7].clone().setY(1.8):looks[s.stop];camera.lookAt(focus);car.position.copy(camera.position).setY(.35);car.rotation.y=camera.rotation.y;
   }
-  for(const e of exhibits){const target=e.userData.activated?1:.55;e.userData.display.scale.lerp(new T.Vector3(target,target,target),1-Math.exp(-dt*4));e.userData.mat.emissiveIntensity=e.userData.activated?.6:.04;}
+  const blend=1-Math.exp(-dt*4);
+  for(const {userData:{activated,display,mat}} of exhibits){
+   const target=activated?1:.55,current=display.scale.x,next=current+(target-current)*blend;
+   if(next!==current)display.scale.setScalar(next);
+   const glow=activated?.6:.04;
+   if(mat.emissiveIntensity!==glow)mat.emissiveIntensity=glow;
+  }
   render();
  }
  return {board,update,exit,state:model.state,get active(){return model.state().active},get completed(){return model.state().completed},near:()=>Math.hypot(camera.position.x+32,camera.position.z+36)<4};

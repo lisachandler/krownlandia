@@ -46,7 +46,9 @@ export function installClubhouse({scene,camera,colliders,pause,rewards,getCurren
  undo.onclick=()=>{if(!active()||!history.length)return;stones=history.pop();draw('Move undone.');if(!history.length)cells[1].focus();};
  function resetGame(){stones='SS.MM';history=[];draw();}
  restart.onclick=()=>{if(!active()||restart.disabled)return;resetGame();cells[1].focus();};
- game.append(summary,rules,path,message,undo,restart,credit);
+ const crossingPaper=document.createElement('a');crossingPaper.id='crossingPaperGuide';crossingPaper.href='/reports/crossing-stones.html';crossingPaper.target='_blank';crossingPaper.rel='noopener';crossingPaper.textContent='Try Crossing Stones without 3D (new tab)';
+ const crossingPaperRow=document.createElement('p');crossingPaperRow.append(crossingPaper);
+ game.append(summary,rules,path,message,undo,restart,credit,crossingPaperRow);
  const sewing=document.createElement('details');sewing.id='clubSewing';
  const sewingTitle=document.createElement('summary');sewingTitle.textContent='Sewing Club · Stitch sampler';
  const sewingCredit=document.createElement('small');sewingCredit.textContent='Sewing Club · @lisachandler, page 16. The sampler and its Clubhouse placement are prototype choices.';

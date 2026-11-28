@@ -71,3 +71,16 @@ a.camera.position.set(-41,1.75,133.5);frame();assert.equal(a.getState().near,'ri
 a.camera.position.set(-36,1.75,126);frame();a.interact();const task=document.querySelector('#rewardBody').children.find(n=>n.textContent?.startsWith('Claim task'));assert(task&&!task.disabled);const points=a.getState().rewards.points;task.onclick();task.onclick();assert.equal(a.getState().rewards.points,points+20);document.querySelector('#rewardClose').onclick();
 const lounge=a.lounges.spots.find(s=>s.id==='riverbend');assert(lounge);const approach={x:lounge.x,z:lounge.z+1.3};assert(planner.route({x:0,z:30},approach).length);a.camera.position.set(approach.x,1.75,approach.z);frame();a.interact();assert(document.querySelector('#loungeMenu').open);document.querySelector('#loungeSnack').onclick();assert(lounge.treat.visible);document.querySelector('#loungeCollect').onclick();assert(a.journal.items().find(i=>i.id==='lounge-riverbend').owned);assert(parseBackup(exportBackup(localStorage)).data['krownlandia-lounge-souvenirs-v1'].includes('riverbend'));console.log('PASS: riverside entrance, discovery display, bank paths, pause, explicit task, one-time points, lounge snack, souvenir and backup',lounge.x,lounge.z);
 document.querySelector('#loungeClose').onclick();assert(a.blocked(-49,153),'Water is not walkable');const seat=a.riverbend.seats[0];assert(planner.route({x:0,z:161},seat.approach).length);a.camera.position.set(seat.approach.x,1.75,seat.approach.z);frame();assert.equal(a.seating.selected,seat);assert(a.seating.sit());frame();assert.equal(a.camera.rotation.y,Math.PI/2);a.seating.stand();assert(!a.blocked(a.camera.position.x,a.camera.position.z));a.camera.position.set(0,1.75,30);a.riverbend.open();assert(!document.querySelector('#riverbendMenu').open);console.log('PASS: water collision, reachable river-facing bench, anchored view, safe standing and remote panel guard');
+
+a.camera.position.set(-41,1.75,133.5);frame();assert(a.riverbend.open());
+const cast=id=>document.querySelector('#riverbendCast'+id);
+assert(!cast('').open);assert.equal(cast('Guide').href,'/reports/village-craft-guide.html#riverbend-casting');
+assert.equal(cast('Guide').target,'_blank');assert.equal(cast('Guide').rel,'noopener');
+const beforeCast=JSON.stringify(a.getState().rewards);
+cast('').open=true;
+for(const [button,clue] of [['Near','a ring by the bank'],['Far','a curved wake']]){
+ cast(button).onclick();assert(cast(button).disabled);cast('Reel').onclick();
+ assert(cast('Status').textContent.includes(clue));assert(!cast(button).disabled);
+}
+assert.equal(JSON.stringify(a.getState().rewards),beforeCast);
+console.log('PASS: optional text guide, bank and current float actions, unchanged rewards.');

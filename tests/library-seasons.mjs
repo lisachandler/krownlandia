@@ -1,13 +1,22 @@
 import {frame} from './school-seating.mjs';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 const a=window.krownlandia,$=s=>document.querySelector(s),library=a.library,point=library.deskPoint;
 a.camera.position.set(point.x,1.75,point.z);frame();assert(library.open());
 const panel=$('#librarySeasons'),text=$('#seasonCaption'),art=$('#seasonArt'),pick=i=>$('#seasonChoice'+i).onclick();
 assert(!panel.open);pick(2);assert.match(text.textContent,/^Spring/);
 const before=JSON.stringify(a.getState().rewards),position=a.camera.position.clone();
+const link=$('#seasonReading');
+assert(panel.children.includes(link));assert.equal(link.href,'reports/four-seasons.html');assert.equal(link.target,'_blank');assert.equal(link.rel,'noopener');
+const page=readFileSync(new URL('../dist/'+link.href,import.meta.url),'utf8');
+assert.match(page,/Four Seasons to @Jauregui9821 \(page 15\)/);assert.doesNotMatch(page,/<script\b/);
+const tiles=[...page.matchAll(/<figure><h2>([^<]+)<\/h2><div class="season-art" data-season="([a-z]+)" aria-hidden="true"><\/div><figcaption>([^<]+)<\/figcaption><\/figure>/g)];
+assert.equal(tiles.length,4);
+const css=readFileSync(new URL('../dist/season-art.css',import.meta.url),'utf8');
 panel.open=true;
 for(const [i,season] of ['spring','summer','autumn','winter'].entries()){
- pick(i);assert.equal(art.dataset.season,season);assert(text.textContent.toLowerCase().startsWith(season+' · '));
+ pick(i);assert.equal(art.dataset.season,season);assert.equal(tiles[i][2],season);assert(css.includes('.season-art[data-season='+season+']'));
+ assert.equal(text.textContent,tiles[i][1]+' · '+tiles[i][3]);
 }
 assert(a.camera.position.equals(position));assert.equal(JSON.stringify(a.getState().rewards),before);
 a.camera.position.set(0,1.75,0);pick(1);assert.match(text.textContent,/^Winter/);

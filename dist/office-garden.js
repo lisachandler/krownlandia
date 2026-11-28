@@ -47,7 +47,9 @@ export function installOfficeGarden({scene,camera,colliders,pause,rewards,getCur
  for(const [value,label] of plans){const option=document.createElement('option');option.value=value;option.textContent=label;greenPlan.append(option);}
  function resetGreen(){green.open=false;greenPlan.value='';greenFeedback.textContent=plans[0][2];}
  greenPlan.onchange=()=>{if(!canRead()||!dialog.open||!green.open)return;greenFeedback.textContent=(plans.find(([value])=>value===greenPlan.value)||plans[0])[2];};
- green.append(greenTitle,greenCredit,greenLabel,greenPlan,greenFeedback);
+ const greenGuide=document.createElement('a');greenGuide.id='greenCornerGuide';greenGuide.href='/reports/green-corner.html';greenGuide.target='_blank';greenGuide.rel='noopener';greenGuide.textContent='Compare the layouts without 3D (new tab)';
+ const guideRow=document.createElement('p');guideRow.append(greenGuide);
+ green.append(greenTitle,greenCredit,greenLabel,greenPlan,greenFeedback,guideRow);
  dialog.append(title,invitation,choices,detail,status,reward,about,green,close);
  resetGreen();
  function open(){if(!canRead()||dialog.open)return false;pause();about.open=false;resetGreen();selected=null;visit.hidden=true;for(const [id] of projects)document.querySelector('#officeProject-'+id).setAttribute('aria-pressed','false');detail.textContent='Choose a community idea to read its credit and get directions.';updateStatus();dialog.showModal();return true;}

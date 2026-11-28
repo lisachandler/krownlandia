@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Krownlandia · Crossing Stones</title>
+<style>
+:root{color-scheme:light;background:#f5f0e4;color:#25362c;font:100%/1.6 system-ui,sans-serif}
+body{margin:0}main{max-width:42rem;margin:auto;padding:2rem 1.2rem 3rem}
+h1,h2{line-height:1.2}summary{cursor:pointer;font-weight:700}a{color:#055576;text-underline-offset:.2em}
+details{margin-block:.75rem}a:focus-visible,summary:focus-visible{outline:3px solid #945312;outline-offset:3px}
+@media print{:root{background:#fff;color:#111}main{padding:0}footer{display:none}details{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<h1>Crossing Stones</h1>
+<p>Trade places with two suns and two moons. Inspired by Game Club, credited to @laloreto in the historical inventory (page 10). This five-space puzzle is a prototype interpretation; there is no timer, score, or saved progress.</p>
+<h2>Set up the path</h2>
+<p>Draw five numbered spaces, or name them from left to right. In order, start with Sun, Sun, Gap, Moon, Moon. Your goal is Moon, Moon, Gap, Sun, Sun. You can use counters, letters, or spoken names.</p>
+<h2>Move into the gap</h2>
+<ol>
+<li>Suns only move right. Moons only move left.</li>
+<li>A piece may slide one space into the gap or jump over exactly one piece into the gap. Your old space becomes the new gap.</li>
+<li>Say or write the number you moved from. If there is no legal move left, undo the last move or start over.</li>
+</ol>
+<details><summary>Reveal a first move</summary><p>Move the Sun from space 2 into space 3. Now choose between sliding the other Sun and jumping the Moon over the moved Sun. Which choice keeps more moves available?</p></details>
+<details><summary>Reveal one eight-move solution</summary><p>Move from these spaces in order: <span id="crossing-solution">2, 4, 5, 3, 1, 2, 4, 3</span>. Each number names a piece’s position before it moves. After each move, replace that position with the gap. Check that you end with Moon, Moon, Gap, Sun, Sun.</p>
+<p>For a second solution, reverse the space numbers: replace 1 with 5, 2 with 4, and so on. This swaps the roles of the suns and moons.</p></details>
+<p>For the button version, open <b>Game Club · Crossing stones</b> at the Clubhouse board.</p>
+<footer><p><a href="reading-shelf.html">Return to the Reading Shelf</a></p></footer>
+</main></body></html>

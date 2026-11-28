@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.js';
 import {createNavigator} from './navigation-core.js';
-export function installNavigation({scene,blocked}){
- const planner=createNavigator(blocked),dots=new T.InstancedMesh(new T.CircleGeometry(.12,10),new T.MeshBasicMaterial({color:'#ffe09b',transparent:true,opacity:.85,depthWrite:false}),160);
+export function installNavigation({scene,blocked,staticEdges=false}){
+ const planner=createNavigator(blocked,{staticEdges}),dots=new T.InstancedMesh(new T.CircleGeometry(.12,10),new T.MeshBasicMaterial({color:'#ffe09b',transparent:true,opacity:.85,depthWrite:false}),160);
  dots.name='Walking guidance trail';dots.frustumCulled=false;dots.visible=false;scene.add(dots);const d=new T.Object3D();d.rotation.set(-Math.PI/2,0,0);
  const drawn=[];let path=[],key='',last=-Infinity;
  const navigate=(ms,position,target,visible,active=visible)=>{
